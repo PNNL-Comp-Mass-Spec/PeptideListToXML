@@ -1,0 +1,139 @@
+<!-- List the mods used in the search_summary section at the top of the pepXML file -->
+
+<!--  When recording mod info, record the total mass of each modified residue
+      For example, if we have PEPC#TIDE where Cys is Alkylated with 57, then use 103.009184+57=160.009 -->
+               <mod_aminoacid_mass position="4" mass="160.009" />
+
+<!-- If the N-terminus is modified, use mod_nterm_mass to write out the full mass of the N-terminus.  This is the mass of Hydrogen (1.0078246) plus the mod mass -->
+<!-- If the C-terminus is modified, use mod_Cterm_mass to write out the full mass of the N-terminus.  This is the mass of OH      (17.0027396) plus the mod mass -->
+
+
+<!-- Example marked-up peptide with just one mod-->
+ <search_hit hit_rank="1" peptide="MFRRTKIVTTLGPATDRDDNLR" peptide_prev_aa="-" peptide_next_aa="R" protein="SO_2491" protein_descr="pyruvate kinase II, PykA" num_tot_proteins="1" num_matched_ions="10" tot_num_ions="84" calc_neutral_pep_mass="2633.3707" massdiff="0.508" num_tol_term="2" num_missed_cleavages="3" is_rejected="0">
+    <modification_info>
+       <mod_aminoacid_mass position="1" mass="147.0354" />
+    </modification_info>
+
+<!-- Example marked-up peptide where M is modified by 15.9949 (so we use mass = 131.04048 + 15.9949)
+     and the N-terminus is modified by 42.01057 (so we use mass = 1.00782 + 42.01057)                   -->
+ <search_hit hit_rank="1" peptide="MFRRTKIVTTLGPATDRDDNLR" peptide_prev_aa="-" peptide_next_aa="R" protein="SO_2491" protein_descr="pyruvate kinase II, PykA" num_tot_proteins="1" num_matched_ions="10" tot_num_ions="84" calc_neutral_pep_mass="2633.3707" massdiff="0.508" num_tol_term="2" num_missed_cleavages="3" is_rejected="0">
+    <modification_info mod_nterm_mass="43.0183946">
+       <mod_aminoacid_mass position="1" mass="147.0354" />
+    </modification_info>
+    
+    
+<!-- Detailed examples -->
+
+<!-- Example 1 -->
+<search_summary base_name="XTM201105160953_Auto701903\SBEP_RCHP_STM_007_6May11_Draco_11-03-10_xt.xml" search_engine="X! Tandem" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">
+         <search_database local_path="G:\DMS_Temp_Org\ID_002871_B9FC2BE0.fasta" type="AA"/>
+         <enzymatic_search_constraint enzyme="trypsin" max_num_internal_cleavages="3" min_number_termini="1" />
+         <aminoacid_modification aminoacid="E" massdiff="-18.0106" mass="111.0320" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="Q" massdiff="-17.0265" mass="111.0321" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+
+         <search_hit hit_rank="1" peptide="QSLEASLAETEGR" peptide_prev_aa="K" peptide_next_aa="Y" protein="gi|547749" protein_descr="KERATIN, TYPE I CYTOSKELETAL 10 (CYTOKERATIN 10) (K10) (CK 10) (sp|P13645|K1CJ_HUMAN)" num_tot_proteins="5" num_matched_ions="9" tot_num_ions="24" calc_neutral_pep_mass="1372.6467" massdiff="-0.302" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <alternative_protein protein="gi|71528" protein_descr="keratin 10, type I, cytoskeletal (clone lambda-KH10-5) - human gi|28317 (X14487) unnamed protein product [Homo sapiens] (pir||KRHU0)" num_tol_term="2"/>
+            <alternative_protein protein="gi|88041" protein_descr="keratin 10, type I, epidermal - human gi|623409 (J04029) keratin 10 [Homo sapiens] (pir||A31994)" num_tol_term="2"/>
+            <alternative_protein protein="gi|106849" protein_descr="keratin 10, type I, cytoskeletal (clone HK51) - human (fragment) gi|186629 (M77663) keratin 10 [Homo sapiens] (pir|PC1102)" num_tol_term="2"/>
+            <alternative_protein protein="gi|88042" protein_descr="keratin 10, type I, cytoskeletal (clone IIB5) - human (fragment) (pir||S14666)" num_tol_term="2"/>
+            <modification_info>
+               <mod_aminoacid_mass position="1" mass="111.0321" />
+            </modification_info>
+            <search_score name="hyperscore" value="29.5"/>
+            <search_score name="nextscore" value="28.0"/>
+            <search_score name="bscore" value="0"/>
+            <search_score name="yscore" value="7.3"/>
+            <search_score name="cscore" value="0"/>
+            <search_score name="zscore" value="0"/>
+            <search_score name="ascore" value="0"/>
+            <search_score name="xscore" value="0"/>
+            <search_score name="expect" value="0.14"/>
+         </search_hit>
+
+
+<!-- Example 2 -->
+<search_summary base_name="XTM201204200908_Auto828072\QC_Shew_11_06_pt5_4_19Apr12_Draco_12-02-39_xt.xml" search_engine="X! Tandem" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">
+         <search_database local_path="G:\DMS_Temp_Org\ID_003456_9B916A8B.fasta" type="AA"/>
+         <enzymatic_search_constraint enzyme="trypsin" max_num_internal_cleavages="3" min_number_termini="1" />
+         <aminoacid_modification aminoacid="E" massdiff="-18.0106" mass="111.0320" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="M" massdiff="15.9949" mass="147.0354" variable="Y" />
+         <aminoacid_modification aminoacid="Q" massdiff="-17.0265" mass="111.0321" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+
+         <search_hit hit_rank="1" peptide="AVAAGMNPMDLK" peptide_prev_aa="K" peptide_next_aa="R" protein="SO_0704" protein_descr="chaperonin, GroEL" num_tot_proteins="1" num_matched_ions="17" tot_num_ions="22" calc_neutral_pep_mass="1248.5837" massdiff="0.036" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <modification_info>
+               <mod_aminoacid_mass position="6" mass="147.0354" />
+               <mod_aminoacid_mass position="9" mass="147.0354" />
+            </modification_info>
+            <search_score name="hyperscore" value="54.3"/>
+            <search_score name="nextscore" value="24.1"/>
+
+         <search_hit hit_rank="1" peptide="QWVAMQDSHDCLYCVVDLHAITVR" peptide_prev_aa="R" peptide_next_aa="Q" protein="SO_0294" protein_descr="tryptophanyl-tRNA synthetase, TrpS" num_tot_proteins="1" num_matched_ions="16" tot_num_ions="92" calc_neutral_pep_mass="2800.2767" massdiff="0.483" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <modification_info>
+               <mod_aminoacid_mass position="1" mass="111.0321" />
+               <mod_aminoacid_mass position="5" mass="147.0354" />
+            </modification_info>
+            <search_score name="hyperscore" value="39.8"/>
+            
+
+<!-- Example 3 (EthPhos) -->
+<search_summary base_name="XTM201201121709_Auto783601\Orga-Phos_BCHE-Phos_CID-Top10-Target_28Feb09_Hawk_07-09-05_xt.xml" search_engine="X! Tandem" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">
+         <search_database local_path="G:\DMS_Temp_Org\ID_002866_74502D13.fasta" type="AA"/>
+         <enzymatic_search_constraint enzyme="trypsin" max_num_internal_cleavages="3" min_number_termini="1" />
+         <aminoacid_modification aminoacid="E" massdiff="-18.0106" mass="111.0320" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="Q" massdiff="-17.0265" mass="111.0321" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="S" massdiff="107.9976" mass="195.0297" variable="Y" />
+         <aminoacid_modification aminoacid="T" massdiff="107.9976" mass="209.0453" variable="Y" />
+         <aminoacid_modification aminoacid="Y" massdiff="107.9976" mass="271.0610" variable="Y" />
+
+         <search_hit hit_rank="1" peptide="VCLAKMYYSAVDPTKDIFTGLIGPMK" peptide_prev_aa="P" peptide_next_aa="I" protein="CERU_HUMAN" protein_descr="Ceruloplasmin; EC=1.16.3.1; AltName: Full=Ferroxidase; Flags: Precursor" num_tot_proteins="1" num_matched_ions="14" tot_num_ions="100" calc_neutral_pep_mass="3076.4527" massdiff="3.116" num_tol_term="1" num_missed_cleavages="2" is_rejected="0">
+            <modification_info>
+               <mod_aminoacid_mass position="7" mass="271.0610" />
+               <mod_aminoacid_mass position="9" mass="195.0297" />
+            </modification_info>
+            <search_score name="hyperscore" value="45.6"/>
+            <search_score name="nextscore" value="45.6"/>
+
+
+<!-- Example 4 (Phospho and iTRAQ) -->
+<search_summary base_name="XTM201011111129_Auto640604\MB_phos_4_Fraction_4_13Oct10_Hawk_03-10-09p_xt.xml" search_engine="X! Tandem" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">
+         <search_database local_path="G:\DMS_Temp_Org\ID_002472_602EF80E.fasta" type="AA"/>
+         <enzymatic_search_constraint enzyme="trypsin" max_num_internal_cleavages="3" min_number_termini="2" />
+         <aminoacid_modification aminoacid="C" massdiff="57.0215" mass="160.0307" variable="N" />
+         <aminoacid_modification aminoacid="K" massdiff="304.2022" mass="432.2972" variable="N" />
+         <aminoacid_modification aminoacid="C" massdiff="-17.0265" mass="143.0042" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="E" massdiff="-18.0106" mass="111.0320" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="Q" massdiff="-17.0265" mass="111.0321" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="S" massdiff="79.9663" mass="166.9983" variable="Y" />
+         <aminoacid_modification aminoacid="T" massdiff="79.9663" mass="181.0140" variable="Y" />
+         <aminoacid_modification aminoacid="Y" massdiff="79.9663" mass="243.0296" variable="Y" />
+         <terminal_modification terminus="n" massdiff="304.2022" mass="305.2100" protein_terminus="N" variable="N" />
+
+         <search_hit hit_rank="1" peptide="GLDFEIPPPSPPLNLHELSGPAEGTPLTPK" peptide_prev_aa="K" peptide_next_aa="S" protein="SNIP_MOUSE" protein_descr="Q9QWI6 p130Cas-associated protein" num_tot_proteins="1" num_matched_ions="15" tot_num_ions="232" calc_neutral_pep_mass="3887.9549" massdiff="0.004" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <modification_info mod_nterm_mass="305.2100">
+               <mod_aminoacid_mass position="19" mass="166.9983" />
+               <mod_aminoacid_mass position="25" mass="181.0140" />
+               <mod_aminoacid_mass position="30" mass="432.2972" />
+            </modification_info>
+            
+            
+<!-- Example 5 (Variable c-terminal mod) -->
+<search_summary base_name="XTM201204130915_Auto826098\Alz_P07_B01_013_12Apr12_Roc_12-03-15_xt.xml" search_engine="X! Tandem" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">
+         <search_database local_path="G:\DMS_Temp_Org\ID_003471_B4971209.fasta" type="AA"/>
+         <enzymatic_search_constraint enzyme="trypsin" max_num_internal_cleavages="2" min_number_termini="2" />
+         <aminoacid_modification aminoacid="C" massdiff="57.0215" mass="160.0307" variable="N" />
+         <aminoacid_modification aminoacid="C" massdiff="-17.0265" mass="143.0042" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="E" massdiff="-18.0106" mass="111.0320" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <aminoacid_modification aminoacid="Q" massdiff="-17.0265" mass="111.0321" variable="Y" symbol="^" /><!--X! Tandem n-terminal AA variable modification-->
+         <terminal_modification terminus="c" massdiff="4.0085" mass="21.0112" protein_terminus="N" variable="Y" />
+
+         <search_hit hit_rank="1" peptide="EIVHLQAGQCGNQIGAK" peptide_prev_aa="R" peptide_next_aa="F" protein="TBB4_HUMAN" protein_descr="Tubulin beta-4 chain; AltName: Full=Tubulin 5 beta" num_tot_proteins="2" num_matched_ions="15" tot_num_ions="32" calc_neutral_pep_mass="1825.9241" massdiff="-0.009" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <alternative_protein protein="TBB2C_HUMAN" protein_descr="Tubulin beta-2C chain; AltName: Full=Tubulin beta-2 chain" num_tol_term="2"/>
+            <modification_info mod_cterm_mass="21.0112">
+               <mod_aminoacid_mass position="10" mass="160.0307" />
+            </modification_info>
+
+         <search_hit hit_rank="1" peptide="AVLVDLEPGTMDSVR" peptide_prev_aa="R" peptide_next_aa="S" protein="TBB4_HUMAN" protein_descr="Tubulin beta-4 chain; AltName: Full=Tubulin 5 beta" num_tot_proteins="4" num_matched_ions="8" tot_num_ions="28" calc_neutral_pep_mass="1604.8215" massdiff="-0.001" num_tol_term="2" num_missed_cleavages="0" is_rejected="0">
+            <alternative_protein protein="TBB2C_HUMAN" protein_descr="Tubulin beta-2C chain; AltName: Full=Tubulin beta-2 chain" num_tol_term="2"/>
+            <alternative_protein protein="TBB8_HUMAN" protein_descr="Tubulin beta-8 chain" num_tol_term="2"/>
+            <alternative_protein protein="TBB4Q_HUMAN" protein_descr="Putative tubulin beta-4q chain" num_tol_term="2"/>
+            <modification_info mod_cterm_mass="21.0112" />

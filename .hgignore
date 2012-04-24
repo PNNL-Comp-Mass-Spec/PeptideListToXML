@@ -18,3 +18,4 @@ AM_Common/DeconEngin*/*
 Plugins/*/[Bb]in/*
 Test_Plugins/*/[Bb]in/*
 */Unused/*
+bin/PepXML_Examples/XTM*/*
