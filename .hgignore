@@ -1,0 +1,20 @@
+syntax: glob
+.svn/
+obj/*
+**.suo
+**.vbproj.user
+**.csproj.user
+**.pdb
+[Bb]in/*.dll
+[Bb]in/[Dd]ebug/*.dll
+[Bb]in/[Rr]elease/*.dll
+*/Logs/*
+*/MSGF_Scratch/*
+AM_Program/Legacy/*
+AM_Program/bin/MemoryUsageLog*
+AM_Program/bin/RecentJobParameters*
+AM_Common/AnalysisManager*.dll
+AM_Common/DeconEngin*/*
+Plugins/*/[Bb]in/*
+Test_Plugins/*/[Bb]in/*
+*/Unused/*
