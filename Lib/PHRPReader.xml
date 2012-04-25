@@ -100,6 +100,99 @@ PHRPReader
 	<param name="dblMass"></param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.AdditionalScores">
+	<summary>
+ Returns a dictionary with additional search engine scores stored as key/value pairs
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>Update scores using SetScore</remarks>
+</member><member name="P:PHRPReader.clsPSM.Charge">
+	<summary>
+ Assumed charge of the spectrum in which this peptide was identified
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.CleavageState">
+	<summary>
+ Peptide cleavage state (with regards to ProteinFirst)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.CollisionMode">
+	<summary>
+ Collision mode (CID, ETD, HCD)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ElutionTimeMinutes">
+	<summary>
+ Elution time (in minutes) of the spectrum
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.MassErrorDa">
+	<summary>
+ Mass difference, in daltons, between the monoisotopic mass of the precursor ion and the calculated (theoretical) monoisotopic mass of the peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.MassErrorPPM">
+	<summary>
+ Mass difference, in ppm, between the monoisotopic mass of the precursor ion and the calculated (theoretical) monoisotopic mass of the peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ModifiedResidues">
+	<summary>
+ List of modified residues
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>A given residue is allowed to have more than one modification</remarks>
+</member><member name="P:PHRPReader.clsPSM.MSGFSpecProb">
+	<summary>
+ MSGF Spectral Probability associated with this peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>Ranges from 0 to 1, where 0 is the best score and 1 is the worse score</remarks>
+</member><member name="P:PHRPReader.clsPSM.NumMissedCleavages">
+	<summary>
+ Number of missed cleavages (internal K or R)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.NumTrypticTerminii">
+	<summary>
+ Number of tryptic terminii (or similar if not using trypsin)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic</remarks>
+</member><member name="P:PHRPReader.clsPSM.Peptide">
+	<summary>
+ Peptide sequence, including any modification symbols that were assigned by the search engine
+ For example, R.AAS*PQDLAGGYTSSLACHR.A
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.PeptideCleanSequence">
+	<summary>
+ Peptide residues without any modification symbols or flanking residues
+ For example, AASPQDLAGGYTSSLACHR
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPSM.PeptideMonoisotopicMass">
 	<summary>
  Computed monoisotopic mass (uncharged, theoretical mass, including mods)
@@ -107,14 +200,83 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.PeptideWithNumericMods">
+	<summary>
+ Peptide sequence where all modified residues have the modification masses displayed as numeric values
+ For example, R.A+144.102063AS+79.9663PQDLAGGYTSSLAC+57.0215HR.A
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ProteinFirst">
+	<summary>
+ First protein associated with this peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>Retrieve full list of proteins using the Proteins property</remarks>
 </member><member name="P:PHRPReader.clsPSM.PrecursorNeutralMass">
 	<summary>
  Uncharged monoisotopic mass of the precursor (observed mass based on m/z and charge)
  </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.Proteins">
+	<summary>
+ List of proteins associated with this peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ResultID">
+	<summary>
+ ResultID of this peptide (typically assigned by the search engine)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ScoreRank">
+	<summary>
+ Rank of this peptide in the given spectrum
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks>Top scoring peptide is rank 1, next lowest score is rank 2, etc.</remarks>
+</member><member name="P:PHRPReader.clsPSM.SeqID">
+	<summary>
+ Sequence ID value assigned by PHRP
+ Required for looking up information from the SeqInfo files
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ScanNumber">
+	<summary>
+ Scan number of the mass spectrum in which this peptide was identified
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPSM.#ctor">
 	<summary>
  Constructor; auto-calls Clear()
  </summary>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPSM.AddModifiedResidue(PHRPReader.clsAminoAcidModInfo)">
+	<summary>
+ Add the details for a modified residue
+ </summary>
+	<param name="objModInfo">Modification info class</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPSM.AddModifiedResidue(System.Char,System.Int32,PHRPReader.clsAminoAcidModInfo.eResidueTerminusStateConstants,PHRPReader.clsModificationDefinition)">
+	<summary>
+ Add the details for a modified residue
+ </summary>
+	<param name="Residue">Amino acid letter; use angle brackets or square brackes for peptide or protein terminii (see the SYMBOL_DMS constants in clsAminoAcidModInfo)</param>
+	<param name="ResidueLocInPeptide">Location of the residue in the peptide; use 1 for an N-terminal mod</param>
+	<param name="ResidueTerminusState">Terminus state of residue</param>
+	<param name="ModDefinition">Modification details</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPSM.AddProtein(System.String)">
 	<summary>
@@ -202,25 +364,88 @@ PHRPReader
 	<value></value>
 	<returns>True if the file is readable</returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.CurrentPSM">
+	<summary>
+ Returns the most recently loaded PSM
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.DatasetName">
+	<summary>
+ Dataset name (auto-determined based on the input filename)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.EchoMessagesToConsole">
+	<summary>
+ If True, then will display messages at the console
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.ErrorMessage">
+	<summary>
+ Current error message
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.LoadModSummaryFile">
+	<summary>
+ If True, then looks for and loads the modification definitions from the _ModSummary.txt file associated with the input file
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.LoadMSGFResults">
+	<summary>
+ If true, then loads the MSGF SpecProb values from the _MSGF.txt file associated with the input file
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.LoadScanStatsData">
+	<summary>
+ If True, then loads the MASIC _ScanStats.txt file
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.PeptideHitResultType">
+	<summary>
+ Peptide hit result type; Sequest, XTandem, Inspect, or MSGFDB
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.PHRPParser">
+	<summary>
+ Returns the PHRP Parser object
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String)">
 	<summary>
  Constructor that auto-determines the PeptideHit result type based on the filename
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
-	<remarks>Sets LoadModDefs to True and LoadMSGFResults to true</remarks>
+	<remarks>Sets LoadModSummaryFile to True and LoadMSGFResults to true</remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
 	<summary>
  Constructor where the PeptideHit result type is explicitly set
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
 	<param name="eResultType">Source file PeptideHit result type</param>
-	<remarks>Sets LoadModDefs to True and LoadMSGFResults to true</remarks>
+	<remarks>Sets LoadModSummaryFile to True and LoadMSGFResults to true</remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,System.Boolean,System.Boolean,System.Boolean)">
 	<summary>
  Constructor that auto-determines the PeptideHit result type based on the filename
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
-	<param name="blnLoadModDefs">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadModSummaryFile">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
 	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,System.Boolean,System.Boolean,System.Boolean)">
@@ -229,7 +454,7 @@ PHRPReader
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
  ''' <param name="eResultType">Source file PeptideHit result type</param>
-	<param name="blnLoadModDefs">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadModSummaryFile">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
 	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.AutoDetermineDatasetName(System.String)">
@@ -254,16 +479,56 @@ PHRPReader
 	<param name="strFilePath"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:PHRPReader.clsPHRPReader.ConvertModsToNumericMods(System.String,System.String@,System.Collections.Generic.List{PeptideHitResultsProcessor.clsAminoAcidModInfo}@)">
+</member><member name="M:PHRPReader.clsPHRPReader.ConvertModsToNumericMods(System.String,System.String@,System.Collections.Generic.List{PHRPReader.clsAminoAcidModInfo}@)">
 	<summary>
  Look for dynamic mod symbols in the peptide sequence; replace with the corresponding mod masses
  Note that if the _SeqInfo.txt file is available, then this function will not be used
  </summary>
 	<returns>True if success, false if an error</returns>
 	<remarks></remarks>
-</member><member name="M:PHRPReader.clsPHRPReader.GetModSummaryFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPFirstHitsFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+	<summary>
+ Returns the default first-hits file name for the given PeptideHit result type
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strDatasetName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
 	<summary>
  Returns the default ModSummary file name for the given PeptideHit result type
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strDatasetName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+	<summary>
+ Returns the default Synopsis file name for the given PeptideHit result type
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strDatasetName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+	<summary>
+ Returns the default ResultToSeq Map file name for the given PeptideHit result type
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strDatasetName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+	<summary>
+ Returns the default SeqInfo file name for the given PeptideHit result type
+ </summary>
+	<param name="eResultType"></param>
+	<param name="strDatasetName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
+	<summary>
+ Returns the default SeqToProtein Map file name for the given PeptideHit result type
  </summary>
 	<param name="eResultType"></param>
 	<param name="strDatasetName"></param>
@@ -371,6 +636,7 @@ PHRPReader
 </member><member name="M:PHRPReader.clsPHRPParserXTandem.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
 	<summary>
  Parses the specified X!Tandem parameter file
+ Note that the file specified by parameter "list path, default parameters" will also be auto-parsed (if found in folder mInputFolderPath)
  </summary>
 	<param name="strSearchEngineParamFileName"></param>
 	<param name="objSearchEngineParams"></param>
@@ -437,12 +703,70 @@ PHRPReader
  </summary>
 	<param name="strInputFilePath">Input file path</param>
 	<returns>A Dictionary where keys are ResultID and values are MSGF_SpecProb values (stored as strings)</returns>
+</member><member name="P:PHRPReader.clsPHRPParser.InputFilePath">
+	<summary>
+ Input file path
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPParser.InputFolderPath">
+	<summary>
+ Input folder path
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPParser.PeptideHitResultType">
+	<summary>
+ Peptide hit result type; Sequest, XTandem, Inspect, or MSGFDB
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPParser.ResultToSeqMap">
+	<summary>
+ Returns the cached mapping between ResultID and SeqID
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPParser.SeqInfo">
+	<summary>
+ Returns the cached sequence info, where key is SeqID
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPParser.SeqToProteinMap">
+	<summary>
+ Returns the cached sequence to protein map information
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParser.#ctor(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
 	<summary>
  Constructor
  </summary>
 	<param name="strDatasetName">Dataset Name</param>
 	<param name="strInputFilePath">Input file path</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParser.ParsePHRPDataLine(System.String,System.Int32,PHRPReader.clsPSM@)">
+	<summary>
+ Parse the data line read from a PHRP results file
+ </summary>
+	<param name="strLine">Data line</param>
+	<param name="intLinesRead">Number of lines read so far (used for error reporting)</param>
+	<param name="objPSM">clsPSM object (output)</param>
+	<returns>True if success, false if an error</returns>
+</member><member name="M:PHRPReader.clsPHRPParser.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
+	<summary>
+ Parses the specified parameter file
+ </summary>
+	<param name="strSearchEngineParamFileName">Name of the parameter file to parse (must reside in InputFolderPath)</param>
+	<param name="objSearchEngineParams">Search engine parameters class (output)</param>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParser.LoadModSummary">
 	<summary>
@@ -455,10 +779,19 @@ PHRPReader
  </summary>
 	<param name="strSplitLine"></param>
 	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParser.ParseKeyValueSetting(System.String,System.Char)">
+	<summary>
+ Splits strText on strText, returning a KeyValuePair object where the key is the text to the left of the delimiter and the value is the text to the right
+ </summary>
+	<param name="strText"></param>
+	<param name="chDelimiter"></param>
+	<returns>KeyValuePair with key and value from strText; key and value will be empty if chDelimiter was not found</returns>
+	<remarks>Automatically trims whitespace</remarks>
 </member><member name="M:PHRPReader.clsPHRPParser.UpdatePSMUsingSeqInfo(PHRPReader.clsPSM@)">
 	<summary>
  Updates the theoretical (computed) monoisotopic mass of objPSM using mResultToSeqMap and mSeqInfo
  Also updates the modification info
+ Also updates SeqID
  </summary>
 	<param name="objPSM"></param>
 	<returns>True if success, False if objPSM.ResultID is not found in mResultToSeqMap</returns>
@@ -622,6 +955,61 @@ PHRPReader
  </summary>
 	<param name="strMassCorrectionTag"></param>
 	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsModificationDefinition.CanAffectPeptideOrProteinTerminus">
+	<summary>
+ Returns True if this modification can affect the peptide or protein terminus
+ Note that some modifications can affect either peptide teriminii or internal residues
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsSeqInfo.SeqID">
+	<summary>
+ Sequence ID
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsSeqInfo.ModCount">
+	<summary>
+ Number of modifications
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsSeqInfo.ModDescription">
+	<summary>
+ Comma-separated list of modifications, for example "itrac:1,Phosph:3,IodoAcet:15"
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsSeqInfo.MonoisotopicMass">
+	<summary>
+ Theoretical, monoisotopic mass (including the modified residues)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsSeqInfo.#ctor(System.Int32,System.Double)">
+	<summary>
+ Constructor using Sequence ID and mass
+ </summary>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsSeqInfo.#ctor(System.Int32,System.Double,System.Int32,System.String)">
+	<summary>
+ Constructor using Sequence ID, mass, mod count, and list of modifications
+ </summary>
+	<param name="SeqID">Sequence ID</param>
+	<param name="MonoisotopicMass">Theoretical, monoisotopic mass (including the modified residues)</param>
+	<param name="ModCount">Number of modifications</param>
+	<param name="ModDescription">Comma-separated list of modifications, for example "itrac:1,Phosph:3,IodoAcet:15"</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsSeqInfo.UpdateMonoisotopicMass(System.Double)">
+	<summary>
+ Update the monoisotopic mass for this sequence
+ </summary>
+	<param name="MonoisotopicMass"></param>
 	<remarks></remarks>
 </member>
 </members>

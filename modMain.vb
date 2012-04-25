@@ -17,7 +17,7 @@
 
 Module modMain
 
-	Public Const PROGRAM_DATE As String = "April 23, 2012"
+	Public Const PROGRAM_DATE As String = "April 25, 2012"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
@@ -25,6 +25,8 @@ Module modMain
 
 	Private mFastaFilePath As String
 	Private mSearchEngineParamFileName As String
+	Private mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
+	Private mSkipXPeptides As Boolean
 
 	' Future enum; mzIdentML is not yet supported
 	' Private mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
@@ -60,6 +62,8 @@ Module modMain
 
 		mFastaFilePath = String.Empty
 		mSearchEngineParamFileName = String.Empty
+		mHitsPerSpectrum = 3
+		mSkipXPeptides = False
 
 		' Future enum; mzIdentML is not yet supported
 		' mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.PepXML
@@ -95,6 +99,9 @@ Module modMain
 
 					.FastaFilePath = mFastaFilePath
 					.SearchEngineParamFileName = mSearchEngineParamFileName
+
+					.HitsPerSpectrum = mHitsPerSpectrum
+					.SkipXPeptides = mSkipXPeptides
 
 					' .OutputFormat = mOutputFormat
 
@@ -148,7 +155,8 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "O", "M", "P", "F", "E", "S", "A", "R", "L", "Q"}
+		Dim strValidParameters() As String = New String() {"I", "O", "F", "E", "H", "X", "P", "S", "A", "R", "L", "Q"}
+		Dim intValue As Integer
 
         Try
             ' Make sure no invalid parameters are present
@@ -170,11 +178,19 @@ Module modMain
 					'    mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.mzIdentML
 					'End If
 
-                    If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
-
 					If .RetrieveValueForParameter("F", strValue) Then mFastaFilePath = strValue
+
 					If .RetrieveValueForParameter("E", strValue) Then mSearchEngineParamFileName = strValue
 
+					If .RetrieveValueForParameter("H", strValue) Then
+						If Integer.TryParse(strValue, intValue) Then
+							mHitsPerSpectrum = intValue
+						End If
+					End If
+
+					If .RetrieveValueForParameter("X", strValue) Then mSkipXPeptides = True
+
+					If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
 
                     If .RetrieveValueForParameter("S", strValue) Then
@@ -217,21 +233,26 @@ Module modMain
     Private Sub ShowProgramHelp()
 
         Try
-            Console.WriteLine("This program reads a tab-delimited text file of peptide sequence and " & _
-                              "creates a PepXML or mzIdentML file with the appropriate information.")
+			Console.WriteLine("This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) and " & _
+			  "creates a PepXML with the appropriate information.  The various _SeqInfo files created by PHRP must be present in the same folder as the text file. " & _
+			  "If the MASIC Scan Stats file is also present, then elution time information will be extracted and included in the PepXML file. " & _
+			  "You should ideally also include the name of the parameter file used for the MS/MS search engine.")
             Console.WriteLine()
 
             Console.WriteLine("Program syntax:")
-            Console.WriteLine(System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & _
-                              " /I:SourceFastaOrTextFile [/O:OutputFolderPath] [/M]")
-			Console.WriteLine(" [/P:ParameterFilePath] [/F:FastaFilePath] [/E:SearchEngineParamFileName]")
+			Console.WriteLine(System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " /I:PHRPResultsFile [/O:OutputFolderPath]")
+			Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/H:HitsPerSpectrum] [/X] [/P:ParameterFilePath] ")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
             Console.WriteLine()
-            Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file. " & _
-                              "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. " & _
-                              "By default, the output file will be a PepXML file; use /M to instead create a mzIdentML file. ")
+			Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
+			   "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
             Console.WriteLine()
-
+			Console.WriteLine("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder.")
+			Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGFDB)")
+			Console.WriteLine("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)")
+			Console.WriteLine("Use /X to specify that peptides with X residues should be skipped")
+			Console.WriteLine()
+			Console.WriteLine("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X")
             Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " & _
                               "When using /S, you can redirect the output of the results using /A. " & _
                               "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")

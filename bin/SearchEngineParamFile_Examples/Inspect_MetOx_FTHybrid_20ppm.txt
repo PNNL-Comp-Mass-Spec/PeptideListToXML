@@ -1,0 +1,35 @@
+
+#Options are: ESI-ION-TRAP (default), QTOF, and FT-Hybrid
+instrument,FT-Hybrid
+
+#Options are Trypsin, None, and Chymotrypsin
+protease,Trypsin
+
+#Mod type values are: fix, cterminal, nterminal, and opt
+#Dynamic oxidation of methionine:
+mod,15.9949,M,opt,oxidation
+
+#Maximum number of PTMs permitted in a single peptide
+#Limit to up to 3 modified residues; allowing more will drastically increase the search space
+Mods,3
+
+#Set this to 1 to perform an unrestrictive search (allowing arbitrary modification masses). 
+#Recommended to perform unrestrictive searches against a small database, containing proteins output by an earlier search;
+# (the "Summary.py" script can be used to generate a second-pass database from initial search results)
+Unrestrictive,0
+
+#Parent mass tolerance (Da)
+#PMTolerance,3
+
+#Alternative parent mass tolerance that is ppm-based
+ParentPPM,20
+
+#Fragment ion tolerance
+IonTolerance,0.5
+
+#Alternative fragment masss tolerance that is ppm-based
+#PeakPPM,20
+
+#If set to true, attempt to guess the precursor charge and mass, and consider multiple charge states if feasible
+#Algorithm is not proven and should not be used
+MultiCharge,0

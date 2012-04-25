@@ -11,13 +11,14 @@ Public Class clsPeptideListToXML
     Inherits clsProcessFilesBaseClass
 
     Public Sub New()
-		MyBase.mFileDate = "April 23, 2012"
+		MyBase.mFileDate = "April 25, 2012"
         InitializeLocalVariables()
     End Sub
 
 #Region "Constants and Enums"
 
     Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
+	Public Const DEFAULT_HITS_PER_SPECTRUM As Integer = 3
 
 	' Future enum; mzIdentML is not yet supported
 	'Public Enum ePeptideListOutputFormat
@@ -25,7 +26,10 @@ Public Class clsPeptideListToXML
 	'    mzIdentML = 1
 	'End Enum
 
-    ' Error codes specialized for this class
+	''' <summary>
+	''' Error codes specialized for this class
+	''' </summary>
+	''' <remarks></remarks>
     Public Enum ePeptideListToXMLErrorCodes
         NoError = 0
         ErrorReadingInputFile = 1
@@ -45,13 +49,17 @@ Public Class clsPeptideListToXML
 	'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
 
 	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
+	Protected WithEvents mXMLWriter As clsPepXMLWriter
 
 	' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
 	Protected mDatasetName As String
 	Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
 
+	' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
 	Protected mFastaFilePath As String
 	Protected mSearchEngineParamFileName As String
+	Protected mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
+	Protected mSkipXPeptides As Boolean
 
 	' This dictionary tracks the PSMs (hits) for each spectrum
 	' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
@@ -66,12 +74,25 @@ Public Class clsPeptideListToXML
 
 #Region "Processing Options Interface Functions"
 
+	''' <summary>
+	''' Dataset name; auto-determined by the PHRP Reader class
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public ReadOnly Property DatasetName() As String
 		Get
 			Return mDatasetName
 		End Get
 	End Property
 
+	''' <summary>
+	''' Fasta file path to store in the pepXML file
+	''' Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for Sequest and X!Tandem)
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Property FastaFilePath() As String
 		Get
 			Return mFastaFilePath
@@ -81,6 +102,27 @@ Public Class clsPeptideListToXML
 		End Set
 	End Property
 
+	''' <summary>
+	''' Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Property HitsPerSpectrum() As Integer
+		Get
+			Return mHitsPerSpectrum
+		End Get
+		Set(value As Integer)
+			mHitsPerSpectrum = value
+		End Set
+	End Property
+
+	''' <summary>
+	''' Local error code
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public ReadOnly Property LocalErrorCode() As ePeptideListToXMLErrorCodes
 		Get
 			Return mLocalErrorCode
@@ -102,6 +144,21 @@ Public Class clsPeptideListToXML
 		End Set
 	End Property
 
+	''' <summary>
+	''' If True, then skip peptides with X residues
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Property SkipXPeptides As Boolean
+		Get
+			Return mSkipXPeptides
+		End Get
+		Set(value As Boolean)
+			mSkipXPeptides = value
+		End Set
+	End Property
+
 	' Future enum; mzIdentML is not yet supported
 	'Public Property OutputFormat() As ePeptideListOutputFormat
 	'    Get
@@ -114,6 +171,13 @@ Public Class clsPeptideListToXML
 
 #End Region
 
+	''' <summary>
+	''' Create a PepXML file using the peptides in file strInputFilePath
+	''' </summary>
+	''' <param name="strInputFilePath"></param>
+	''' <param name="strOutputFolderPath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Function ConvertPHRPDataToXML(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
 
 		Dim blnSuccess As Boolean
@@ -141,6 +205,7 @@ Public Class clsPeptideListToXML
 		Dim strSpectrumKey As String
 		Dim udtSpectrumInfo As clsPepXMLWriter.udtSpectrumInfoType
 		Dim objPSMs As System.Collections.Generic.List(Of PHRPReader.clsPSM) = Nothing
+		Dim blnSkipPeptide As Boolean
 
 		Try
 
@@ -157,7 +222,6 @@ Public Class clsPeptideListToXML
 			End If
 
 			Using mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath)
-				mPHRPReader.SkipDuplicatePSMs = True
 
 				mDatasetName = mPHRPReader.DatasetName
 				mPeptideHitResultType = mPHRPReader.PeptideHitResultType
@@ -171,31 +235,46 @@ Public Class clsPeptideListToXML
 
 					Dim objCurrentPSM As PHRPReader.clsPSM = mPHRPReader.CurrentPSM
 
-					strSpectrumKey = GetSpectrumKey(objCurrentPSM)
-
-					If Not mSpectrumInfo.ContainsKey(strSpectrumKey) Then
-						' New spectrum; add a new entry to mSpectrumInfo
-						udtSpectrumInfo = New clsPepXMLWriter.udtSpectrumInfoType
-						udtSpectrumInfo.SpectrumName = strSpectrumKey
-						udtSpectrumInfo.StartScan = objCurrentPSM.ScanNumber
-						udtSpectrumInfo.EndScan = objCurrentPSM.ScanNumber
-						udtSpectrumInfo.PrecursorNeutralMass = objCurrentPSM.PrecursorNeutralMass
-						udtSpectrumInfo.AssumedCharge = objCurrentPSM.Charge
-						udtSpectrumInfo.ElutionTimeMinutes = objCurrentPSM.ElutionTimeMinutes
-						udtSpectrumInfo.Index = mSpectrumInfo.Count
-
-						mSpectrumInfo.Add(strSpectrumKey, udtSpectrumInfo)
-					End If
-
-					If mPSMsBySpectrumKey.TryGetValue(strSpectrumKey, objPSMs) Then
-						objPSMs.Add(objCurrentPSM)
+					If mSkipXPeptides AndAlso objCurrentPSM.PeptideCleanSequence.Contains("X"c) Then
+						blnSkipPeptide = True
 					Else
-						objPSMs = New System.Collections.Generic.List(Of PHRPReader.clsPSM)
-						objPSMs.Add(objCurrentPSM)
-
-						mPSMsBySpectrumKey.Add(strSpectrumKey, objPSMs)
+						blnSkipPeptide = False
 					End If
 
+					If Not blnSkipPeptide AndAlso mHitsPerSpectrum > 0 Then
+						If objCurrentPSM.ScoreRank > mHitsPerSpectrum Then
+							blnSkipPeptide = True
+						End If
+					End If
+
+					If Not blnSkipPeptide Then
+
+						strSpectrumKey = GetSpectrumKey(objCurrentPSM)
+
+						If Not mSpectrumInfo.ContainsKey(strSpectrumKey) Then
+							' New spectrum; add a new entry to mSpectrumInfo
+							udtSpectrumInfo = New clsPepXMLWriter.udtSpectrumInfoType
+							udtSpectrumInfo.SpectrumName = strSpectrumKey
+							udtSpectrumInfo.StartScan = objCurrentPSM.ScanNumber
+							udtSpectrumInfo.EndScan = objCurrentPSM.ScanNumber
+							udtSpectrumInfo.PrecursorNeutralMass = objCurrentPSM.PrecursorNeutralMass
+							udtSpectrumInfo.AssumedCharge = objCurrentPSM.Charge
+							udtSpectrumInfo.ElutionTimeMinutes = objCurrentPSM.ElutionTimeMinutes
+							udtSpectrumInfo.Index = mSpectrumInfo.Count
+
+							mSpectrumInfo.Add(strSpectrumKey, udtSpectrumInfo)
+						End If
+
+						If mPSMsBySpectrumKey.TryGetValue(strSpectrumKey, objPSMs) Then
+							objPSMs.Add(objCurrentPSM)
+						Else
+							objPSMs = New System.Collections.Generic.List(Of PHRPReader.clsPSM)
+							objPSMs.Add(objCurrentPSM)
+
+							mPSMsBySpectrumKey.Add(strSpectrumKey, objPSMs)
+						End If
+
+					End If
 
 				End While
 
@@ -212,17 +291,29 @@ Public Class clsPeptideListToXML
 
 	End Function
 
+	''' <summary>
+	''' Returns the default file extensions that this class knows how to parse
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Overrides Function GetDefaultExtensionsToParse() As String()
-		Dim strExtensionsToParse(0) As String
+		Dim strExtensionsToParse(3) As String
 
-		strExtensionsToParse(0) = ".fasta"
+		strExtensionsToParse(0) = PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName("")
+		strExtensionsToParse(1) = PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName("")
+		strExtensionsToParse(2) = PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName("")
+		strExtensionsToParse(3) = PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName("")
 
 		Return strExtensionsToParse
 
 	End Function
 
+	''' <summary>
+	''' Returns the error message; empty string if no error
+	''' </summary>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Overrides Function GetErrorMessage() As String
-		' Returns "" if no error
 
 		Dim strErrorMessage As String
 
@@ -265,8 +356,17 @@ Public Class clsPeptideListToXML
 		mFastaFilePath = String.Empty
 		mSearchEngineParamFileName = String.Empty
 
+		mHitsPerSpectrum = DEFAULT_HITS_PER_SPECTRUM
+		mSkipXPeptides = False
+
 	End Sub
 
+	''' <summary>
+	''' Loads the settings from the parameter file
+	''' </summary>
+	''' <param name="strParameterFilePath"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Function LoadParameterFileSettings(ByVal strParameterFilePath As String) As Boolean
 
 		Dim objSettingsFile As New XmlSettingsFileAccessor
@@ -293,9 +393,12 @@ Public Class clsPeptideListToXML
 					MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
 					Return False
 				Else
-					' Define options here
 
-					' Me.ProcessingOption = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "ProcessingOption", Me.ProcessingOption)
+					Me.FastaFilePath = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "FastaFilePath", Me.FastaFilePath)
+					Me.SearchEngineParamFileName = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", Me.SearchEngineParamFileName)
+					Me.HitsPerSpectrum = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "HitsPerSpectrum", Me.HitsPerSpectrum)
+					Me.SkipXPeptides = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", Me.SkipXPeptides)
+
 				End If
 			End If
 
@@ -326,7 +429,15 @@ Public Class clsPeptideListToXML
 
 	End Function
 
-	' Main processing function -- Calls ParseProteinFile
+	''' <summary>
+	''' Main processing function; calls ConvertPHRPDataToXML
+	''' </summary>
+	''' <param name="strInputFilePath">PHRP Input file path</param>
+	''' <param name="strOutputFolderPath">Output folder path (if empty, then output file will be created in the same folder as the input file)</param>
+	''' <param name="strParameterFilePath">Parameter file path</param>
+	''' <param name="blnResetErrorCode">True to reset the error code prior to processing</param>
+	''' <returns></returns>
+	''' <remarks></remarks>
 	Public Overloads Overrides Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String, ByVal blnResetErrorCode As Boolean) As Boolean
 		' Returns True if success, False if failure
 
@@ -393,7 +504,6 @@ Public Class clsPeptideListToXML
 
 	Protected Function WriteCachedData(ByVal strOutputFilePath As String, ByRef objSearchEngineParams As PHRPReader.clsSearchEngineParameters) As Boolean
 
-		Dim objXMLWriter As clsPepXMLWriter
 		Dim blnSuccess As Boolean
 
 		Dim strSpectrumKey As String
@@ -401,9 +511,9 @@ Public Class clsPeptideListToXML
 
 		Try
 
-			objXMLWriter = New clsPepXMLWriter(mDatasetName, mFastaFilePath, objSearchEngineParams, strOutputFilePath)
+			mXMLWriter = New clsPepXMLWriter(mDatasetName, mFastaFilePath, objSearchEngineParams, strOutputFilePath)
 
-			If Not objXMLWriter.IsWritable Then
+			If Not mXMLWriter.IsWritable Then
 				ShowErrorMessage("XMLWriter is not writable; aborting")
 				Return False
 			End If
@@ -412,14 +522,14 @@ Public Class clsPeptideListToXML
 
 				strSpectrumKey = objItem.Key
 				If mSpectrumInfo.TryGetValue(strSpectrumKey, udtCurrentSpectrum) Then
-					objXMLWriter.WriteSpectrum(udtCurrentSpectrum, objItem.Value)
+					mXMLWriter.WriteSpectrum(udtCurrentSpectrum, objItem.Value, mPHRPReader.PHRPParser.SeqToProteinMap)
 				Else
 					ShowErrorMessage("Warning, spectrum key not found in mSpectrumInfo: " & strSpectrumKey)
 				End If
 
 			Next
 
-			objXMLWriter.CloseDocument()
+			mXMLWriter.CloseDocument()
 
 			blnSuccess = True
 
@@ -453,4 +563,7 @@ Public Class clsPeptideListToXML
 
 	End Sub
 
+	Private Sub mXMLWriter_ErrorEvent(Message As String) Handles mXMLWriter.ErrorEvent
+		ShowErrorMessage(Message)
+	End Sub
 End Class
