@@ -28,74 +28,82 @@ Module modMain
 	Private mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
 	Private mSkipXPeptides As Boolean
 
+	Private mLoadModsAndSeqInfo As Boolean
+	Private mLoadMSGFResults As Boolean
+	Private mLoadScanStats As Boolean
+
 	' Future enum; mzIdentML is not yet supported
 	' Private mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
 
-    Private mOutputFolderAlternatePath As String                ' Optional
-    Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
+	Private mOutputFolderAlternatePath As String				' Optional
+	Private mRecreateFolderHierarchyInAlternatePath As Boolean	' Optional
 
-    Private mRecurseFolders As Boolean
-    Private mRecurseFoldersMaxLevels As Integer
+	Private mRecurseFolders As Boolean
+	Private mRecurseFoldersMaxLevels As Integer
 
-    Private mLogMessagesToFile As Boolean
-    Private mLogFilePath As String = String.Empty
-    Private mLogFolderPath As String = String.Empty
+	Private mLogMessagesToFile As Boolean
+	Private mLogFilePath As String = String.Empty
+	Private mLogFolderPath As String = String.Empty
 
-    Private mQuietMode As Boolean
+	Private mQuietMode As Boolean
 
-    Private WithEvents mPeptideListConverter As clsPeptideListToXML
-    Private mLastProgressReportTime As System.DateTime
-    Private mLastProgressReportValue As Integer
+	Private WithEvents mPeptideListConverter As clsPeptideListToXML
+	Private mLastProgressReportTime As System.DateTime
+	Private mLastProgressReportValue As Integer
 
-    Public Function Main() As Integer
-        ' Returns 0 if no error, error code if an error
+	Public Function Main() As Integer
+		' Returns 0 if no error, error code if an error
 
-        Dim intReturnCode As Integer
-        Dim objParseCommandLine As New clsParseCommandLine
-        Dim blnProceed As Boolean
+		Dim intReturnCode As Integer
+		Dim objParseCommandLine As New clsParseCommandLine
+		Dim blnProceed As Boolean
 
-        ' Initialize the options
-        intReturnCode = 0
-        mInputFilePath = String.Empty
-        mOutputFolderPath = String.Empty
-        mParameterFilePath = String.Empty
+		' Initialize the options
+		intReturnCode = 0
+		mInputFilePath = String.Empty
+		mOutputFolderPath = String.Empty
+		mParameterFilePath = String.Empty
 
 		mFastaFilePath = String.Empty
 		mSearchEngineParamFileName = String.Empty
 		mHitsPerSpectrum = 3
 		mSkipXPeptides = False
 
+		mLoadModsAndSeqInfo = True
+		mLoadMSGFResults = True
+		mLoadScanStats = True
+
 		' Future enum; mzIdentML is not yet supported
 		' mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.PepXML
 
-        mRecurseFolders = False
-        mRecurseFoldersMaxLevels = 0
+		mRecurseFolders = False
+		mRecurseFoldersMaxLevels = 0
 
-        mQuietMode = False
-        mLogMessagesToFile = False
-        mLogFilePath = String.Empty
-        mLogFolderPath = String.Empty
+		mQuietMode = False
+		mLogMessagesToFile = False
+		mLogFilePath = String.Empty
+		mLogFolderPath = String.Empty
 
-        Try
-            blnProceed = False
-            If objParseCommandLine.ParseCommandLine Then
-                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
-            End If
+		Try
+			blnProceed = False
+			If objParseCommandLine.ParseCommandLine Then
+				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+			End If
 
-            If Not blnProceed OrElse _
-               objParseCommandLine.NeedToShowHelp OrElse _
-               objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
-               mInputFilePath.Length = 0 Then
-                ShowProgramHelp()
-                intReturnCode = -1
-            Else
+			If Not blnProceed OrElse _
+			   objParseCommandLine.NeedToShowHelp OrElse _
+			   objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
+			   mInputFilePath.Length = 0 Then
+				ShowProgramHelp()
+				intReturnCode = -1
+			Else
 
-                mPeptideListConverter = New clsPeptideListToXML
+				mPeptideListConverter = New clsPeptideListToXML
 
-                ' Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-                With mPeptideListConverter
-                    .ShowMessages = Not mQuietMode
-                    .LogMessagesToFile = mLogMessagesToFile
+				' Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
+				With mPeptideListConverter
+					.ShowMessages = Not mQuietMode
+					.LogMessagesToFile = mLogMessagesToFile
 
 					.FastaFilePath = mFastaFilePath
 					.SearchEngineParamFileName = mSearchEngineParamFileName
@@ -103,75 +111,82 @@ Module modMain
 					.HitsPerSpectrum = mHitsPerSpectrum
 					.SkipXPeptides = mSkipXPeptides
 
+					.LoadModsAndSeqInfo = mLoadModsAndSeqInfo
+					.LoadMSGFResults = mLoadMSGFResults
+					.LoadScanStats = mLoadScanStats
+
 					' .OutputFormat = mOutputFormat
 
-                End With
+				End With
 
-                If mRecurseFolders Then
-                    If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
-                        intReturnCode = 0
-                    Else
-                        intReturnCode = mPeptideListConverter.ErrorCode
-                    End If
-                Else
-                    If mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
-                        intReturnCode = 0
-                    Else
-                        intReturnCode = mPeptideListConverter.ErrorCode
-                        If intReturnCode <> 0 AndAlso Not mQuietMode Then
-                            ShowErrorMessage("Error while processing: " & mPeptideListConverter.GetErrorMessage())
-                        End If
-                    End If
-                End If
+				If mRecurseFolders Then
+					If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
+						intReturnCode = 0
+					Else
+						intReturnCode = mPeptideListConverter.ErrorCode
+					End If
+				Else
+					If mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
+						intReturnCode = 0
+					Else
+						intReturnCode = mPeptideListConverter.ErrorCode
+						If intReturnCode <> 0 AndAlso Not mQuietMode Then
+							ShowErrorMessage("Error while processing: " & mPeptideListConverter.GetErrorMessage())
+						End If
+					End If
+				End If
 
-                DisplayProgressPercent(mLastProgressReportValue, True)
-            End If
+				If intReturnCode = 0 Then
+					DisplayProgressPercent(mLastProgressReportValue, True)
+				End If
 
-        Catch ex As Exception
-            ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
-            intReturnCode = -1
-        End Try
+			End If
 
-        Return intReturnCode
+		Catch ex As Exception
+			ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
+			intReturnCode = -1
+		End Try
 
-    End Function
+		Return intReturnCode
 
-    Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
-        If blnAddCarriageReturn Then
-            Console.WriteLine()
-        End If
-        If intPercentComplete > 100 Then intPercentComplete = 100
-        Console.Write("Processing: " & intPercentComplete.ToString() & "% ")
-        If blnAddCarriageReturn Then
-            Console.WriteLine()
-        End If
-    End Sub
+	End Function
 
-    Private Function GetAppVersion() As String
-        Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
-    End Function
+	Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
+		If blnAddCarriageReturn Then
+			Console.WriteLine()
+		End If
+		If intPercentComplete > 100 Then intPercentComplete = 100
+		Console.Write("Processing: " & intPercentComplete.ToString() & "% ")
+		If blnAddCarriageReturn Then
+			Console.WriteLine()
+		End If
+	End Sub
 
-    Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
-        ' Returns True if no problems; otherwise, returns false
+	Private Function GetAppVersion() As String
+		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
+	End Function
 
-        Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "O", "F", "E", "H", "X", "P", "S", "A", "R", "L", "Q"}
+	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
+		' Returns True if no problems; otherwise, returns false
+
+		Dim strValue As String = String.Empty
+		Dim strValidParameters() As String = New String() {"I", "O", "F", "E", "H", "X", "NoMods", "NoMSGF", "NoScanStats", "P", "S", "A", "R", "L", "Q"}
 		Dim intValue As Integer
 
-        Try
-            ' Make sure no invalid parameters are present
-            If objParseCommandLine.InvalidParametersPresent(strValidParameters) Then
-                Return False
-            Else
-                With objParseCommandLine
-                    ' Query objParseCommandLine to see if various parameters are present
-                    If .RetrieveValueForParameter("I", strValue) Then
-                        mInputFilePath = strValue
-                    ElseIf .NonSwitchParameterCount > 0 Then
-                        mInputFilePath = .RetrieveNonSwitchParameter(0)
-                    End If
+		Try
+			' Make sure no invalid parameters are present
+			If objParseCommandLine.InvalidParametersPresent(strValidParameters) Then
+				Return False
+			Else
+				With objParseCommandLine
+					' Query objParseCommandLine to see if various parameters are present
+					If .RetrieveValueForParameter("I", strValue) Then
+						mInputFilePath = strValue
+					ElseIf .NonSwitchParameterCount > 0 Then
+						mInputFilePath = .RetrieveNonSwitchParameter(0)
+					End If
 
-                    If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
+					If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
 
 					' Future enum; mzIdentML is not yet supported
 					'If .RetrieveValueForParameter("M", strValue) Then
@@ -192,32 +207,35 @@ Module modMain
 
 					If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
+					If .RetrieveValueForParameter("NoMods", strValue) Then mLoadModsAndSeqInfo = False
+					If .RetrieveValueForParameter("NoMSGF", strValue) Then mLoadMSGFResults = False
+					If .RetrieveValueForParameter("NoScanStats", strValue) Then mLoadScanStats = False
 
-                    If .RetrieveValueForParameter("S", strValue) Then
-                        mRecurseFolders = True
-                        If Not Integer.TryParse(strValue, mRecurseFoldersMaxLevels) Then
-                            mRecurseFoldersMaxLevels = 0
-                        End If
-                    End If
+					If .RetrieveValueForParameter("S", strValue) Then
+						mRecurseFolders = True
+						If Not Integer.TryParse(strValue, mRecurseFoldersMaxLevels) Then
+							mRecurseFoldersMaxLevels = 0
+						End If
+					End If
 
-                    If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
-                    If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
+					If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
+					If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
 
-                    If .RetrieveValueForParameter("L", strValue) Then mLogMessagesToFile = True
-                    If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
+					If .RetrieveValueForParameter("L", strValue) Then mLogMessagesToFile = True
+					If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
 
-                End With
+				End With
 
-                Return True
-            End If
+				Return True
+			End If
 
-        Catch ex As Exception
-            ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
-        End Try
+		Catch ex As Exception
+			ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
+		End Try
 
-        Return False
+		Return False
 
-    End Function
+	End Function
 
     Private Sub ShowErrorMessage(ByVal strMessage As String)
         Dim strSeparator As String = "------------------------------------------------------------------------------"
@@ -242,6 +260,7 @@ Module modMain
             Console.WriteLine("Program syntax:")
 			Console.WriteLine(System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " /I:PHRPResultsFile [/O:OutputFolderPath]")
 			Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/H:HitsPerSpectrum] [/X] [/P:ParameterFilePath] ")
+			Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/NoSeqInfo]")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
             Console.WriteLine()
 			Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
@@ -251,6 +270,10 @@ Module modMain
 			Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGFDB)")
 			Console.WriteLine("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)")
 			Console.WriteLine("Use /X to specify that peptides with X residues should be skipped")
+			Console.WriteLine()
+			Console.WriteLine("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; use /NoMods to skip these files")
+			Console.WriteLine("By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; use /NoMSGF to skip this file")
+			Console.WriteLine("By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded to determine elution times for scan numbers; use /NoScanStats to skip these files")
 			Console.WriteLine()
 			Console.WriteLine("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X")
             Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " & _
