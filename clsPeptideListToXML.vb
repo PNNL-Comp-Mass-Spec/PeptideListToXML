@@ -58,6 +58,7 @@ Public Class clsPeptideListToXML
 	' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
 	Protected mDatasetName As String
 	Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+	Protected mSeqToProteinMapCached As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo))
 
 	' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
 	Protected mFastaFilePath As String
@@ -215,8 +216,9 @@ Public Class clsPeptideListToXML
 	''' <remarks></remarks>
 	Public Function ConvertPHRPDataToXML(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
 
-		Dim blnSuccess As Boolean
 		Dim objSearchEngineParams As PHRPReader.clsSearchEngineParameters
+		Dim strOutputFilePath As String
+		Dim blnSuccess As Boolean
 
 		' Note that CachePHRPData() will update these variables
 		mDatasetName = "Unknown"
@@ -228,7 +230,8 @@ Public Class clsPeptideListToXML
 
 			objSearchEngineParams = LoadSearchEngineParameters(mSearchEngineParamFileName)
 
-			blnSuccess = WriteCachedData(strOutputFolderPath, objSearchEngineParams)
+			strOutputFilePath = System.IO.Path.Combine(strOutputFolderPath, mDatasetName & ".pepXML")
+			blnSuccess = WriteCachedData(strOutputFilePath, objSearchEngineParams)
 		End If
 
 		Return blnSuccess
@@ -241,6 +244,9 @@ Public Class clsPeptideListToXML
 		Dim udtSpectrumInfo As clsPepXMLWriter.udtSpectrumInfoType
 		Dim objPSMs As System.Collections.Generic.List(Of PHRPReader.clsPSM) = Nothing
 		Dim blnSkipPeptide As Boolean
+
+		Dim intPeptidesParsed As Integer
+		Dim intPeptidesStored As Integer
 
 		Try
 
@@ -258,6 +264,9 @@ Public Class clsPeptideListToXML
 				mSpectrumInfo.Clear()
 			End If
 
+			intPeptidesParsed = 0
+			intPeptidesStored = 0
+
 			Using mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, mLoadModsAndSeqInfo, mLoadMSGFResults, mLoadScanStats)
 
 				' Report any errors cached during instantiation of mPHRPReader
@@ -274,11 +283,10 @@ Public Class clsPeptideListToXML
 						ShowMessage("  ... use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)")
 					ElseIf strMessage.Contains("MSGF file not found") Then
 						ShowMessage("  ... use the /NoMSGF switch to avoid this error")
-					ElseIf strMessage.Contains("ScanStats file not found") Then
-						ShowMessage("  ... use the /NoScanStats switch to avoid this error")
-
 					ElseIf strMessage.Contains("Extended ScanStats file not found") Then
 						ShowMessage("  ... parent ion m/z values may not be completely accurate; use the /NoScanStats switch to avoid this error")
+					ElseIf strMessage.Contains("ScanStats file not found") Then
+						ShowMessage("  ... use the /NoScanStats switch to avoid this error")
 					End If
 
 				Next
@@ -288,10 +296,11 @@ Public Class clsPeptideListToXML
 
 				mDatasetName = mPHRPReader.DatasetName
 				mPeptideHitResultType = mPHRPReader.PeptideHitResultType
+				mSeqToProteinMapCached = mPHRPReader.PHRPParser.SeqToProteinMap
 
 				If String.IsNullOrEmpty(mDatasetName) Then
 					mDatasetName = "Unknown"
-					ShowMessage("Warning, unable to determine the dataset name from the input file path; database will be named " & mDatasetName & " in the PepXML file")
+					ShowWarningMessage("Unable to determine the dataset name from the input file path; database will be named " & mDatasetName & " in the PepXML file")
 				End If
 
 				While mPHRPReader.MoveNext
@@ -318,11 +327,12 @@ Public Class clsPeptideListToXML
 							' New spectrum; add a new entry to mSpectrumInfo
 							udtSpectrumInfo = New clsPepXMLWriter.udtSpectrumInfoType
 							udtSpectrumInfo.SpectrumName = strSpectrumKey
-							udtSpectrumInfo.StartScan = objCurrentPSM.ScanNumber
-							udtSpectrumInfo.EndScan = objCurrentPSM.ScanNumber
+							udtSpectrumInfo.StartScan = objCurrentPSM.ScanNumberStart
+							udtSpectrumInfo.EndScan = objCurrentPSM.ScanNumberEnd
 							udtSpectrumInfo.PrecursorNeutralMass = objCurrentPSM.PrecursorNeutralMass
 							udtSpectrumInfo.AssumedCharge = objCurrentPSM.Charge
 							udtSpectrumInfo.ElutionTimeMinutes = objCurrentPSM.ElutionTimeMinutes
+							udtSpectrumInfo.CollisionMode = objCurrentPSM.CollisionMode
 							udtSpectrumInfo.Index = mSpectrumInfo.Count
 
 							mSpectrumInfo.Add(strSpectrumKey, udtSpectrumInfo)
@@ -333,13 +343,22 @@ Public Class clsPeptideListToXML
 						Else
 							objPSMs = New System.Collections.Generic.List(Of PHRPReader.clsPSM)
 							objPSMs.Add(objCurrentPSM)
-
 							mPSMsBySpectrumKey.Add(strSpectrumKey, objPSMs)
 						End If
 
+						intPeptidesStored += 1
+
 					End If
 
+					intPeptidesParsed += 1
+
+					UpdateProgress(mPHRPReader.PercentComplete)
+
 				End While
+
+				OperationComplete()
+				Console.WriteLine()
+				ShowMessage(" ... cached " & intPeptidesStored.ToString("0,000") & " peptides")
 
 			End Using
 
@@ -428,7 +447,7 @@ Public Class clsPeptideListToXML
 	End Function
 
 	Protected Function GetSpectrumKey(ByRef CurrentPSM As PHRPReader.clsPSM) As String
-		Return mDatasetName & "." & CurrentPSM.ScanNumber & "." & CurrentPSM.ScanNumber & CurrentPSM.Charge
+		Return mDatasetName & "." & CurrentPSM.ScanNumberStart & "." & CurrentPSM.ScanNumberEnd & "." & CurrentPSM.Charge
 	End Function
 
 	Private Sub InitializeLocalVariables()
@@ -509,15 +528,16 @@ Public Class clsPeptideListToXML
 
 		Try
 			If String.IsNullOrEmpty(strSearchEngineParamFileName) Then
-				ShowWarningMessage("Warning, Search engine parameter file not defined")
-				objSearchEngineParams = New PHRPReader.clsSearchEngineParameters(mPHRPReader.PeptideHitResultType.ToString())
+				Console.WriteLine()
+				ShowWarningMessage("Search engine parameter file not defined")
+				objSearchEngineParams = New PHRPReader.clsSearchEngineParameters(mPeptideHitResultType.ToString())
 			Else
 				ShowMessage("Loading Search Engine parameters")
 
 				blnSuccess = mPHRPReader.PHRPParser.LoadSearchEngineParameters(strSearchEngineParamFileName, objSearchEngineParams)
 
 				If Not blnSuccess Then
-					objSearchEngineParams = New PHRPReader.clsSearchEngineParameters(mPHRPReader.PeptideHitResultType.ToString())
+					objSearchEngineParams = New PHRPReader.clsSearchEngineParameters(mPeptideHitResultType.ToString())
 				End If
 			End If
 
@@ -632,7 +652,8 @@ Public Class clsPeptideListToXML
 		Dim udtCurrentSpectrum As clsPepXMLWriter.udtSpectrumInfoType = New clsPepXMLWriter.udtSpectrumInfoType
 
 		Try
-			ShowMessage("Create PepXML file " & System.IO.Path.GetFileName(strOutputFilePath))
+			Console.WriteLine()
+			ShowMessage("Creating PepXML file at " & System.IO.Path.GetFileName(strOutputFilePath))
 
 			mXMLWriter = New clsPepXMLWriter(mDatasetName, mFastaFilePath, objSearchEngineParams, strOutputFilePath)
 
@@ -650,16 +671,24 @@ Public Class clsPeptideListToXML
 					intSpectra += 1
 					intPeptides += objItem.Value.Count
 
-					mXMLWriter.WriteSpectrum(udtCurrentSpectrum, objItem.Value, mPHRPReader.PHRPParser.SeqToProteinMap)
+					mXMLWriter.WriteSpectrum(udtCurrentSpectrum, objItem.Value, mSeqToProteinMapCached)
 				Else
-					ShowErrorMessage("Warning, spectrum key not found in mSpectrumInfo: " & strSpectrumKey)
+					ShowErrorMessage("Spectrum key '" & strSpectrumKey & "' not found in mSpectrumInfo; this is unexected")
 				End If
 
+				If intPeptides Mod 2500 = 0 Then
+					Console.Write(".")
+				End If
 			Next
+
+			If intPeptides > 2500 Then
+				Console.WriteLine()
+			End If
 
 			mXMLWriter.CloseDocument()
 
-			ShowMessage("PepXML file created with " & intSpectra & " spectra and " & intPeptides & " peptides")
+			Console.WriteLine()
+			ShowMessage("PepXML file created with " & intSpectra.ToString("0,000") & " spectra and " & intPeptides.ToString("0,000") & " peptides")
 
 			blnSuccess = True
 

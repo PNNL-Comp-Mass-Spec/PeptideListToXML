@@ -13,6 +13,7 @@ Public Class clsPepXMLWriter
 		Public PrecursorNeutralMass As Double
 		Public AssumedCharge As Integer
 		Public ElutionTimeMinutes As Double
+		Public CollisionMode As String
 		Public Index As Integer
 	End Structure
 
@@ -28,7 +29,7 @@ Public Class clsPepXMLWriter
 	Protected mDatasetName As String
 	Protected mFileOpen As Boolean
 
-	' This dictionary maps PNNL-based score names to pep-xml standard score names (at present, only for Sequest)
+	' This dictionary maps PNNL-based score names to pep-xml standard score names
 	Protected mPNNLScoreNameMap As System.Collections.Generic.Dictionary(Of String, String)
 #End Region
 
@@ -89,8 +90,29 @@ Public Class clsPepXMLWriter
 
 		mXMLWriter.WriteEndElement()				' msms_pipeline_analysis
 		mXMLWriter.WriteEndDocument()
+		mXMLWriter.Flush()
+		mXMLWriter.Close()
 
 		Return True
+	End Function
+
+	Protected Function GetPepXMLCollisionMode(ByVal strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
+
+		Select Case strPSMCollisionMode.ToUpper()
+			Case "CID", "ETD", "HCD"
+				strPepXMLCollisionMode = strPSMCollisionMode.ToUpper()
+			Case "ETD/CID", "ETD-CID"
+				strPepXMLCollisionMode = "ETD/CID"
+			Case Else
+				strPepXMLCollisionMode = String.Empty
+		End Select
+
+		If String.IsNullOrEmpty(strPepXMLCollisionMode) Then
+			Return False
+		Else
+			Return True
+		End If
+
 	End Function
 
 	''' <summary>
@@ -133,11 +155,19 @@ Public Class clsPepXMLWriter
 	Protected Sub InitializePNNLScoreNameMap()
 		mPNNLScoreNameMap = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
+		' Sequest scores
 		mPNNLScoreNameMap.Add("XCorr", "xcorr")
 		mPNNLScoreNameMap.Add("DelCn", "deltacn")
 		mPNNLScoreNameMap.Add("Sp", "spscore")
 		mPNNLScoreNameMap.Add("DelCn2", "deltacnstar")
 		mPNNLScoreNameMap.Add("RankSp", "sprank")
+
+		' X!Tandem scores
+		mPNNLScoreNameMap.Add("Peptide_Hyperscore", "hyperscore")
+		mPNNLScoreNameMap.Add("Peptide_Expectation_Value", "expect")
+		mPNNLScoreNameMap.Add("y_score", "yscore")
+		mPNNLScoreNameMap.Add("b_score", "bscore")
+
 	End Sub
 
 	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As String)
@@ -406,6 +436,7 @@ Public Class clsPepXMLWriter
 		Dim dblTotalMass As Double
 
 		Dim strAlternateScoreName As String = String.Empty
+		Dim strCollisionMode As String = String.Empty
 
 		' The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
 		Dim lstModifiedResidues As System.Collections.Generic.Dictionary(Of Integer, Double)
@@ -419,6 +450,11 @@ Public Class clsPepXMLWriter
 			.WriteAttributeString("spectrum", objSpectrum.SpectrumName)			' Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
 			WriteAttribute("start_scan", objSpectrum.StartScan)
 			WriteAttribute("end_scan", objSpectrum.EndScan)
+			WriteAttribute("retention_time_sec", objSpectrum.ElutionTimeMinutes * 60.0, 2)
+
+			If GetPepXMLCollisionMode(objSpectrum.CollisionMode, strCollisionMode) Then
+				WriteAttribute("activation_method", strCollisionMode)
+			End If
 
 			WriteAttribute("precursor_neutral_mass", objSpectrum.PrecursorNeutralMass)
 
@@ -428,27 +464,33 @@ Public Class clsPepXMLWriter
 			.WriteStartElement("search_result")
 		End With
 
-		Dim intHitRank As Integer = 0
 		For Each oPSMEntry As clsPSM In lstHits
 
-			intHitRank += 1
 			With mXMLWriter
 				.WriteStartElement("search_hit")
-				WriteAttribute("hit_rank", intHitRank)
+				WriteAttribute("hit_rank", oPSMEntry.ScoreRank)
 
-				Dim strCleanSeq As String = ""
-				Dim strPrefix As String = ""
-				Dim strSuffix As String = ""
+				Dim strPeptide As String = String.Empty
+				Dim strCleanSequence As String = String.Empty
+				Dim strPrefix As String = String.Empty
+				Dim strSuffix As String = String.Empty
 
-				If PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strCleanSeq, strPrefix, strSuffix) Then
+				If PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strPeptide, strPrefix, strSuffix) Then
 					' The peptide sequence needs to be just the amino acids; no mod symbols
-					.WriteAttributeString("peptide", PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strCleanSeq, False))
+					strCleanSequence = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, False)
+					.WriteAttributeString("peptide", strCleanSequence)
 					.WriteAttributeString("peptide_prev_aa", strPrefix)
 					.WriteAttributeString("peptide_next_aa", strSuffix)
 				Else
-					.WriteAttributeString("peptide", PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False))
+					strCleanSequence = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False)
+					.WriteAttributeString("peptide", strCleanSequence)
 					.WriteAttributeString("peptide_prev_aa", String.Empty)
 					.WriteAttributeString("peptide_next_aa", String.Empty)
+				End If
+
+				If strCleanSequence <> strPeptide Then
+					.WriteAttributeString("peptide_with_symbols", oPSMEntry.Peptide)
+					.WriteAttributeString("peptide_with_numbers", oPSMEntry.PeptideWithNumericMods)
 				End If
 
 				.WriteAttributeString("protein", oPSMEntry.ProteinFirst)
@@ -477,7 +519,12 @@ Public Class clsPepXMLWriter
 				Dim blnProteinInfoAvailable As Boolean
 				Dim intNumTrypticTerminii As Integer
 
-				blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, lstProteins)
+				If Not lstSeqToProteinMap Is Nothing AndAlso lstSeqToProteinMap.Count > 0 Then
+					blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, lstProteins)
+				Else
+					blnProteinInfoAvailable = False
+				End If
+
 
 				' Write out the additional proteins
 				For Each strProteinAddnl As String In oPSMEntry.Proteins
@@ -514,6 +561,7 @@ Public Class clsPepXMLWriter
 					Dim dblNTermAddon As Double = 0
 					Dim dblCTermAddon As Double = 0
 
+					' Look for N and C terminal mods in oPSMEntry.ModifiedResidues
 					For Each objResidue In oPSMEntry.ModifiedResidues
 
 						If objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse _
@@ -555,16 +603,17 @@ Public Class clsPepXMLWriter
 					For Each objResidue In oPSMEntry.ModifiedResidues
 
 						If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse _
-								objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod) Then
+						  objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod) Then
 
 							If lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, dblTotalMass) Then
+								' This residue has more than one modification applied to it
 								dblTotalMass += objResidue.ModDefinition.ModificationMass
 								lstModifiedResidues(objResidue.ResidueLocInPeptide) = dblTotalMass
 							Else
 								dblTotalMass = mPeptideMassCalculator.GetAminoAcidMass(objResidue.Residue) + objResidue.ModDefinition.ModificationMass
 								lstModifiedResidues.Add(objResidue.ResidueLocInPeptide, dblTotalMass)
 							End If
-							
+
 						End If
 					Next
 

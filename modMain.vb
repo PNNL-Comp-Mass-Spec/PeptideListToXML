@@ -136,10 +136,6 @@ Module modMain
 					End If
 				End If
 
-				If intReturnCode = 0 Then
-					DisplayProgressPercent(mLastProgressReportValue, True)
-				End If
-
 			End If
 
 		Catch ex As Exception
