@@ -17,7 +17,7 @@
 
 Module modMain
 
-	Public Const PROGRAM_DATE As String = "April 26, 2012"
+	Public Const PROGRAM_DATE As String = "April 27, 2012"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
@@ -26,6 +26,7 @@ Module modMain
 	Private mFastaFilePath As String
 	Private mSearchEngineParamFileName As String
 	Private mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
+	Private mPreview As Boolean
 	Private mSkipXPeptides As Boolean
 
 	Private mLoadModsAndSeqInfo As Boolean
@@ -67,6 +68,7 @@ Module modMain
 		mFastaFilePath = String.Empty
 		mSearchEngineParamFileName = String.Empty
 		mHitsPerSpectrum = 3
+		mPreview = False
 		mSkipXPeptides = False
 
 		mLoadModsAndSeqInfo = True
@@ -109,6 +111,7 @@ Module modMain
 					.SearchEngineParamFileName = mSearchEngineParamFileName
 
 					.HitsPerSpectrum = mHitsPerSpectrum
+					.PreviewMode = mPreview
 					.SkipXPeptides = mSkipXPeptides
 
 					.LoadModsAndSeqInfo = mLoadModsAndSeqInfo
@@ -166,7 +169,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "O", "F", "E", "H", "X", "NoMods", "NoMSGF", "NoScanStats", "P", "S", "A", "R", "L", "Q"}
+		Dim strValidParameters() As String = New String() {"I", "O", "F", "E", "H", "X", "NoMods", "NoMSGF", "NoScanStats", "Preview", "P", "S", "A", "R", "L", "Q"}
 		Dim intValue As Integer
 
 		Try
@@ -206,6 +209,8 @@ Module modMain
 					If .RetrieveValueForParameter("NoMods", strValue) Then mLoadModsAndSeqInfo = False
 					If .RetrieveValueForParameter("NoMSGF", strValue) Then mLoadMSGFResults = False
 					If .RetrieveValueForParameter("NoScanStats", strValue) Then mLoadScanStats = False
+
+					If .RetrieveValueForParameter("Preview", strValue) Then mPreview = True
 
 					If .RetrieveValueForParameter("S", strValue) Then
 						mRecurseFolders = True
@@ -256,7 +261,7 @@ Module modMain
             Console.WriteLine("Program syntax:")
 			Console.WriteLine(System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " /I:PHRPResultsFile [/O:OutputFolderPath]")
 			Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/H:HitsPerSpectrum] [/X] [/P:ParameterFilePath] ")
-			Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/NoSeqInfo]")
+			Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/NoSeqInfo] [/Preview]")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
             Console.WriteLine()
 			Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
@@ -270,6 +275,7 @@ Module modMain
 			Console.WriteLine("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; use /NoMods to skip these files")
 			Console.WriteLine("By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; use /NoMSGF to skip this file")
 			Console.WriteLine("By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded to determine elution times for scan numbers; use /NoScanStats to skip these files")
+			Console.WriteLine("Use /Preview to preview the files that would be required for the specified dataset (taking into account the other command line switches used)")
 			Console.WriteLine()
 			Console.WriteLine("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X")
             Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " & _

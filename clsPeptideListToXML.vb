@@ -11,7 +11,7 @@ Public Class clsPeptideListToXML
     Inherits clsProcessFilesBaseClass
 
     Public Sub New()
-		MyBase.mFileDate = "April 26, 2012"
+		MyBase.mFileDate = "April 27, 2012"
         InitializeLocalVariables()
     End Sub
 
@@ -64,6 +64,7 @@ Public Class clsPeptideListToXML
 	Protected mFastaFilePath As String
 	Protected mSearchEngineParamFileName As String
 	Protected mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
+	Protected mPreviewMode As Boolean
 	Protected mSkipXPeptides As Boolean
 
 	Protected mLoadModsAndSeqInfo As Boolean
@@ -166,6 +167,21 @@ Public Class clsPeptideListToXML
 	End Property
 
 	''' <summary>
+	''' If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Public Property PreviewMode As Boolean
+		Get
+			Return mPreviewMode
+		End Get
+		Set(value As Boolean)
+			mPreviewMode = value
+		End Set
+	End Property
+
+	''' <summary>
 	''' Name of the paramter file used by the search engine that produced the results file that we are parsing
 	''' </summary>
 	''' <value></value>
@@ -226,12 +242,17 @@ Public Class clsPeptideListToXML
 
 		blnSuccess = CachePHRPData(strInputFilePath, objSearchEngineParams)
 
-		If blnSuccess Then
+		If Not blnSuccess Then Return False
+
+		If mPreviewMode Then
+			PreviewRequiredFiles(strInputFilePath, mDatasetName, mPeptideHitResultType, mLoadModsAndSeqInfo, mLoadMSGFResults, mLoadScanStats, mSearchEngineParamFileName)
+		Else
 			strOutputFilePath = System.IO.Path.Combine(strOutputFolderPath, mDatasetName & ".pepXML")
 			blnSuccess = WriteCachedData(strInputFilePath, strOutputFilePath, objSearchEngineParams)
 		End If
 
 		Return blnSuccess
+
 	End Function
 
 	Protected Function CachePHRPData(ByVal strInputFilePath As String, ByRef objSearchEngineParams As PHRPReader.clsSearchEngineParameters) As Boolean
@@ -246,8 +267,11 @@ Public Class clsPeptideListToXML
 		Dim intPeptidesStored As Integer
 
 		Try
-
-			ShowMessage("Caching PHRP data")
+			If mPreviewMode Then
+				ShowMessage("Finding required files")
+			Else
+				ShowMessage("Caching PHRP data")
+			End If
 
 			If mPSMsBySpectrumKey Is Nothing Then
 				mPSMsBySpectrumKey = New System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.List(Of PHRPReader.clsPSM))
@@ -265,6 +289,15 @@ Public Class clsPeptideListToXML
 			intPeptidesStored = 0
 
 			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, mLoadModsAndSeqInfo, mLoadMSGFResults, mLoadScanStats)
+
+			mDatasetName = mPHRPReader.DatasetName
+			mPeptideHitResultType = mPHRPReader.PeptideHitResultType
+			mSeqToProteinMapCached = mPHRPReader.PHRPParser.SeqToProteinMap
+
+			If mPreviewMode Then
+				' We can exit this function now since we have determined the dataset name and peptide hit result type
+				Return True
+			End If
 
 			' Report any errors cached during instantiation of mPHRPReader
 			For Each strMessage In mPHRPReader.ErrorMessages
@@ -295,10 +328,6 @@ Public Class clsPeptideListToXML
 
 			mPHRPReader.ClearErrors()
 			mPHRPReader.ClearWarnings()
-
-			mDatasetName = mPHRPReader.DatasetName
-			mPeptideHitResultType = mPHRPReader.PeptideHitResultType
-			mSeqToProteinMapCached = mPHRPReader.PHRPParser.SeqToProteinMap
 
 			If String.IsNullOrEmpty(mDatasetName) Then
 				mDatasetName = "Unknown"
@@ -368,15 +397,18 @@ Public Class clsPeptideListToXML
 			blnSuccess = True
 
 		Catch ex As Exception
-			ShowErrorMessage("Error Reading source file in CachePHRPData: " & ex.Message)
-
-			If ex.Message.Contains("ModSummary file not found") Then
-				SetLocalErrorCode(ePeptideListToXMLErrorCodes.ModSummaryFileNotFound)
+			If mPreviewMode Then
+				Console.WriteLine()
+				ShowMessage("Unable to preview the required files since not able to determine the dataset name: " & ex.Message)
 			Else
-				SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+				ShowErrorMessage("Error Reading source file in CachePHRPData: " & ex.Message)
+
+				If ex.Message.Contains("ModSummary file not found") Then
+					SetLocalErrorCode(ePeptideListToXMLErrorCodes.ModSummaryFileNotFound)
+				Else
+					SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+				End If
 			End If
-
-
 
 			blnSuccess = False
 		End Try
@@ -588,6 +620,57 @@ Public Class clsPeptideListToXML
 
 	End Function
 
+	Protected Sub PreviewRequiredFiles(ByVal strInputFilePath As String, ByVal strDatasetName As String, ByVal ePeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByVal blnLoadModsAndSeqInfo As Boolean, ByVal blnLoadMSGFResults As Boolean, ByVal blnLoadScanStats As Boolean, ByVal strSearchEngineParamFileName As String)
+		Const PAD_WIDTH As Integer = 22
+
+		Dim fiFileInfo As System.IO.FileInfo
+		fiFileInfo = New System.IO.FileInfo(strInputFilePath)
+
+		Console.WriteLine()
+		If fiFileInfo.DirectoryName.Length > 40 Then
+			ShowMessage("Data file folder: ")
+			ShowMessage(fiFileInfo.DirectoryName)
+			Console.WriteLine()
+		Else
+			ShowMessage("Data file folder: " & fiFileInfo.DirectoryName)
+		End If
+
+		ShowMessage("Data file: ".PadRight(PAD_WIDTH) & System.IO.Path.GetFileName(strInputFilePath))
+
+
+		If blnLoadModsAndSeqInfo Then
+			ShowMessage("ModSummary file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, strDatasetName))
+			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
+			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
+			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
+		End If
+
+		If blnLoadMSGFResults Then
+			ShowMessage("MSGF Results file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetMSGFFileName(strInputFilePath))
+		End If
+
+		If blnLoadScanStats Then
+			ShowMessage("ScanStats file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetScanStatsFilename(mDatasetName))
+			ShowMessage("ScanStats file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetExtendedScanStatsFilename(mDatasetName))
+		End If
+
+		If Not String.IsNullOrEmpty(strSearchEngineParamFileName) Then
+			ShowMessage("Search Engine Params: ".PadRight(PAD_WIDTH) & strSearchEngineParamFileName)
+
+			If mPeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.XTandem Then
+				' Determine the additional files that will be required
+				Dim lstFileNames As System.Collections.Generic.List(Of String)
+				lstFileNames = PHRPReader.clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(System.IO.Path.Combine(fiFileInfo.DirectoryName, strSearchEngineParamFileName))
+
+				For Each strFileName In lstFileNames
+					ShowMessage("Search Engine Params: ".PadRight(PAD_WIDTH) & strFileName)
+				Next
+
+			End If
+		End If
+
+	End Sub
+
 	''' <summary>
 	''' Main processing function; calls ConvertPHRPDataToXML
 	''' </summary>
@@ -625,14 +708,18 @@ Public Class clsPeptideListToXML
 			Else
 
 				Console.WriteLine()
-				ShowMessage("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
+				If Not mPreviewMode Then
+					ShowMessage("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
+				End If
 
 				' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
 				If Not CleanupFilePaths(strInputFilePath, strOutputFolderPath) Then
 					MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.FilePathError)
 				Else
 
-					MyBase.ResetProgress()
+					If Not mPreviewMode Then
+						MyBase.ResetProgress()
+					End If
 
 					Try
 						' Obtain the full path to the input file
@@ -645,7 +732,7 @@ Public Class clsPeptideListToXML
 						HandleException("Error calling ConvertToXML", ex)
 					End Try
 				End If
-			End If
+				End If
 		Catch ex As Exception
 			HandleException("Error in ProcessFile", ex)
 		End Try
