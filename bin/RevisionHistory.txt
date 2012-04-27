@@ -1,4 +1,7 @@
 PHRPReader.dll Revision History
 
+Version 1.0.4499; April 26, 2012
+	- Initial release
+
 Version 1.0.4498; April 25, 2012
 	- Initial beta

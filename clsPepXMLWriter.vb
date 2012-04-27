@@ -27,6 +27,8 @@ Public Class clsPepXMLWriter
 
 	Protected mSearchEngineParams As clsSearchEngineParameters
 	Protected mDatasetName As String
+	Protected mSourceFilePath As String
+
 	Protected mFileOpen As Boolean
 
 	' This dictionary maps PNNL-based score names to pep-xml standard score names
@@ -57,13 +59,30 @@ Public Class clsPepXMLWriter
 		End Get
 	End Property
 
+	Public ReadOnly Property SourceFilePath As String
+		Get
+			Return mSourceFilePath
+		End Get
+	End Property
 #End Region
 
-	Public Sub New(ByVal strDatasetName As String, ByVal strFastaFilePath As String, ByVal objSearchEngineParams As clsSearchEngineParameters, ByVal strOutputFilePath As String)
+	''' <summary>
+	''' Instantiate a new PepXML writer
+	''' </summary>
+	''' <param name="strDatasetName">Name of the Dataset</param>
+	''' <param name="strFastaFilePath">Fasta file path to use if objSearchEngineParams.FastaFilePath is empty</param>
+	''' <param name="objSearchEngineParams">Search engine parameters</param>
+	''' <param name="strSourceFilePath">Source file path</param>
+	''' <param name="strOutputFilePath">Path to the PepXML file to create</param>
+	''' <remarks></remarks>
+	Public Sub New(ByVal strDatasetName As String, ByVal strFastaFilePath As String, ByVal objSearchEngineParams As clsSearchEngineParameters, ByVal strSourceFilePath As String, ByVal strOutputFilePath As String)
 
 		mSearchEngineParams = objSearchEngineParams
 		mDatasetName = strDatasetName
 		If mDatasetName Is Nothing Then mDatasetName = "Unknown"
+
+		If String.IsNullOrEmpty(strSourceFilePath) Then strSourceFilePath = String.Empty
+		mSourceFilePath = strSourceFilePath
 
 		mCleavageStateCalculator = New PHRPReader.clsPeptideCleavageStateCalculator()
 		mPeptideMassCalculator = New clsPeptideMassCalculator()
@@ -98,13 +117,23 @@ Public Class clsPepXMLWriter
 
 	Protected Function GetPepXMLCollisionMode(ByVal strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
 
-		Select Case strPSMCollisionMode.ToUpper()
+		Dim strCollisionModeUCase As String = strPSMCollisionMode.ToUpper()
+
+		Select Case strCollisionModeUCase
 			Case "CID", "ETD", "HCD"
-				strPepXMLCollisionMode = strPSMCollisionMode.ToUpper()
+				strPepXMLCollisionMode = strCollisionModeUCase
 			Case "ETD/CID", "ETD-CID"
 				strPepXMLCollisionMode = "ETD/CID"
 			Case Else
-				strPepXMLCollisionMode = String.Empty
+				If strCollisionModeUCase.StartsWith("CID") Then
+					strPepXMLCollisionMode = "CID"
+				ElseIf strCollisionModeUCase.StartsWith("HCD") Then
+					strPepXMLCollisionMode = "HCD"
+				ElseIf strCollisionModeUCase.StartsWith("ETD") Then
+					strPepXMLCollisionMode = "ETD"
+				Else
+					strPepXMLCollisionMode = String.Empty
+				End If
 		End Select
 
 		If String.IsNullOrEmpty(strPepXMLCollisionMode) Then
@@ -127,7 +156,7 @@ Public Class clsPepXMLWriter
 		Dim fiOutputFile As System.IO.FileInfo
 
 		If String.IsNullOrWhiteSpace(strFastaFilePath) Then
-			strFastaFilePath = "C:\Database\ID_001260_20C38064.fasta"
+			strFastaFilePath = "C:\Database\Unknown_Database.fasta"
 		End If
 
 		fiOutputFile = New System.IO.FileInfo(strOutputFilePath)
@@ -196,12 +225,7 @@ Public Class clsPepXMLWriter
 	End Sub
 
 	Protected Sub WriteAttributePlusMinus(ByVal strAttributeName As String, ByVal Value As Double, ByVal DigitsOfPrecision As Integer)
-		Dim strFormatString As String = "+0;-0"
-		If DigitsOfPrecision > 0 Then
-			strFormatString = "+0." & New String("0"c, DigitsOfPrecision) & ";-0." & New String("0"c, DigitsOfPrecision)
-		End If
-
-		mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
+		mXMLWriter.WriteAttributeString(strAttributeName, PHRPReader.clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
 	End Sub
 
 	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Double)
@@ -287,6 +311,7 @@ Public Class clsPepXMLWriter
 		Dim lstTerminalSymbols As System.Collections.Generic.SortedSet(Of Char)
 		lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
 
+		Dim strFastaFilePathToUse As String = String.Empty
 		Dim strTargetResidues As String
 		Dim dblAAMass As Double
 
@@ -294,7 +319,8 @@ Public Class clsPepXMLWriter
 
 			.WriteStartElement("search_summary")
 
-			.WriteAttributeString("base_name", mDatasetName & ".txt")		  ' Input file path
+			.WriteAttributeString("base_name", mDatasetName)
+			.WriteAttributeString("source_file", System.IO.Path.GetFileName(mSourceFilePath))
 
 			.WriteAttributeString("search_engine", mSearchEngineParams.SearchEngineName)
 			.WriteAttributeString("precursor_mass_type", mSearchEngineParams.PrecursorMassType)
@@ -305,10 +331,16 @@ Public Class clsPepXMLWriter
 			.WriteStartElement("search_database")
 
 			If Not String.IsNullOrEmpty(mSearchEngineParams.FastaFilePath) Then
-				.WriteAttributeString("local_path", mSearchEngineParams.FastaFilePath)
+				Try
+					' Update the folder to be the start with C:\Database
+					strFastaFilePathToUse = System.IO.Path.Combine("C:\Database", System.IO.Path.GetFileName(mSearchEngineParams.FastaFilePath))
+				Catch ex As Exception
+					strFastaFilePathToUse = mSearchEngineParams.FastaFilePath
+				End Try
 			Else
-				.WriteAttributeString("local_path", strFastaFilePath)
+				strFastaFilePathToUse = String.Copy(strFastaFilePath)
 			End If
+			.WriteAttributeString("local_path", strFastaFilePathToUse)
 
 			.WriteAttributeString("type", "AA")
 			.WriteEndElement()		' search_database			
@@ -319,7 +351,6 @@ Public Class clsPepXMLWriter
 		WriteAttribute("max_num_internal_cleavages", mSearchEngineParams.MaxNumberInternalCleavages)
 		WriteAttribute("min_number_termini", mSearchEngineParams.MinNumberTermini)
 		mXMLWriter.WriteEndElement()		' enzymatic_search_constraint
-
 
 		' Amino acid mod details
 		For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
@@ -489,8 +520,7 @@ Public Class clsPepXMLWriter
 				End If
 
 				If strCleanSequence <> strPeptide Then
-					.WriteAttributeString("peptide_with_symbols", oPSMEntry.Peptide)
-					.WriteAttributeString("peptide_with_numbers", oPSMEntry.PeptideWithNumericMods)
+					.WriteAttributeString("peptide_with_mods", oPSMEntry.PeptideWithNumericMods)
 				End If
 
 				.WriteAttributeString("protein", oPSMEntry.ProteinFirst)
@@ -645,12 +675,14 @@ Public Class clsPepXMLWriter
 
 				WriteNameValueElement("search_score", "msgfspecprob", oPSMEntry.MSGFSpecProb)
 
-				Dim dblMSGFSpecProb As Double
-				If Double.TryParse(oPSMEntry.MSGFSpecProb, dblMSGFSpecProb) Then
-					WriteNameValueElement("search_score", "msgfspecprobAltFormat", dblMSGFSpecProb, 11)
-					WriteNameValueElement("search_score", "msgfprobability", clsMSGFConversion.MSGFToProbability(dblMSGFSpecProb), 4)
-					WriteNameValueElement("search_score", "msgffscore", clsMSGFConversion.MSGFToFValue(dblMSGFSpecProb), 4)
-				End If
+				'' Old, unused
+				' Uncomment the following to write out other variations of the MSGF SpecProb value
+				'Dim dblMSGFSpecProb As Double
+				'If Double.TryParse(oPSMEntry.MSGFSpecProb, dblMSGFSpecProb) Then
+				'	WriteNameValueElement("search_score", "msgfspecprobAltFormat", dblMSGFSpecProb, 11)
+				'	WriteNameValueElement("search_score", "msgf_probability_estimate", clsMSGFConversion.MSGFToProbability(dblMSGFSpecProb), 4)
+				'	WriteNameValueElement("search_score", "msgf_fscore_estimate", clsMSGFConversion.MSGFToFValue(dblMSGFSpecProb), 4)
+				'End If
 
 			End With
 
@@ -720,66 +752,67 @@ Public Class clsPepXMLWriter
 
 	'End Sub
 
-	Protected Class clsMSGFConversion
+	' Old, unused
+	'Protected Class clsMSGFConversion
 
-		''' <summary>
-		''' Performs a crude approximation of Probability using a MSGF SpecProb value
-		''' Converts the MSGF score to base-10 log, adds 6, then converts back to the original scale to obtain an adjusted MSGF SpecProb value
-		''' For example, if MSGF SpecProb = 1E-13, then the adjusted value is 1E-07
-		''' Computes Probability as 1 - AdjustedMSGFSpecProb
-		''' </summary>
-		''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
-		''' <returns>Probability</returns>
-		Public Shared Function MSGFToProbability(dblMSGFScore As Double) As Double
-			Const LOG_MSGF_ADJUST As Integer = 6
+	'	''' <summary>
+	'	''' Performs a crude approximation of Probability using a MSGF SpecProb value
+	'	''' Converts the MSGF score to base-10 log, adds 6, then converts back to the original scale to obtain an adjusted MSGF SpecProb value
+	'	''' For example, if MSGF SpecProb = 1E-13, then the adjusted value is 1E-07
+	'	''' Computes Probability as 1 - AdjustedMSGFSpecProb
+	'	''' </summary>
+	'	''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
+	'	''' <returns>Probability</returns>
+	'	Public Shared Function MSGFToProbability(dblMSGFScore As Double) As Double
+	'		Const LOG_MSGF_ADJUST As Integer = 6
 
-			Dim dLogMSGF As Double
-			Dim dblProbability As Double
+	'		Dim dLogMSGF As Double
+	'		Dim dblProbability As Double
 
-			If dblMSGFScore >= 1 Then
-				dblProbability = 0
-			ElseIf dblMSGFScore <= 0 Then
-				dblProbability = 1
-			Else
-				dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
-				dblProbability = 1 - Math.Pow(10, dLogMSGF)
+	'		If dblMSGFScore >= 1 Then
+	'			dblProbability = 0
+	'		ElseIf dblMSGFScore <= 0 Then
+	'			dblProbability = 1
+	'		Else
+	'			dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
+	'			dblProbability = 1 - Math.Pow(10, dLogMSGF)
 
-				If dblProbability < 0 Then
-					dblProbability = 0
-				End If
+	'			If dblProbability < 0 Then
+	'				dblProbability = 0
+	'			End If
 
-				If dblProbability > 1 Then
-					dblProbability = 1
-				End If
-			End If
+	'			If dblProbability > 1 Then
+	'				dblProbability = 1
+	'			End If
+	'		End If
 
-			Return dblProbability
+	'		Return dblProbability
 
-		End Function
+	'	End Function
 
-		''' <summary>
-		''' Performs a crude approximation of FValue using a MSGF SpecProb value
-		''' Converts the MSGF score to base-10 log, adds 6, then takes the negative of this result
-		''' For example, if MSGF SpecProb = 1E-13, then computes: -13 + 6 = -7, then returns 7
-		''' </summary>
-		''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
-		''' <returns>FValue</returns>
-		Public Shared Function MSGFToFValue(dblMSGFScore As Double) As Double
-			Const LOG_MSGF_ADJUST As Integer = 6
+	'	''' <summary>
+	'	''' Performs a crude approximation of FValue using a MSGF SpecProb value
+	'	''' Converts the MSGF score to base-10 log, adds 6, then takes the negative of this result
+	'	''' For example, if MSGF SpecProb = 1E-13, then computes: -13 + 6 = -7, then returns 7
+	'	''' </summary>
+	'	''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
+	'	''' <returns>FValue</returns>
+	'	Public Shared Function MSGFToFValue(dblMSGFScore As Double) As Double
+	'		Const LOG_MSGF_ADJUST As Integer = 6
 
-			Dim dLogMSGF As Double
-			Dim dblFValue As Double
+	'		Dim dLogMSGF As Double
+	'		Dim dblFValue As Double
 
-			If dblMSGFScore >= 1 Then
-				dblFValue = 0
-			Else
-				dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
-				dblFValue = -dLogMSGF
-			End If
+	'		If dblMSGFScore >= 1 Then
+	'			dblFValue = 0
+	'		Else
+	'			dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
+	'			dblFValue = -dLogMSGF
+	'		End If
 
-			Return dblFValue
+	'		Return dblFValue
 
-		End Function
+	'	End Function
 
-	End Class
+	'End Class
 End Class
