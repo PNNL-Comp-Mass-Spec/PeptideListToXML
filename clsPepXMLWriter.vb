@@ -278,6 +278,7 @@ Public Class clsPepXMLWriter
 			.WriteStartElement("msms_run_summary")
 
 			.WriteAttributeString("base_name", mDatasetName)
+			.WriteAttributeString("search_engine", mSearchEngineParams.SearchEngineName)
 			.WriteAttributeString("raw_data_type", "raw")
 			.WriteAttributeString("raw_data", ".mzXML")
 

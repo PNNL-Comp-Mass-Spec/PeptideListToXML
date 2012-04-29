@@ -8,16 +8,16 @@ Option Strict On
 ' Started April 13, 2012
 
 Public Class clsPeptideListToXML
-    Inherits clsProcessFilesBaseClass
+	Inherits clsProcessFilesBaseClass
 
-    Public Sub New()
+	Public Sub New()
 		MyBase.mFileDate = "April 27, 2012"
-        InitializeLocalVariables()
-    End Sub
+		InitializeLocalVariables()
+	End Sub
 
 #Region "Constants and Enums"
 
-    Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
+	Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
 	Public Const DEFAULT_HITS_PER_SPECTRUM As Integer = 3
 
 	' Future enum; mzIdentML is not yet supported
@@ -30,16 +30,16 @@ Public Class clsPeptideListToXML
 	''' Error codes specialized for this class
 	''' </summary>
 	''' <remarks></remarks>
-    Public Enum ePeptideListToXMLErrorCodes
-        NoError = 0
-        ErrorReadingInputFile = 1
+	Public Enum ePeptideListToXMLErrorCodes
+		NoError = 0
+		ErrorReadingInputFile = 1
 		ErrorWritingOutputFile = 2
 		ModSummaryFileNotFound = 3
 		SeqInfoFileNotFound = 4
 		MSGFStatsFileNotFound = 5
 		ScanStatsFileNotFound = 6
-        UnspecifiedError = -1
-    End Enum
+		UnspecifiedError = -1
+	End Enum
 
 #End Region
 
@@ -321,7 +321,7 @@ Public Class clsPeptideListToXML
 				ElseIf strMessage.Contains("Extended ScanStats file not found") Then
 					ShowMessage("  ... parent ion m/z values may not be completely accurate; use the /NoScanStats switch to avoid this error")
 				ElseIf strMessage.Contains("ScanStats file not found") Then
-					ShowMessage("  ... use the /NoScanStats switch to avoid this error")
+					ShowMessage("  ... unable to determine elution times; use the /NoScanStats switch to avoid this error")
 				End If
 			Next
 			If mPHRPReader.WarningMessages.Count > 0 Then Console.WriteLine()
@@ -640,9 +640,12 @@ Public Class clsPeptideListToXML
 
 		If blnLoadModsAndSeqInfo Then
 			ShowMessage("ModSummary file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, strDatasetName))
-			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
-			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
-			ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
+
+			If fiFileInfo.Name.ToLower() = PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, strDatasetName).ToLower() Then
+				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
+				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
+				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
+			End If
 		End If
 
 		If blnLoadMSGFResults Then
@@ -732,7 +735,7 @@ Public Class clsPeptideListToXML
 						HandleException("Error calling ConvertToXML", ex)
 					End Try
 				End If
-				End If
+			End If
 		Catch ex As Exception
 			HandleException("Error in ProcessFile", ex)
 		End Try
@@ -839,6 +842,6 @@ Public Class clsPeptideListToXML
 	End Sub
 
 	Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-		ShowWarningMessage(strWarningMessage)		
+		ShowWarningMessage(strWarningMessage)
 	End Sub
 End Class

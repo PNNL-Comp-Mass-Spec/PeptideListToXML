@@ -124,6 +124,7 @@ PHRPReader
 </member><member name="P:PHRPReader.clsPSM.CollisionMode">
 	<summary>
  Collision mode (CID, ETD, HCD)
+ PepXML allows this to be CID, ETD, ECD, ETD/CID, or HCD
  </summary>
 	<value></value>
 	<returns></returns>
@@ -236,6 +237,21 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ScanList">
+	<summary>
+ List of scans that were combined prior to identifying this peptide
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPSM.ScanNumber">
+	<summary>
+ Scan number of the mass spectrum in which this peptide was identified
+ Will automatically update ScanList if it does not yet contain this scan number
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPSM.ScoreRank">
 	<summary>
  Rank of this peptide in the given spectrum
@@ -247,13 +263,6 @@ PHRPReader
 	<summary>
  Sequence ID value assigned by PHRP
  Required for looking up information from the SeqInfo files
- </summary>
-	<value></value>
-	<returns></returns>
-	<remarks></remarks>
-</member><member name="P:PHRPReader.clsPSM.ScanNumber">
-	<summary>
- Scan number of the mass spectrum in which this peptide was identified
  </summary>
 	<value></value>
 	<returns></returns>
@@ -385,6 +394,13 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.ErrorMessages">
+	<summary>
+ Cached error messages
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPHRPReader.ErrorMessage">
 	<summary>
  Current error message
@@ -392,9 +408,10 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="P:PHRPReader.clsPHRPReader.LoadModSummaryFile">
+</member><member name="P:PHRPReader.clsPHRPReader.LoadModsAndSeqInfo">
 	<summary>
  If True, then looks for and loads the modification definitions from the _ModSummary.txt file associated with the input file
+ Also reads the SeqInfo and related files
  </summary>
 	<value></value>
 	<returns></returns>
@@ -413,6 +430,13 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.ModSummaryFileLoaded">
+	<summary>
+ Returns True if the ModSummary file was successfully loaded
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPHRPReader.PeptideHitResultType">
 	<summary>
  Peptide hit result type; Sequest, XTandem, Inspect, or MSGFDB
@@ -420,9 +444,30 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.PercentComplete">
+	<summary>
+ Returns a number between 0 and 100 indicating the percentage of the source file that has been read
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPHRPReader.PHRPParser">
 	<summary>
  Returns the PHRP Parser object
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.SkipDuplicatePSMs">
+	<summary>
+ When True, then skips near-duplicate lines in the PHRP data file (lines with the same peptide in the same scan, but different protein names)
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:PHRPReader.clsPHRPReader.WarningMessages">
+	<summary>
+ Cached warning messages
  </summary>
 	<value></value>
 	<returns></returns>
@@ -440,12 +485,30 @@ PHRPReader
 	<param name="strInputFilePath">Input file to read</param>
 	<param name="eResultType">Source file PeptideHit result type</param>
 	<remarks>Sets LoadModSummaryFile to True and LoadMSGFResults to true</remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Constructor that auto-determines the PeptideHit result type based on the filename
+ </summary>
+	<param name="strInputFilePath">Input file to read</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,System.Boolean,System.Boolean,System.Boolean)">
 	<summary>
  Constructor that auto-determines the PeptideHit result type based on the filename
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
-	<param name="blnLoadModSummaryFile">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
+	<param name="blnLoadScanStats">If True, then looks for and auto-loads the MASIC scan stats files (used to determine collision mode and to refine the precursor m/z values)</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,System.Boolean,System.Boolean)">
+	<summary>
+ Constructor where the PeptideHit result type is explicitly set
+ </summary>
+	<param name="strInputFilePath">Input file to read</param>
+ ''' <param name="eResultType">Source file PeptideHit result type</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
 	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.#ctor(System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,System.Boolean,System.Boolean,System.Boolean)">
@@ -454,8 +517,19 @@ PHRPReader
  </summary>
 	<param name="strInputFilePath">Input file to read</param>
  ''' <param name="eResultType">Source file PeptideHit result type</param>
-	<param name="blnLoadModSummaryFile">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then looks for and auto-loads the modification definitions from the _moddefs.txt file</param>
 	<param name="blnLoadMSGFResults">If True, then looks for and auto-loads the MSGF results from the _msg.txt file</param>
+	<param name="blnLoadScanStats">If True, then looks for and auto-loads the MASIC scan stats files (used to determine collision mode and to refine the precursor m/z values)</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.ClearErrors">
+	<summary>
+ Clear any cached error messages
+ </summary>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.ClearWarnings">
+	<summary>
+ Clear any cached warning messages
+ </summary>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.AutoDetermineDatasetName(System.String)">
 	<summary>
@@ -484,7 +558,24 @@ PHRPReader
  Look for dynamic mod symbols in the peptide sequence; replace with the corresponding mod masses
  Note that if the _SeqInfo.txt file is available, then this function will not be used
  </summary>
+	<param name="strPeptide"></param>
+	<param name="strPeptideWithNumericMods">Peptide with numeric mods (output)</param>
+	<param name="lstPeptideMods">List of modified amino acids (output)</param>
 	<returns>True if success, false if an error</returns>
+	<remarks>strPeptideWithNumericMods will look like R.TDM+15.9949ESALPVTVLSAEDIAK.T</remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetCollisionMode(System.String)">
+	<summary>
+ Determines the collision mode using the Scan Type name
+ </summary>
+	<param name="strScanTypeName"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPReader.GetMSGFFileName(System.String)">
+	<summary>
+ Returns the filename of the MSGF file that corresponds to strSynopsisOrFirstHitsFileName
+ </summary>
+	<param name="strSynopsisOrFirstHitsFileName">Filename (or full path) to the synopsis or first-hits file</param>
+	<returns></returns>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPReader.GetPHRPFirstHitsFileName(PHRPReader.clsPHRPReader.ePeptideHitResultType,System.String)">
 	<summary>
@@ -577,7 +668,7 @@ PHRPReader
  </summary>
 	<returns>True if a line was read, false if not more data is available</returns>
 	<remarks></remarks>
-</member><member name="M:PHRPReader.clsPHRPReader.ReadModSummaryFile(System.String,System.Collections.Generic.SortedDictionary{System.Char,System.String}@,System.Collections.Generic.SortedDictionary{System.String,System.Collections.Generic.List{System.String}}@)">
+</member><member name="M:PHRPReader.clsPHRPReader.ReadModSummaryFile(System.String,System.Collections.Generic.SortedDictionary{System.Char,PHRPReader.clsModificationDefinition}@,System.Collections.Generic.SortedDictionary{System.String,System.Collections.Generic.List{PHRPReader.clsModificationDefinition}}@)">
 	<summary>
  Reads the data in strModSummaryFilePath.  Populates objDynamicMods and objStaticMods with the modification definitions
  </summary>
@@ -628,10 +719,18 @@ PHRPReader
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserXTandem.#ctor(System.String,System.String)">
 	<summary>
+ Constructor; assumes blnLoadModsAndSeqInfo=True
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strInputFilePath">Input file path</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParserXTandem.#ctor(System.String,System.String,System.Boolean)">
+	<summary>
  Constructor
  </summary>
 	<param name="strDatasetName">Dataset name</param>
 	<param name="strInputFilePath">Input file path</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then load the ModSummary file and SeqInfo files</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserXTandem.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
 	<summary>
@@ -652,10 +751,18 @@ PHRPReader
 	<returns>True if success, false if an error</returns>
 </member><member name="M:PHRPReader.clsPHRPParserSequest.#ctor(System.String,System.String)">
 	<summary>
+ Constructor; assumes blnLoadModsAndSeqInfo=True
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strInputFilePath">Input file path</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParserSequest.#ctor(System.String,System.String,System.Boolean)">
+	<summary>
  Constructor
  </summary>
 	<param name="strDatasetName">Dataset name</param>
 	<param name="strInputFilePath">Input file path</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then load the ModSummary file and SeqInfo files</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserSequest.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
 	<summary>
@@ -684,7 +791,7 @@ PHRPReader
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsScanStatsReader.ReadScanStatsData(System.String)">
 	<summary>
- Open a tab-delimited Scan_Stats file and read the data
+ Open a tab-delimited _ScanStats.txt file and read the data
  </summary>
 	<param name="strInputFilePath">Input file path</param>
 	<returns>A Dictionary where keys are ScanNumber and values are clsScanStatsInfo objects</returns>
@@ -703,6 +810,13 @@ PHRPReader
  </summary>
 	<param name="strInputFilePath">Input file path</param>
 	<returns>A Dictionary where keys are ResultID and values are MSGF_SpecProb values (stored as strings)</returns>
+</member><member name="P:PHRPReader.clsPHRPParser.ErrorMessages">
+	<summary>
+ Cached error messages
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="P:PHRPReader.clsPHRPParser.InputFilePath">
 	<summary>
  Input file path
@@ -745,7 +859,14 @@ PHRPReader
 	<value></value>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:PHRPReader.clsPHRPParser.#ctor(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
+</member><member name="P:PHRPReader.clsPHRPParser.WarningMessages">
+	<summary>
+ Cached warning messages
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParser.#ctor(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,System.Boolean)">
 	<summary>
  Constructor
  </summary>
@@ -768,11 +889,31 @@ PHRPReader
 	<param name="objSearchEngineParams">Search engine parameters class (output)</param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParser.ClearErrors">
+	<summary>
+ Clear any cached error messages
+ </summary>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParser.ClearWarnings">
+	<summary>
+ Clear any cached warning messages
+ </summary>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParser.LoadModSummary">
 	<summary>
  Reads the data in strModSummaryFilePath.  Populates mModInfo with the modification names, masses, and affected residues
  </summary>
 	<returns>True if success; false if an error</returns>
+</member><member name="M:PHRPReader.clsPHRPParser.NumToStringPlusMinus(System.Double,System.Int32)">
+	<summary>
+ Formats a number so that it begins with a + sign if positive or a - sign if negative
+ Rounds the number to the specified number of digits, trimming off trailing zeros
+ Example output: +79.9663 or -17.016
+ </summary>
+	<param name="Value"></param>
+	<param name="DigitsOfPrecision"></param>
+	<returns></returns>
+	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParser.ParseColumnHeaders(System.String[]@)">
 	<summary>
  Parse the column names in strSplitLine and update the local column header mapping
@@ -798,10 +939,18 @@ PHRPReader
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserInspect.#ctor(System.String,System.String)">
 	<summary>
+ Constructor; assumes blnLoadModsAndSeqInfo=True
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strInputFilePath">Input file path</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParserInspect.#ctor(System.String,System.String,System.Boolean)">
+	<summary>
  Constructor
  </summary>
 	<param name="strDatasetName">Dataset name</param>
 	<param name="strInputFilePath">Input file path</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then load the ModSummary file and SeqInfo files</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserInspect.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
 	<summary>
@@ -821,10 +970,18 @@ PHRPReader
 	<returns>True if success, false if an error</returns>
 </member><member name="M:PHRPReader.clsPHRPParserMSGFDB.#ctor(System.String,System.String)">
 	<summary>
+ Constructor; assumes blnLoadModsAndSeqInfo=True
+ </summary>
+	<param name="strDatasetName">Dataset name</param>
+	<param name="strInputFilePath">Input file path</param>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsPHRPParserMSGFDB.#ctor(System.String,System.String,System.Boolean)">
+	<summary>
  Constructor
  </summary>
 	<param name="strDatasetName">Dataset name</param>
 	<param name="strInputFilePath">Input file path</param>
+	<param name="blnLoadModsAndSeqInfo">If True, then load the ModSummary file and SeqInfo files</param>
 	<remarks></remarks>
 </member><member name="M:PHRPReader.clsPHRPParserMSGFDB.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
 	<summary>
@@ -956,6 +1113,21 @@ PHRPReader
 	<param name="strMassCorrectionTag"></param>
 	<returns></returns>
 	<remarks></remarks>
+</member><member name="P:PHRPReader.clsExtendedScanStatsReader.ErrorMessage">
+	<summary>
+ Error message
+ </summary>
+</member><member name="M:PHRPReader.clsExtendedScanStatsReader.#ctor">
+	<summary>
+ Constructor
+ </summary>
+	<remarks></remarks>
+</member><member name="M:PHRPReader.clsExtendedScanStatsReader.ReadExtendedScanStatsData(System.String)">
+	<summary>
+ Open a tab-delimited _ScanStatsEx.txt file and read the data
+ </summary>
+	<param name="strInputFilePath">Input file path</param>
+	<returns>A Dictionary where keys are ScanNumber and values are clsScanStatsInfo objects</returns>
 </member><member name="M:PHRPReader.clsModificationDefinition.CanAffectPeptideOrProteinTerminus">
 	<summary>
  Returns True if this modification can affect the peptide or protein terminus
