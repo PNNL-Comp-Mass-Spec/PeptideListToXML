@@ -11,7 +11,7 @@ Public Class clsPeptideListToXML
 	Inherits clsProcessFilesBaseClass
 
 	Public Sub New()
-		MyBase.mFileDate = "April 27, 2012"
+		MyBase.mFileDate = "April 30, 2012"
 		InitializeLocalVariables()
 	End Sub
 
