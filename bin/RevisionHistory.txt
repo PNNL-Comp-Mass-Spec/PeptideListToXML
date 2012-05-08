@@ -1,5 +1,9 @@
 PHRPReader.dll Revision History
 
+Version 1.0.4511; May 8, 2012
+	- Added the /Preview switch
+	- New version of PHRPReader
+
 Version 1.0.4503; April 30, 2012
 	- New version of PHRPReader
 
