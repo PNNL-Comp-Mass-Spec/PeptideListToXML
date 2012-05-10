@@ -8,7 +8,7 @@
 ' Program started April 13, 2012
 
 ' E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnl.gov/ or http://omics.pnl.gov
+' Website: http://ncrr.pnnl.gov/ or http://omics.pnl.gov
 ' -------------------------------------------------------------------------------
 ' 
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -17,7 +17,7 @@
 
 Module modMain
 
-	Public Const PROGRAM_DATE As String = "May 8, 2012"
+	Public Const PROGRAM_DATE As String = "May 9, 2012"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
@@ -247,6 +247,7 @@ Module modMain
         Console.WriteLine(strSeparator)
         Console.WriteLine()
 
+		WriteToErrorStream(strMessage)
     End Sub
 
     Private Sub ShowProgramHelp()
@@ -290,7 +291,7 @@ Module modMain
             Console.WriteLine()
 
             Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-            Console.WriteLine("Website: http://ncrr.pnl.gov/ or http://omics.pnl.gov")
+			Console.WriteLine("Website: http://ncrr.pnnl.gov/ or http://omics.pnl.gov")
             Console.WriteLine()
 
             ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
@@ -300,7 +301,21 @@ Module modMain
 			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
         End Try
 
-    End Sub
+	End Sub
+
+	Private Sub WriteToErrorStream(strErrorMessage As String)
+		Try
+			Using swErrorStream As System.IO.StreamWriter = New System.IO.StreamWriter(Console.OpenStandardError())
+				swErrorStream.WriteLine(strErrorMessage)
+			End Using
+		Catch ex As Exception
+			' Ignore errors here
+		End Try
+	End Sub
+
+	Private Sub mPeptideListConverter_ErrorEvent(strMessage As String) Handles mPeptideListConverter.ErrorEvent
+		WriteToErrorStream(strMessage)
+	End Sub
 
     Private Sub mMotifExtractor_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideListConverter.ProgressChanged
         Const PERCENT_REPORT_INTERVAL As Integer = 25
@@ -325,4 +340,5 @@ Module modMain
         mLastProgressReportTime = DateTime.UtcNow
         mLastProgressReportValue = 0
     End Sub
+
 End Module
