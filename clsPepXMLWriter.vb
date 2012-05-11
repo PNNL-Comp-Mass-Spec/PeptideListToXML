@@ -421,6 +421,11 @@ Public Class clsPepXMLWriter
 						WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)			' Mass difference, must beging with + or -
 						WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
+						If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
+							WriteAttribute("variable", "Y")
+						Else
+							WriteAttribute("variable", "N")
+						End If
 
 						WriteAttribute("symbol", objModDef.ModificationSymbol)				' Symbol used by search-engine to denote this mod
 

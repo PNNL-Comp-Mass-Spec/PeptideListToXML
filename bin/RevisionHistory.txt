@@ -1,5 +1,8 @@
 PHRPReader.dll Revision History
 
+Version 1.0.4513; May 10, 2012
+	- Now including the "variable" attribute in the search_summary, terminal_modification section of the pepXML file
+
 Version 1.0.4512; May 9, 2012
 	- Now posting error messages to the error stream
 
