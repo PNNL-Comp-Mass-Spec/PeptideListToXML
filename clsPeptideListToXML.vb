@@ -7,11 +7,13 @@ Option Strict On
 '
 ' Started April 13, 2012
 
+Imports System.IO
+
 Public Class clsPeptideListToXML
 	Inherits clsProcessFilesBaseClass
 
 	Public Sub New()
-		MyBase.mFileDate = "April 30, 2012"
+		MyBase.mFileDate = "May 1, 2014"
 		InitializeLocalVariables()
 	End Sub
 
@@ -19,6 +21,9 @@ Public Class clsPeptideListToXML
 
 	Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
 	Public Const DEFAULT_HITS_PER_SPECTRUM As Integer = 3
+	Public Const DEFAULT_MAX_PROTEINS_PER_PSM As Integer = 100
+
+	Protected Const PREVIEW_PAD_WIDTH As Integer = 22
 
 	' Future enum; mzIdentML is not yet supported
 	'Public Enum ePeptideListOutputFormat
@@ -58,14 +63,20 @@ Public Class clsPeptideListToXML
 	' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
 	Protected mDatasetName As String
 	Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
-	Protected mSeqToProteinMapCached As System.Collections.Generic.SortedList(Of Integer, System.Collections.Generic.List(Of PHRPReader.clsProteinInfo))
+	Protected mSeqToProteinMapCached As SortedList(Of Integer, List(Of PHRPReader.clsProteinInfo))
 
 	' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
 	Protected mFastaFilePath As String
 	Protected mSearchEngineParamFileName As String
 	Protected mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
 	Protected mPreviewMode As Boolean
+
 	Protected mSkipXPeptides As Boolean
+	Protected mTopHitOnly As Boolean
+	Protected mMaxProteinsPerPSM As Integer
+
+	Protected mPeptideFilterFilePath As String
+	Protected mChargeFilterList As List(Of Integer)
 
 	Protected mLoadModsAndSeqInfo As Boolean
 	Protected mLoadMSGFResults As Boolean
@@ -73,17 +84,29 @@ Public Class clsPeptideListToXML
 
 	' This dictionary tracks the PSMs (hits) for each spectrum
 	' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-	Protected mPSMsBySpectrumKey As System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.List(Of PHRPReader.clsPSM))
+	Protected mPSMsBySpectrumKey As Dictionary(Of String, List(Of PHRPReader.clsPSM))
 
 	' This dictionary tracks the spectrum info
 	' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-	Protected mSpectrumInfo As System.Collections.Generic.Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
+	Protected mSpectrumInfo As Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
 
 	Private mLocalErrorCode As ePeptideListToXMLErrorCodes
 #End Region
 
 #Region "Processing Options Interface Functions"
 
+	Public Property ChargeFilterList As List(Of Integer)
+		Get
+			Return mChargeFilterList
+		End Get
+		Set(value As List(Of Integer))
+			If value Is Nothing Then
+				mChargeFilterList = New List(Of Integer)
+			Else
+				mChargeFilterList = value
+			End If
+		End Set
+	End Property
 	''' <summary>
 	''' Dataset name; auto-determined by the PHRP Reader class
 	''' </summary>
@@ -166,6 +189,15 @@ Public Class clsPeptideListToXML
 		End Get
 	End Property
 
+	Public Property MaxProteinsPerPSM() As Integer
+		Get
+			Return mMaxProteinsPerPSM
+		End Get
+		Set(value As Integer)
+			mMaxProteinsPerPSM = value
+		End Set
+	End Property
+
 	''' <summary>
 	''' If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
 	''' </summary>
@@ -211,6 +243,34 @@ Public Class clsPeptideListToXML
 		End Set
 	End Property
 
+	''' <summary>
+	''' If True, then only keeps the top-scoring peptide for each scan number
+	''' </summary>
+	''' <value></value>
+	''' <returns></returns>
+	''' <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
+	Public Property TopHitOnly As Boolean
+		Get
+			Return mTopHitOnly
+		End Get
+		Set(value As Boolean)
+			mTopHitOnly = value
+		End Set
+	End Property
+
+	Public Property PeptideFilterFilePath As String
+		Get
+			Return mPeptideFilterFilePath
+		End Get
+		Set(value As String)
+			If String.IsNullOrEmpty(value) Then
+				mPeptideFilterFilePath = String.Empty
+			Else
+				mPeptideFilterFilePath = value
+			End If
+		End Set
+	End Property
+
 	' Future enum; mzIdentML is not yet supported
 	'Public Property OutputFormat() As ePeptideListOutputFormat
 	'    Get
@@ -247,7 +307,7 @@ Public Class clsPeptideListToXML
 		If mPreviewMode Then
 			PreviewRequiredFiles(strInputFilePath, mDatasetName, mPeptideHitResultType, mLoadModsAndSeqInfo, mLoadMSGFResults, mLoadScanStats, mSearchEngineParamFileName)
 		Else
-			strOutputFilePath = System.IO.Path.Combine(strOutputFolderPath, mDatasetName & ".pepXML")
+			strOutputFilePath = Path.Combine(strOutputFolderPath, mDatasetName & ".pepXML")
 			blnSuccess = WriteCachedData(strInputFilePath, strOutputFilePath, objSearchEngineParams)
 		End If
 
@@ -258,41 +318,62 @@ Public Class clsPeptideListToXML
 	Protected Function CachePHRPData(ByVal strInputFilePath As String, ByRef objSearchEngineParams As PHRPReader.clsSearchEngineParameters) As Boolean
 
 		Dim blnSuccess As Boolean
-		Dim strSpectrumKey As String
 		Dim udtSpectrumInfo As clsPepXMLWriter.udtSpectrumInfoType
-		Dim objPSMs As System.Collections.Generic.List(Of PHRPReader.clsPSM) = Nothing
 		Dim blnSkipPeptide As Boolean
+
+		Dim lstPeptidesToFilterOn As SortedSet(Of String)
+		Dim objPSMs As List(Of PHRPReader.clsPSM) = Nothing
+
+		' Keys in this dictionary are scan numbers
+		Dim dctBestPSMByScan As Dictionary(Of Integer, clsPSMInfo)
 
 		Dim intPeptidesParsed As Integer
 		Dim intPeptidesStored As Integer
 
 		Try
 			If mPreviewMode Then
-				ShowMessage("Finding required files")
+				ResetProgress("Finding required files")
 			Else
-				ShowMessage("Caching PHRP data")
+				ResetProgress("Caching PHRP data")
 			End If
 
 			If mPSMsBySpectrumKey Is Nothing Then
-				mPSMsBySpectrumKey = New System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.List(Of PHRPReader.clsPSM))
+				mPSMsBySpectrumKey = New Dictionary(Of String, List(Of PHRPReader.clsPSM))
 			Else
 				mPSMsBySpectrumKey.Clear()
 			End If
 
 			If mSpectrumInfo Is Nothing Then
-				mSpectrumInfo = New System.Collections.Generic.Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
+				mSpectrumInfo = New Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
 			Else
 				mSpectrumInfo.Clear()
 			End If
 
+			dctBestPSMByScan = New Dictionary(Of Integer, clsPSMInfo)
+
+			If mChargeFilterList Is Nothing Then mChargeFilterList = New List(Of Integer)
+
 			intPeptidesParsed = 0
 			intPeptidesStored = 0
 
-			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, mLoadModsAndSeqInfo, mLoadMSGFResults, mLoadScanStats)
-
+			Dim oStartupOptions = New PHRPReader.clsPHRPStartupOptions()
+			With oStartupOptions
+				.LoadModsAndSeqInfo = mLoadModsAndSeqInfo
+				.LoadMSGFResults = mLoadMSGFResults
+				.LoadScanStatsData = mLoadScanStats
+				.MaxProteinsPerPSM = MaxProteinsPerPSM
+			End With
+			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, oStartupOptions)
+			
 			mDatasetName = mPHRPReader.DatasetName
 			mPeptideHitResultType = mPHRPReader.PeptideHitResultType
 			mSeqToProteinMapCached = mPHRPReader.PHRPParser.SeqToProteinMap
+
+			lstPeptidesToFilterOn = New SortedSet(Of String)
+			If Not String.IsNullOrWhiteSpace(mPeptideFilterFilePath) Then
+				blnSuccess = LoadPeptideFilterFile(mPeptideFilterFilePath, lstPeptidesToFilterOn)
+				If Not blnSuccess Then Return False
+			End If
 
 			If mPreviewMode Then
 				' We can exit this function now since we have determined the dataset name and peptide hit result type
@@ -300,12 +381,12 @@ Public Class clsPeptideListToXML
 			End If
 
 			' Report any errors cached during instantiation of mPHRPReader
-			For Each strMessage In mPHRPReader.ErrorMessages
+			For Each strMessage In mPHRPReader.ErrorMessages.Distinct()
 				ShowErrorMessage(strMessage)
 			Next
 
 			' Report any warnings cached during instantiation of mPHRPReader
-			For Each strMessage In mPHRPReader.WarningMessages
+			For Each strMessage In mPHRPReader.WarningMessages.Distinct()
 				Console.WriteLine()
 				ShowWarningMessage(strMessage)
 
@@ -322,6 +403,8 @@ Public Class clsPeptideListToXML
 					ShowMessage("  ... parent ion m/z values may not be completely accurate; use the /NoScanStats switch to avoid this error")
 				ElseIf strMessage.Contains("ScanStats file not found") Then
 					ShowMessage("  ... unable to determine elution times; use the /NoScanStats switch to avoid this error")
+				ElseIf strMessage.Contains("ModSummary file not found") Then
+					ShowMessage("  ... ModSummary file was not found; will infer modification details")
 				End If
 			Next
 			If mPHRPReader.WarningMessages.Count > 0 Then Console.WriteLine()
@@ -350,8 +433,20 @@ Public Class clsPeptideListToXML
 					End If
 				End If
 
-				If Not blnSkipPeptide Then
+				If Not blnSkipPeptide AndAlso lstPeptidesToFilterOn.Count > 0 Then
+					If Not lstPeptidesToFilterOn.Contains(objCurrentPSM.PeptideCleanSequence) Then
+						blnSkipPeptide = True
+					End If
+				End If
 
+				If Not blnSkipPeptide AndAlso mChargeFilterList.Count > 0 Then
+					If Not mChargeFilterList.Contains(objCurrentPSM.Charge) Then
+						blnSkipPeptide = True
+					End If
+				End If
+
+				If Not blnSkipPeptide Then
+					Dim strSpectrumKey As String
 					strSpectrumKey = GetSpectrumKey(objCurrentPSM)
 
 					If Not mSpectrumInfo.ContainsKey(strSpectrumKey) Then
@@ -365,6 +460,7 @@ Public Class clsPeptideListToXML
 						udtSpectrumInfo.ElutionTimeMinutes = objCurrentPSM.ElutionTimeMinutes
 						udtSpectrumInfo.CollisionMode = objCurrentPSM.CollisionMode
 						udtSpectrumInfo.Index = mSpectrumInfo.Count
+						udtSpectrumInfo.NativeID = ConstructNativeID(objCurrentPSM.ScanNumberStart)
 
 						mSpectrumInfo.Add(strSpectrumKey, udtSpectrumInfo)
 					End If
@@ -372,9 +468,24 @@ Public Class clsPeptideListToXML
 					If mPSMsBySpectrumKey.TryGetValue(strSpectrumKey, objPSMs) Then
 						objPSMs.Add(objCurrentPSM)
 					Else
-						objPSMs = New System.Collections.Generic.List(Of PHRPReader.clsPSM)
+						objPSMs = New List(Of PHRPReader.clsPSM)
 						objPSMs.Add(objCurrentPSM)
 						mPSMsBySpectrumKey.Add(strSpectrumKey, objPSMs)
+					End If
+
+					If mTopHitOnly Then
+						Dim objBestPSMInfo As clsPSMInfo = Nothing
+						Dim objComparisonPSMInfo As clsPSMInfo = New clsPSMInfo(strSpectrumKey, objCurrentPSM)
+
+						If dctBestPSMByScan.TryGetValue(objCurrentPSM.ScanNumberStart, objBestPSMInfo) Then
+							If objComparisonPSMInfo.MSGFSpecProb < objBestPSMInfo.MSGFSpecProb Then
+								' We have found a better scoring peptide for this scan
+								dctBestPSMByScan(objCurrentPSM.ScanNumberStart) = objComparisonPSMInfo
+							End If
+						Else
+							dctBestPSMByScan.Add(objCurrentPSM.ScanNumberStart, objComparisonPSMInfo)
+						End If
+
 					End If
 
 					intPeptidesStored += 1
@@ -389,7 +500,30 @@ Public Class clsPeptideListToXML
 
 			OperationComplete()
 			Console.WriteLine()
-			ShowMessage(" ... cached " & intPeptidesStored.ToString("0,000") & " peptides")
+
+			Dim strFilterMessage As String = String.Empty
+			If lstPeptidesToFilterOn.Count > 0 Then
+				strFilterMessage = " (filtered using " & lstPeptidesToFilterOn.Count & " peptides in " & IO.Path.GetFileName(mPeptideFilterFilePath) & ")"
+			End If
+
+			If mTopHitOnly Then
+				' Update mPSMsBySpectrumKey to contain the best hit for each scan number (regardless of charge)
+
+				Dim intCountAtStart As Integer = mPSMsBySpectrumKey.Count
+				mPSMsBySpectrumKey.Clear()
+
+				For Each item In dctBestPSMByScan
+					Dim lstPSMs As List(Of PHRPReader.clsPSM) = New List(Of PHRPReader.clsPSM)
+					lstPSMs.Add(item.Value.PSM)
+					mPSMsBySpectrumKey.Add(item.Value.SpectrumKey, lstPSMs)
+				Next
+				intPeptidesStored = mPSMsBySpectrumKey.Count
+
+				ShowMessage(" ... cached " & intPeptidesStored.ToString("#,##0") & " PSMs" & strFilterMessage)
+				ShowMessage(" ... filtered out " & (intCountAtStart - intPeptidesStored).ToString("#,##0") & " PSMs to only retain the top hit for each scan (regardless of charge)")
+			Else
+				ShowMessage(" ... cached " & intPeptidesStored.ToString("#,##0") & " PSMs" & strFilterMessage)
+			End If
 
 			' Load the search engine parameters
 			objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, mSearchEngineParamFileName)
@@ -400,6 +534,7 @@ Public Class clsPeptideListToXML
 			If mPreviewMode Then
 				Console.WriteLine()
 				ShowMessage("Unable to preview the required files since not able to determine the dataset name: " & ex.Message)
+
 			Else
 				ShowErrorMessage("Error Reading source file in CachePHRPData: " & ex.Message)
 
@@ -418,17 +553,38 @@ Public Class clsPeptideListToXML
 	End Function
 
 	''' <summary>
+	''' Constructs a nativeID string for the given spectrum
+	''' This allows for linking up with data in .mzML files
+	''' </summary>
+	''' <param name="intScanNumber"></param>
+	''' <returns></returns>
+	''' <remarks></remarks>
+	Protected Function ConstructNativeID(ByVal intScanNumber As Integer) As String
+		' Examples:
+		' Most Thermo raw files: "controllerType=0 controllerNumber=1 scan=6" 
+		' Thermo raw with PQD spectra: "controllerType=1 controllerNumber=1 scan=6" 
+		' Wiff files: "sample=1 period=1 cycle=123 experiment=2" 
+		' Waters files: "function=2 process=0 scan=123
+
+		' For now, we're assuming all data processed by this program is from Thermo raw files
+
+		Return "controllerType=0 controllerNumber=1 scan=" & intScanNumber.ToString()
+
+	End Function
+
+	''' <summary>
 	''' Returns the default file extensions that this class knows how to parse
 	''' </summary>
 	''' <returns></returns>
 	''' <remarks></remarks>
 	Public Overrides Function GetDefaultExtensionsToParse() As String()
-		Dim strExtensionsToParse(3) As String
+		Dim strExtensionsToParse(4) As String
 
 		strExtensionsToParse(0) = PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName("")
 		strExtensionsToParse(1) = PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName("")
 		strExtensionsToParse(2) = PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName("")
 		strExtensionsToParse(3) = PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName("")
+		strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName("")
 
 		Return strExtensionsToParse
 
@@ -496,6 +652,11 @@ Public Class clsPeptideListToXML
 
 		mHitsPerSpectrum = DEFAULT_HITS_PER_SPECTRUM
 		mSkipXPeptides = False
+		mTopHitOnly = False
+		mMaxProteinsPerPSM = DEFAULT_MAX_PROTEINS_PER_PSM
+
+		mPeptideFilterFilePath = String.Empty
+		mChargeFilterList = New List(Of Integer)
 
 		mLoadModsAndSeqInfo = True
 		mLoadMSGFResults = True
@@ -520,10 +681,10 @@ Public Class clsPeptideListToXML
 				Return True
 			End If
 
-			If Not System.IO.File.Exists(strParameterFilePath) Then
+			If Not File.Exists(strParameterFilePath) Then
 				' See if strParameterFilePath points to a file in the same directory as the application
-				strParameterFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), System.IO.Path.GetFileName(strParameterFilePath))
-				If Not System.IO.File.Exists(strParameterFilePath) Then
+				strParameterFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
+				If Not File.Exists(strParameterFilePath) Then
 					MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.ParameterFileNotFound)
 					Return False
 				End If
@@ -540,6 +701,8 @@ Public Class clsPeptideListToXML
 					Me.SearchEngineParamFileName = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", Me.SearchEngineParamFileName)
 					Me.HitsPerSpectrum = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "HitsPerSpectrum", Me.HitsPerSpectrum)
 					Me.SkipXPeptides = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", Me.SkipXPeptides)
+					Me.TopHitOnly = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "TopHitOnly", Me.TopHitOnly)
+					Me.MaxProteinsPerPSM = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "MaxProteinsPerPSM", Me.MaxProteinsPerPSM)
 
 					Me.LoadModsAndSeqInfo = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "LoadModsAndSeqInfo", Me.LoadModsAndSeqInfo)
 					Me.LoadMSGFResults = objSettingsFile.GetParam(XML_SECTION_OPTIONS, "LoadMSGFResults", Me.LoadMSGFResults)
@@ -550,6 +713,58 @@ Public Class clsPeptideListToXML
 
 		Catch ex As Exception
 			HandleException("Error in LoadParameterFileSettings", ex)
+			Return False
+		End Try
+
+		Return True
+
+	End Function
+
+	Protected Function LoadPeptideFilterFile(ByVal strInputFilePath As String, ByRef lstPeptides As SortedSet(Of String)) As Boolean
+
+		Dim strLineIn As String
+		Dim intTabIndex As Integer
+
+		Try
+			If lstPeptides Is Nothing Then
+				lstPeptides = New SortedSet(Of String)
+			Else
+				lstPeptides.Clear()
+			End If
+
+			If Not File.Exists(strInputFilePath) Then
+				ShowErrorMessage("Peptide filter file not found: " & strInputFilePath)
+				SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+				Return False
+			End If
+
+			If mPreviewMode Then
+				ShowMessage("Peptide Filter file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetMSGFFileName(strInputFilePath))
+				Return True
+			End If
+
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+
+				Do While srInFile.Peek > -1
+					strLineIn = srInFile.ReadLine
+
+					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+						' Remove any text present after a tab character
+						intTabIndex = strLineIn.IndexOf(ControlChars.Tab)
+						If intTabIndex > 0 Then
+							strLineIn = strLineIn.Substring(0, intTabIndex)
+						End If
+
+						If Not String.IsNullOrWhiteSpace(strLineIn) Then
+							strLineIn = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strLineIn, True)
+							lstPeptides.Add(strLineIn)
+						End If
+					End If
+				Loop
+			End Using
+
+		Catch ex As Exception
+			HandleException("Error in LoadPeptideFilterFile", ex)
 			Return False
 		End Try
 
@@ -592,10 +807,10 @@ Public Class clsPeptideListToXML
 						If oPSMEntry.ModifiedResidues.Count > 0 Then
 							For Each objResidue As PHRPReader.clsAminoAcidModInfo In oPSMEntry.ModifiedResidues
 
-								' Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
+								' Check whether objResidue.ModDefinition is present in objSearchEngineParams.ModInfo
 								blnMatchFound = False
 								For Each objKnownMod As PHRPReader.clsModificationDefinition In objSearchEngineParams.ModInfo
-									If objKnownMod Is objResidue.ModDefinition Then
+									If objKnownMod.EquivalentMassTypeTagAtomAndResidues(objResidue.ModDefinition) Then
 										blnMatchFound = True
 										Exit For
 									End If
@@ -621,10 +836,8 @@ Public Class clsPeptideListToXML
 	End Function
 
 	Protected Sub PreviewRequiredFiles(ByVal strInputFilePath As String, ByVal strDatasetName As String, ByVal ePeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByVal blnLoadModsAndSeqInfo As Boolean, ByVal blnLoadMSGFResults As Boolean, ByVal blnLoadScanStats As Boolean, ByVal strSearchEngineParamFileName As String)
-		Const PAD_WIDTH As Integer = 22
 
-		Dim fiFileInfo As System.IO.FileInfo
-		fiFileInfo = New System.IO.FileInfo(strInputFilePath)
+		Dim fiFileInfo = New FileInfo(strInputFilePath)
 
 		Console.WriteLine()
 		If fiFileInfo.DirectoryName.Length > 40 Then
@@ -635,38 +848,39 @@ Public Class clsPeptideListToXML
 			ShowMessage("Data file folder: " & fiFileInfo.DirectoryName)
 		End If
 
-		ShowMessage("Data file: ".PadRight(PAD_WIDTH) & System.IO.Path.GetFileName(strInputFilePath))
+		ShowMessage("Data file: ".PadRight(PREVIEW_PAD_WIDTH) & Path.GetFileName(strInputFilePath))
 
 
 		If blnLoadModsAndSeqInfo Then
-			ShowMessage("ModSummary file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, strDatasetName))
+			ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, strDatasetName))
 
 			If fiFileInfo.Name.ToLower() = PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, strDatasetName).ToLower() Then
-				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
-				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
-				ShowMessage("SeqInfo file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
+				ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
+				ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
+				ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
 			End If
 		End If
 
 		If blnLoadMSGFResults Then
-			ShowMessage("MSGF Results file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetMSGFFileName(strInputFilePath))
+			ShowMessage("MSGF Results file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetMSGFFileName(strInputFilePath))
 		End If
 
 		If blnLoadScanStats Then
-			ShowMessage("ScanStats file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetScanStatsFilename(mDatasetName))
-			ShowMessage("ScanStats file: ".PadRight(PAD_WIDTH) & PHRPReader.clsPHRPReader.GetExtendedScanStatsFilename(mDatasetName))
+			ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetScanStatsFilename(mDatasetName))
+			ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetExtendedScanStatsFilename(mDatasetName))
 		End If
 
 		If Not String.IsNullOrEmpty(strSearchEngineParamFileName) Then
-			ShowMessage("Search Engine Params: ".PadRight(PAD_WIDTH) & strSearchEngineParamFileName)
+			ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) & strSearchEngineParamFileName)
+			ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetToolVersionInfoFilename(ePeptideHitResultType))
 
 			If mPeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.XTandem Then
 				' Determine the additional files that will be required
-				Dim lstFileNames As System.Collections.Generic.List(Of String)
-				lstFileNames = PHRPReader.clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(System.IO.Path.Combine(fiFileInfo.DirectoryName, strSearchEngineParamFileName))
+				Dim lstFileNames As List(Of String)
+				lstFileNames = PHRPReader.clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(fiFileInfo.DirectoryName, strSearchEngineParamFileName))
 
 				For Each strFileName In lstFileNames
-					ShowMessage("Search Engine Params: ".PadRight(PAD_WIDTH) & strFileName)
+					ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) & strFileName)
 				Next
 
 			End If
@@ -686,7 +900,7 @@ Public Class clsPeptideListToXML
 	Public Overloads Overrides Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String, ByVal blnResetErrorCode As Boolean) As Boolean
 		' Returns True if success, False if failure
 
-		Dim ioFile As System.IO.FileInfo
+		Dim ioFile As FileInfo
 		Dim strInputFilePathFull As String
 
 		Dim blnSuccess As Boolean
@@ -712,7 +926,7 @@ Public Class clsPeptideListToXML
 
 				Console.WriteLine()
 				If Not mPreviewMode Then
-					ShowMessage("Parsing " & System.IO.Path.GetFileName(strInputFilePath))
+					ShowMessage("Parsing " & Path.GetFileName(strInputFilePath))
 				End If
 
 				' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
@@ -726,7 +940,7 @@ Public Class clsPeptideListToXML
 
 					Try
 						' Obtain the full path to the input file
-						ioFile = New System.IO.FileInfo(strInputFilePath)
+						ioFile = New FileInfo(strInputFilePath)
 						strInputFilePathFull = ioFile.FullName
 
 						blnSuccess = ConvertPHRPDataToXML(strInputFilePathFull, strOutputFolderPath)
@@ -780,9 +994,11 @@ Public Class clsPeptideListToXML
 		Dim strSpectrumKey As String
 		Dim udtCurrentSpectrum As clsPepXMLWriter.udtSpectrumInfoType = New clsPepXMLWriter.udtSpectrumInfoType
 
+		MyBase.ResetProgress("Creating the .pepXML file")
+
 		Try
 			Console.WriteLine()
-			ShowMessage("Creating PepXML file at " & System.IO.Path.GetFileName(strOutputFilePath))
+			ShowMessage("Creating PepXML file at " & Path.GetFileName(strOutputFilePath))
 
 			mXMLWriter = New clsPepXMLWriter(mDatasetName, mFastaFilePath, objSearchEngineParams, strInputFilePath, strOutputFilePath)
 
@@ -790,6 +1006,8 @@ Public Class clsPeptideListToXML
 				ShowErrorMessage("XMLWriter is not writable; aborting")
 				Return False
 			End If
+
+			mXMLWriter.MaxProteinsPerPSM = mMaxProteinsPerPSM
 
 			intSpectra = 0
 			intPeptides = 0
@@ -805,19 +1023,19 @@ Public Class clsPeptideListToXML
 					ShowErrorMessage("Spectrum key '" & strSpectrumKey & "' not found in mSpectrumInfo; this is unexected")
 				End If
 
-				If intPeptides Mod 2500 = 0 Then
-					Console.Write(".")
-				End If
+				Dim pctComplete As Single = intSpectra / CSng(mPSMsBySpectrumKey.Count) * 100
+				UpdateProgress(pctComplete)
+
 			Next
 
-			If intPeptides > 2500 Then
+			If intPeptides > 500 Then
 				Console.WriteLine()
 			End If
 
 			mXMLWriter.CloseDocument()
 
 			Console.WriteLine()
-			ShowMessage("PepXML file created with " & intSpectra.ToString("0,000") & " spectra and " & intPeptides.ToString("0,000") & " peptides")
+			ShowMessage("PepXML file created with " & intSpectra.ToString("#,##0") & " spectra and " & intPeptides.ToString("#,##0") & " peptides")
 
 			blnSuccess = True
 

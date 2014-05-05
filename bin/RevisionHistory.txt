@@ -1,4 +1,41 @@
-PHRPReader.dll Revision History
+PeptideListToXML Revision History
+
+Version 1.0.5234; May 1, 2014
+	- Now writing at most 100 proteins for each PSM
+		- Override with parameter /MaxProteins
+
+Version 1.0.5227; April 24, 2014
+	- New version of PHRPReader.dll
+		- Optimized for result sets with large numbers of proteins per peptide
+
+Version 1.0.4834; March 27, 2013
+	- Now including AbsMassErrorPPM as a custom search_score value
+	- Now compiling as AnyCPU instead of x86
+
+Version 1.0.4833; March 26, 2013
+	- Now including MassErrorPPM as a custom search_score value
+
+Version 1.0.4766; January 18, 2013
+	- Added switch /ChargeFilter
+		- Use to filter peptides by charge state, for example /ChargeFilter:2 or /ChargeFilter:2,3
+
+Version 1.0.4765; January 17, 2013
+	- Added switch /TopHitOnly
+		- Retains only the top-scoring PSM for each spectrum (regardless of charge)
+	- Added switch /PepFilter
+		- Load a text file with peptide sequences to use to limit the peptides written to the .pepXML file
+
+Version 1.0.4612; August 17, 2012
+	- Now including the search engine version and date that the search engine produced the results
+		- Requires a Tool_Version_Info file; expected filenames:
+			Tool_Version_Info_Sequest.txt
+			Tool_Version_Info_XTandem.txt
+			Tool_Version_Info_Inspect.txt
+			Tool_Version_Info_MSGFDB.txt
+
+Version 1.0.4611; August 16, 2012
+	- Now including nativeID in attriubute in spectrum_query
+		- Currently assumes all data is from Thermo raw files
 
 Version 1.0.4513; May 10, 2012
 	- Now including the "variable" attribute in the search_summary, terminal_modification section of the pepXML file

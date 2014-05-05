@@ -8,7 +8,8 @@ of the parameter file used for the MS/MS search engine.
 
 Program syntax:
 PeptideListToXML.exe /I:PHRPResultsFile [/O:OutputFolderPath]
- [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/H:HitsPerSpectrum] [/X] [/P:ParameterFilePath]
+ [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]
+ [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/PepFilter:PeptideFilterFilePath]
  [/NoMods] [/NoMSGF] [/NoScanStats] [/NoSeqInfo] [/Preview]
  [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]
 
@@ -30,6 +31,12 @@ fasta file to search (this is the case for Sequest and X!Tandem but not Inspect 
 Use /H to specify the number of matches per spectrum to store (default is 3; use 0 to keep all hits)
 
 Use /X to specify that peptides with X residues should be skipped
+
+Use /TopHitOnly to specify that each scan should only include a single 
+peptide match (regardless of charge)
+
+Use /PepFilter:File to use a text file to filter the peptides included in 
+the output file (one peptide sequence per line)
 
 By default, the _ModSummary file and SeqInfo files are loaded and used 
 to determine the modified residues; use /NoMods to skip these files
@@ -59,10 +66,10 @@ will be displayed at the console.
 
 -------------------------------------------------------------------------------
 Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012
-Version: 1.0.4502.17446 (April 27, 2012)
+Version: 1.0.4765.37170 (January 17, 2013)
 
 E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-Website: http://ncrr.pnl.gov/ or http://omics.pnl.gov
+Website: http://ncrr.pnnl.gov/ or http://omics.pnl.gov
 -------------------------------------------------------------------------------
 
 Licensed under the Apache License, Version 2.0; you may not use this file except 

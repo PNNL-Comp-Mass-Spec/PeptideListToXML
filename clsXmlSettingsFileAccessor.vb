@@ -149,7 +149,7 @@ Public Class XmlSettingsFileAccessor
 
         ' Lookup the correct capitalization for sectionName (only truly important if mCaseSensitive = False)
         sectionNameInFile = GetCachedSectionName(sectionName)
-        If sectionNameInFile.Length = 0 Then Return False
+		If String.IsNullOrWhiteSpace(sectionNameInFile) Then Return False
 
         Try
             ' Grab the keys for sectionName
@@ -224,7 +224,7 @@ Public Class XmlSettingsFileAccessor
 
         ' Lookup the correct capitalization for sectionName (only truly important if mCaseSensitive = False)
         sectionNameInFile = GetCachedSectionName(sectionName)
-        If sectionNameInFile.Length = 0 Then Return String.Empty
+		If String.IsNullOrWhiteSpace(sectionNameInFile) Then Return String.Empty
 
         If mCachedSection.SectionName = sectionNameInFile Then
             blnSuccess = True
@@ -744,8 +744,11 @@ Public Class XmlSettingsFileAccessor
         ''' <return>The function returns the name of ini file.</return>
         Public ReadOnly Property XmlFilename() As String
             Get
-                If Not Initialized Then Throw New XMLFileReaderNotInitializedException
-                Return (m_XmlFilename)
+				If Not Initialized Then
+					Return String.Empty
+				Else
+					Return (m_XmlFilename)
+				End If
             End Get
         End Property
 
@@ -1093,9 +1096,10 @@ Public Class XmlSettingsFileAccessor
         Public ReadOnly Property AllSections() As System.Collections.Specialized.StringCollection
             Get
                 If Not Initialized Then
-                    Throw New XMLFileReaderNotInitializedException
-                End If
-                Return sections
+					Return New Collections.Specialized.StringCollection()
+				Else
+					Return sections
+				End If
             End Get
         End Property
 
@@ -1271,7 +1275,7 @@ Public Class XmlSettingsFileAccessor
             m_XmlDoc.LoadXml("<?xml version=""1.0"" encoding=""UTF-8""?><sections></sections>")
 
             Try
-                Dim fi As System.IO.FileInfo
+				Dim fi As System.IO.FileInfo
                 Dim s As String
 
                 fi = New System.IO.FileInfo(strFilePath)
@@ -1343,9 +1347,9 @@ Public Class XmlSettingsFileAccessor
             Dim parts() As String
 
             strLine = strLine.TrimStart()
-            If strLine.Length = 0 Then
-                Return True
-            End If
+			If String.IsNullOrWhiteSpace(strLine) Then
+				Return True
+			End If
 
             Select Case (strLine.Substring(0, 1))
                 Case "["
@@ -1397,39 +1401,39 @@ Public Class XmlSettingsFileAccessor
                             strValue = String.Empty
                         End If
 
-                        If strKey.Length = 0 Then
-                            Return False
+						If String.IsNullOrWhiteSpace(strKey) Then
+							Return False
 
-                        Else
+						Else
 
-                            blnAddSetting = True
+							blnAddSetting = True
 
-                            Select Case strKey.ToLower().Trim()
+							Select Case strKey.ToLower().Trim()
 
-                                Case "<sections>", "</section>", "</sections>"
-                                    ' Do not add a new key
-                                    If String.IsNullOrEmpty(strValue) Then
-                                        blnAddSetting = False
-                                    End If
+								Case "<sections>", "</section>", "</sections>"
+									' Do not add a new key
+									If String.IsNullOrEmpty(strValue) Then
+										blnAddSetting = False
+									End If
 
-                            End Select
+							End Select
 
-                            If blnAddSetting Then
-                                N = doc.CreateElement("item")
-                                Natt = doc.CreateAttribute("key")
-                                Natt.Value = SetNameCase(strKey)
-                                N.Attributes.SetNamedItem(Natt)
+							If blnAddSetting Then
+								N = doc.CreateElement("item")
+								Natt = doc.CreateAttribute("key")
+								Natt.Value = SetNameCase(strKey)
+								N.Attributes.SetNamedItem(Natt)
 
-                                Natt = doc.CreateAttribute("value")
-                                Natt.Value = strValue
-                                N.Attributes.SetNamedItem(Natt)
+								Natt = doc.CreateAttribute("value")
+								Natt.Value = strValue
+								N.Attributes.SetNamedItem(Natt)
 
-                                GetLastSection().AppendChild(N)
+								GetLastSection().AppendChild(N)
 
-                            End If
+							End If
 
-                            Return True
-                        End If
+							Return True
+						End If
 
                     End If
 
@@ -1470,8 +1474,11 @@ Public Class XmlSettingsFileAccessor
         ''' <summary>It Sets or Gets the output file name.</summary>
         Public Property OutputFilename() As String
             Get
-                If Not Initialized Then Throw New XMLFileReaderNotInitializedException
-                Return m_SaveFilename
+				If Not Initialized Then
+					Return String.Empty
+				Else
+					Return m_SaveFilename
+				End If
             End Get
             Set(ByVal Value As String)
                 Dim fi As System.IO.FileInfo
@@ -1516,8 +1523,11 @@ Public Class XmlSettingsFileAccessor
         ''' <summary>It gets the System.Xml.XmlDocument.</summary>
         Public ReadOnly Property XmlDoc() As System.Xml.XmlDocument
             Get
-                If Not Initialized Then Throw New XMLFileReaderNotInitializedException
-                Return m_XmlDoc
+				If Not Initialized Then
+					Return New System.Xml.XmlDocument
+				Else
+					Return m_XmlDoc
+				End If
             End Get
         End Property
 
@@ -1525,17 +1535,21 @@ Public Class XmlSettingsFileAccessor
         ''' <return>It returns the XML document formatted as a string.</return>
         Public ReadOnly Property XML() As String
             Get
-                If Not Initialized Then Throw New XMLFileReaderNotInitializedException
-                Dim sb As System.Text.StringBuilder = New System.Text.StringBuilder
-                Dim sw As System.IO.StringWriter = New System.IO.StringWriter(sb)
-                Dim xw As System.Xml.XmlTextWriter = New System.Xml.XmlTextWriter(sw)
-                xw.Indentation = 3
-                xw.Formatting = System.Xml.Formatting.Indented
-                m_XmlDoc.WriteContentTo(xw)
-                xw.Close()
-                sw.Close()
-                Return sb.ToString()
-            End Get
+				If Not Initialized Then
+					Return String.Empty
+				End If
+
+				Dim sb As System.Text.StringBuilder = New System.Text.StringBuilder
+				Using sw As System.IO.StringWriter = New System.IO.StringWriter(sb)
+					Using xw As System.Xml.XmlTextWriter = New System.Xml.XmlTextWriter(sw)
+						xw.Indentation = 3
+						xw.Formatting = System.Xml.Formatting.Indented
+						m_XmlDoc.WriteContentTo(xw)
+					End Using
+				End Using
+
+				Return sb.ToString()
+			End Get
         End Property
 
     End Class
