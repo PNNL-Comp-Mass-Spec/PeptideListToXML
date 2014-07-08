@@ -1,5 +1,8 @@
 PeptideListToXML Revision History
 
+Version 1.0.5302; July 8, 2014
+	- Updated clsParseCommandLine and PHRPReader
+
 Version 1.0.5234; May 1, 2014
 	- Now writing at most 100 proteins for each PSM
 		- Override with parameter /MaxProteins
