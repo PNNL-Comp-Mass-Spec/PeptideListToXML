@@ -584,7 +584,8 @@ Public Class clsPeptideListToXML
 		strExtensionsToParse(1) = PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName("")
 		strExtensionsToParse(2) = PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName("")
 		strExtensionsToParse(3) = PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName("")
-		strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName("")
+        strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName("")
+        strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName("")
 
 		Return strExtensionsToParse
 

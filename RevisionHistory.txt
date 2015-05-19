@@ -1,5 +1,8 @@
 PeptideListToXML Revision History
 
+Version 1.0.5617; May 19, 2015
+	- New version of PHRPReader.dll that supports MODPlus
+
 Version 1.0.5302; July 8, 2014
 	- Updated clsParseCommandLine and PHRPReader
 
