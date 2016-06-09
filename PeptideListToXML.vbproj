@@ -14,7 +14,7 @@
     <AssemblyName>PeptideListToXML</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
   </PropertyGroup>
@@ -84,9 +84,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="ThermoRawFileReaderDLL, Version=1.1.4758.26744, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ThermoRawFileReader">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Lib\ThermoRawFileReaderDLL.dll</HintPath>
+      <HintPath>Lib\ThermoRawFileReader.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,9 @@
 PeptideListToXML Revision History
 
+Version 1.0.5617; June 8, 2016
+	- Update to .NET 4.5.1
+	- New version of PHRPReader.dll that uses ThermoRawFileReader.dll
+
 Version 1.0.5617; May 19, 2015
 	- New version of PHRPReader.dll that supports MODPlus
 
