@@ -87,416 +87,416 @@ Public Class clsPepXMLWriter
 	''' <param name="strSourceFilePath">Source file path</param>
 	''' <param name="strOutputFilePath">Path to the PepXML file to create</param>
 	''' <remarks></remarks>
-	Public Sub New(ByVal strDatasetName As String, ByVal strFastaFilePath As String, ByVal objSearchEngineParams As clsSearchEngineParameters, ByVal strSourceFilePath As String, ByVal strOutputFilePath As String)
+    Public Sub New(strDatasetName As String, strFastaFilePath As String, objSearchEngineParams As clsSearchEngineParameters, strSourceFilePath As String, strOutputFilePath As String)
 
-		mSearchEngineParams = objSearchEngineParams
-		mDatasetName = strDatasetName
-		If mDatasetName Is Nothing Then mDatasetName = "Unknown"
+        mSearchEngineParams = objSearchEngineParams
+        mDatasetName = strDatasetName
+        If mDatasetName Is Nothing Then mDatasetName = "Unknown"
 
-		If String.IsNullOrEmpty(strSourceFilePath) Then strSourceFilePath = String.Empty
-		mSourceFilePath = strSourceFilePath
+        If String.IsNullOrEmpty(strSourceFilePath) Then strSourceFilePath = String.Empty
+        mSourceFilePath = strSourceFilePath
 
-		mPeptideMassCalculator = New clsPeptideMassCalculator()
+        mPeptideMassCalculator = New clsPeptideMassCalculator()
 
-		InitializePNNLScoreNameMap()
+        InitializePNNLScoreNameMap()
 
-		mMaxProteinsPerPSM = 0
+        mMaxProteinsPerPSM = 0
 
-		Try
-			If Not InitializePepXMLFile(strOutputFilePath, strFastaFilePath) Then
-				Throw New Exception("Error initializing PepXML file")
-			End If
+        Try
+            If Not InitializePepXMLFile(strOutputFilePath, strFastaFilePath) Then
+                Throw New Exception("Error initializing PepXML file")
+            End If
 
-		Catch ex As Exception
-			Throw New Exception("Error initializing PepXML file: " & ex.Message, ex)
-		End Try
+        Catch ex As Exception
+            Throw New Exception("Error initializing PepXML file: " & ex.Message, ex)
+        End Try
 
-	End Sub
+    End Sub
 
-	Public Function CloseDocument() As Boolean
-		If Not mFileOpen Then
-			Return False
-		End If
+    Public Function CloseDocument() As Boolean
+        If Not mFileOpen Then
+            Return False
+        End If
 
-		mXMLWriter.WriteEndElement()				' msms_run_summary
+        mXMLWriter.WriteEndElement()                ' msms_run_summary
 
-		mXMLWriter.WriteEndElement()				' msms_pipeline_analysis
-		mXMLWriter.WriteEndDocument()
-		mXMLWriter.Flush()
-		mXMLWriter.Close()
+        mXMLWriter.WriteEndElement()                ' msms_pipeline_analysis
+        mXMLWriter.WriteEndDocument()
+        mXMLWriter.Flush()
+        mXMLWriter.Close()
 
-		Return True
-	End Function
+        Return True
+    End Function
 
-	Protected Function GetPepXMLCollisionMode(ByVal strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
+    Protected Function GetPepXMLCollisionMode(strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
 
-		Dim strCollisionModeUCase As String = strPSMCollisionMode.ToUpper()
+        Dim strCollisionModeUCase As String = strPSMCollisionMode.ToUpper()
 
-		Select Case strCollisionModeUCase
-			Case "CID", "ETD", "HCD"
-				strPepXMLCollisionMode = strCollisionModeUCase
-			Case "ETD/CID", "ETD-CID"
-				strPepXMLCollisionMode = "ETD/CID"
-			Case Else
-				If strCollisionModeUCase.StartsWith("CID") Then
-					strPepXMLCollisionMode = "CID"
-				ElseIf strCollisionModeUCase.StartsWith("HCD") Then
-					strPepXMLCollisionMode = "HCD"
-				ElseIf strCollisionModeUCase.StartsWith("ETD") Then
-					strPepXMLCollisionMode = "ETD"
-				Else
-					strPepXMLCollisionMode = String.Empty
-				End If
-		End Select
-
-		If String.IsNullOrEmpty(strPepXMLCollisionMode) Then
-			Return False
-		Else
-			Return True
-		End If
+        Select Case strCollisionModeUCase
+            Case "CID", "ETD", "HCD"
+                strPepXMLCollisionMode = strCollisionModeUCase
+            Case "ETD/CID", "ETD-CID"
+                strPepXMLCollisionMode = "ETD/CID"
+            Case Else
+                If strCollisionModeUCase.StartsWith("CID") Then
+                    strPepXMLCollisionMode = "CID"
+                ElseIf strCollisionModeUCase.StartsWith("HCD") Then
+                    strPepXMLCollisionMode = "HCD"
+                ElseIf strCollisionModeUCase.StartsWith("ETD") Then
+                    strPepXMLCollisionMode = "ETD"
+                Else
+                    strPepXMLCollisionMode = String.Empty
+                End If
+        End Select
+
+        If String.IsNullOrEmpty(strPepXMLCollisionMode) Then
+            Return False
+        Else
+            Return True
+        End If
 
-	End Function
-
-	''' <summary>
-	''' Initialize a Pep.XML file for writing
-	''' </summary>
-	''' <param name="strOutputFilePath"></param>
-	''' <param name="strFastaFilePath"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function InitializePepXMLFile(ByVal strOutputFilePath As String, ByVal strFastaFilePath As String) As Boolean
-
-		Dim fiOutputFile As FileInfo
-
-		If String.IsNullOrWhiteSpace(strFastaFilePath) Then
-			strFastaFilePath = "C:\Database\Unknown_Database.fasta"
-		End If
-
-		fiOutputFile = New FileInfo(strOutputFilePath)
-
-		Dim oSettings As System.Xml.XmlWriterSettings = New System.Xml.XmlWriterSettings()
-		oSettings.Indent = True
-		oSettings.OmitXmlDeclaration = False
-		oSettings.NewLineOnAttributes = False
-		oSettings.Encoding = System.Text.Encoding.ASCII
-
-		mXMLWriter = System.Xml.XmlWriter.Create(strOutputFilePath, oSettings)
-		mFileOpen = True
-
-		mXMLWriter.WriteStartDocument()
-		mXMLWriter.WriteProcessingInstruction("xml-stylesheet", "type=""text/xsl"" href=""pepXML_std.xsl""")
-
-		WriteHeaderElements(fiOutputFile)
-
-		WriteSearchSummary(strFastaFilePath)
-
-		Return True
-
-	End Function
-
-	Protected Sub InitializePNNLScoreNameMap()
-		mPNNLScoreNameMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-
-		' Sequest scores
-		mPNNLScoreNameMap.Add("XCorr", "xcorr")
-		mPNNLScoreNameMap.Add("DelCn", "deltacn")
-		mPNNLScoreNameMap.Add("Sp", "spscore")
-		mPNNLScoreNameMap.Add("DelCn2", "deltacnstar")
-		mPNNLScoreNameMap.Add("RankSp", "sprank")
-
-		' X!Tandem scores
-		mPNNLScoreNameMap.Add("Peptide_Hyperscore", "hyperscore")
-		mPNNLScoreNameMap.Add("Peptide_Expectation_Value", "expect")
-		mPNNLScoreNameMap.Add("y_score", "yscore")
-		mPNNLScoreNameMap.Add("b_score", "bscore")
-
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As String)
-		If String.IsNullOrEmpty(Value) Then
-			mXMLWriter.WriteAttributeString(strAttributeName, String.Empty)
-		Else
-			mXMLWriter.WriteAttributeString(strAttributeName, Value)
-		End If
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Integer)
-		mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString())
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Single)
-		WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Single, ByVal DigitsOfPrecision As Integer)
-		Dim strFormatString As String = "0"
-		If DigitsOfPrecision > 0 Then
-			strFormatString &= "." & New String("0"c, DigitsOfPrecision)
-		End If
-
-		mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
-	End Sub
-
-	Protected Sub WriteAttributePlusMinus(ByVal strAttributeName As String, ByVal Value As Double, ByVal DigitsOfPrecision As Integer)
-		mXMLWriter.WriteAttributeString(strAttributeName, PHRPReader.clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Double)
-		WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
-	End Sub
-
-	Protected Sub WriteAttribute(ByVal strAttributeName As String, ByVal Value As Double, ByVal DigitsOfPrecision As Integer)
-		Dim strFormatString As String = "0"
-		If DigitsOfPrecision > 0 Then
-			strFormatString &= "." & New String("0"c, DigitsOfPrecision)
-		End If
+    End Function
+
+    ''' <summary>
+    ''' Initialize a Pep.XML file for writing
+    ''' </summary>
+    ''' <param name="strOutputFilePath"></param>
+    ''' <param name="strFastaFilePath"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function InitializePepXMLFile(strOutputFilePath As String, strFastaFilePath As String) As Boolean
+
+        Dim fiOutputFile As FileInfo
+
+        If String.IsNullOrWhiteSpace(strFastaFilePath) Then
+            strFastaFilePath = "C:\Database\Unknown_Database.fasta"
+        End If
+
+        fiOutputFile = New FileInfo(strOutputFilePath)
+
+        Dim oSettings As System.Xml.XmlWriterSettings = New System.Xml.XmlWriterSettings()
+        oSettings.Indent = True
+        oSettings.OmitXmlDeclaration = False
+        oSettings.NewLineOnAttributes = False
+        oSettings.Encoding = System.Text.Encoding.ASCII
+
+        mXMLWriter = System.Xml.XmlWriter.Create(strOutputFilePath, oSettings)
+        mFileOpen = True
+
+        mXMLWriter.WriteStartDocument()
+        mXMLWriter.WriteProcessingInstruction("xml-stylesheet", "type=""text/xsl"" href=""pepXML_std.xsl""")
+
+        WriteHeaderElements(fiOutputFile)
+
+        WriteSearchSummary(strFastaFilePath)
+
+        Return True
+
+    End Function
+
+    Protected Sub InitializePNNLScoreNameMap()
+        mPNNLScoreNameMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+
+        ' Sequest scores
+        mPNNLScoreNameMap.Add("XCorr", "xcorr")
+        mPNNLScoreNameMap.Add("DelCn", "deltacn")
+        mPNNLScoreNameMap.Add("Sp", "spscore")
+        mPNNLScoreNameMap.Add("DelCn2", "deltacnstar")
+        mPNNLScoreNameMap.Add("RankSp", "sprank")
+
+        ' X!Tandem scores
+        mPNNLScoreNameMap.Add("Peptide_Hyperscore", "hyperscore")
+        mPNNLScoreNameMap.Add("Peptide_Expectation_Value", "expect")
+        mPNNLScoreNameMap.Add("y_score", "yscore")
+        mPNNLScoreNameMap.Add("b_score", "bscore")
+
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As String)
+        If String.IsNullOrEmpty(Value) Then
+            mXMLWriter.WriteAttributeString(strAttributeName, String.Empty)
+        Else
+            mXMLWriter.WriteAttributeString(strAttributeName, Value)
+        End If
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As Integer)
+        mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString())
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As Single)
+        WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As Single, DigitsOfPrecision As Integer)
+        Dim strFormatString As String = "0"
+        If DigitsOfPrecision > 0 Then
+            strFormatString &= "." & New String("0"c, DigitsOfPrecision)
+        End If
+
+        mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
+    End Sub
+
+    Protected Sub WriteAttributePlusMinus(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
+        mXMLWriter.WriteAttributeString(strAttributeName, PHRPReader.clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As Double)
+        WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
+    End Sub
+
+    Protected Sub WriteAttribute(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
+        Dim strFormatString As String = "0"
+        If DigitsOfPrecision > 0 Then
+            strFormatString &= "." & New String("0"c, DigitsOfPrecision)
+        End If
 
-		mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
-	End Sub
+        mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
+    End Sub
 
-	Protected Sub WriteNameValueElement(ByVal strElementName As String, ByVal strName As String, ByVal Value As String)
-		mXMLWriter.WriteStartElement(strElementName)
-		WriteAttribute("name", strName)
-		WriteAttribute("value", Value)
-		mXMLWriter.WriteEndElement()
-	End Sub
+    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As String)
+        mXMLWriter.WriteStartElement(strElementName)
+        WriteAttribute("name", strName)
+        WriteAttribute("value", Value)
+        mXMLWriter.WriteEndElement()
+    End Sub
 
-	Protected Sub WriteNameValueElement(ByVal strElementName As String, ByVal strName As String, ByVal Value As Double)
-		mXMLWriter.WriteStartElement(strElementName)
-		WriteAttribute("name", strName)
-		WriteAttribute("value", Value)
-		mXMLWriter.WriteEndElement()
-	End Sub
+    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As Double)
+        mXMLWriter.WriteStartElement(strElementName)
+        WriteAttribute("name", strName)
+        WriteAttribute("value", Value)
+        mXMLWriter.WriteEndElement()
+    End Sub
 
-	Protected Sub WriteNameValueElement(ByVal strElementName As String, ByVal strName As String, ByVal Value As Double, ByVal DigitsOfPrecision As Integer)
-		mXMLWriter.WriteStartElement(strElementName)
-		WriteAttribute("name", strName)
-		WriteAttribute("value", Value, DigitsOfPrecision)
-		mXMLWriter.WriteEndElement()
-	End Sub
-
-	Protected Sub WriteHeaderElements(ByVal fiOutputFile As FileInfo)
-
-		Dim dtSearchDate As System.DateTime
-
-		With mXMLWriter
-
-			.WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML")
-			.WriteAttributeString("date", System.DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"))
-			.WriteAttributeString("summary_xml", fiOutputFile.Name)
-			.WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML")
-			.WriteAttributeString("xmlns", "xsi", Nothing, "http://www.w3.org/2001/XMLSchema-instance")
-
-			' Old:               ("xsi", "schemaLocation", Nothing, "http://regis-web.systemsbiology.net/pepXML c:\Inetpub\wwwrootpepXML_v113.xsd")
-			.WriteAttributeString("xsi", "schemaLocation", Nothing, "http://sashimi.sourceforge.net/schema_revision/pepXML/pepXML_v117.xsd")
-
-			.WriteStartElement("analysis_summary")
-
-			dtSearchDate = mSearchEngineParams.SearchDate
-			If dtSearchDate < New System.DateTime(1980, 1, 2) Then
-				' Use the date of the input file since the reported SeachDate is invalid
-				Dim fiSourceFile As FileInfo = New FileInfo(mSourceFilePath)
-				If fiSourceFile.Exists Then
-					dtSearchDate = fiSourceFile.LastWriteTime
-				End If
-			End If
-
-			.WriteAttributeString("time", dtSearchDate.ToString("yyyy-MM-ddTHH:mm:ss"))
-			.WriteAttributeString("analysis", mSearchEngineParams.SearchEngineName)
-			.WriteAttributeString("version", mSearchEngineParams.SearchEngineVersion)
-			.WriteEndElement()
-
-			.WriteStartElement("msms_run_summary")
+    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As Double, DigitsOfPrecision As Integer)
+        mXMLWriter.WriteStartElement(strElementName)
+        WriteAttribute("name", strName)
+        WriteAttribute("value", Value, DigitsOfPrecision)
+        mXMLWriter.WriteEndElement()
+    End Sub
+
+    Protected Sub WriteHeaderElements(fiOutputFile As FileInfo)
+
+        Dim dtSearchDate As System.DateTime
+
+        With mXMLWriter
+
+            .WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML")
+            .WriteAttributeString("date", System.DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"))
+            .WriteAttributeString("summary_xml", fiOutputFile.Name)
+            .WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML")
+            .WriteAttributeString("xmlns", "xsi", Nothing, "http://www.w3.org/2001/XMLSchema-instance")
+
+            ' Old:               ("xsi", "schemaLocation", Nothing, "http://regis-web.systemsbiology.net/pepXML c:\Inetpub\wwwrootpepXML_v113.xsd")
+            .WriteAttributeString("xsi", "schemaLocation", Nothing, "http://sashimi.sourceforge.net/schema_revision/pepXML/pepXML_v117.xsd")
+
+            .WriteStartElement("analysis_summary")
+
+            dtSearchDate = mSearchEngineParams.SearchDate
+            If dtSearchDate < New System.DateTime(1980, 1, 2) Then
+                ' Use the date of the input file since the reported SeachDate is invalid
+                Dim fiSourceFile As FileInfo = New FileInfo(mSourceFilePath)
+                If fiSourceFile.Exists Then
+                    dtSearchDate = fiSourceFile.LastWriteTime
+                End If
+            End If
+
+            .WriteAttributeString("time", dtSearchDate.ToString("yyyy-MM-ddTHH:mm:ss"))
+            .WriteAttributeString("analysis", mSearchEngineParams.SearchEngineName)
+            .WriteAttributeString("version", mSearchEngineParams.SearchEngineVersion)
+            .WriteEndElement()
+
+            .WriteStartElement("msms_run_summary")
 
-			.WriteAttributeString("base_name", mDatasetName)
-			.WriteAttributeString("raw_data_type", "raw")
-			.WriteAttributeString("raw_data", ".mzXML")
-
-			.WriteStartElement("sample_enzyme")
-			.WriteAttributeString("name", mSearchEngineParams.Enzyme)
-
-			' ToDo: get the specificity info from mSearchEngineParams
-
-			If mSearchEngineParams.Enzyme.ToLower().Contains("trypsin") Then
-				.WriteStartElement("specificity")
-				.WriteAttributeString("cut", "KR")
-				.WriteAttributeString("no_cut", "P")
-				.WriteAttributeString("sense", "C")
-				.WriteEndElement()
-			Else
-				.WriteStartElement("specificity")
-				.WriteAttributeString("cut", "KR")
-				.WriteAttributeString("no_cut", "P")
-				.WriteAttributeString("sense", "C")
-				.WriteEndElement()
+            .WriteAttributeString("base_name", mDatasetName)
+            .WriteAttributeString("raw_data_type", "raw")
+            .WriteAttributeString("raw_data", ".mzXML")
+
+            .WriteStartElement("sample_enzyme")
+            .WriteAttributeString("name", mSearchEngineParams.Enzyme)
+
+            ' ToDo: get the specificity info from mSearchEngineParams
+
+            If mSearchEngineParams.Enzyme.ToLower().Contains("trypsin") Then
+                .WriteStartElement("specificity")
+                .WriteAttributeString("cut", "KR")
+                .WriteAttributeString("no_cut", "P")
+                .WriteAttributeString("sense", "C")
+                .WriteEndElement()
+            Else
+                .WriteStartElement("specificity")
+                .WriteAttributeString("cut", "KR")
+                .WriteAttributeString("no_cut", "P")
+                .WriteAttributeString("sense", "C")
+                .WriteEndElement()
 
-			End If
+            End If
 
-			.WriteEndElement()					' sample_enzyme
-
-		End With
-
-	End Sub
-
-	Protected Sub WriteSearchSummary(ByVal strFastaFilePath As String)
-		Dim lstTerminalSymbols As SortedSet(Of Char)
-		lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
+            .WriteEndElement()                  ' sample_enzyme
+
+        End With
+
+    End Sub
+
+    Protected Sub WriteSearchSummary(strFastaFilePath As String)
+        Dim lstTerminalSymbols As SortedSet(Of Char)
+        lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
 
-		Dim strFastaFilePathToUse As String = String.Empty
-		Dim strTargetResidues As String
-		Dim dblAAMass As Double
-
-		With mXMLWriter
-
-			.WriteStartElement("search_summary")
-
-			.WriteAttributeString("base_name", mDatasetName)
-			.WriteAttributeString("source_file", Path.GetFileName(mSourceFilePath))
-
-			.WriteAttributeString("search_engine", mSearchEngineParams.SearchEngineName)
-			.WriteAttributeString("search_engine_version", mSearchEngineParams.SearchEngineVersion)
-			.WriteAttributeString("precursor_mass_type", mSearchEngineParams.PrecursorMassType)
-			.WriteAttributeString("fragment_mass_type", mSearchEngineParams.FragmentMassType)
-
-			.WriteAttributeString("search_id", "1")
-
-			.WriteStartElement("search_database")
-
-			If Not String.IsNullOrEmpty(mSearchEngineParams.FastaFilePath) Then
-				Try
-					' Update the folder to be the start with C:\Database
-					strFastaFilePathToUse = Path.Combine("C:\Database", Path.GetFileName(mSearchEngineParams.FastaFilePath))
-				Catch ex As Exception
-					strFastaFilePathToUse = mSearchEngineParams.FastaFilePath
-				End Try
-			Else
-				strFastaFilePathToUse = String.Copy(strFastaFilePath)
-			End If
-			.WriteAttributeString("local_path", strFastaFilePathToUse)
-
-			.WriteAttributeString("type", "AA")
-			.WriteEndElement()		' search_database			
-		End With
+        Dim strFastaFilePathToUse As String = String.Empty
+        Dim strTargetResidues As String
+        Dim dblAAMass As Double
+
+        With mXMLWriter
+
+            .WriteStartElement("search_summary")
+
+            .WriteAttributeString("base_name", mDatasetName)
+            .WriteAttributeString("source_file", Path.GetFileName(mSourceFilePath))
+
+            .WriteAttributeString("search_engine", mSearchEngineParams.SearchEngineName)
+            .WriteAttributeString("search_engine_version", mSearchEngineParams.SearchEngineVersion)
+            .WriteAttributeString("precursor_mass_type", mSearchEngineParams.PrecursorMassType)
+            .WriteAttributeString("fragment_mass_type", mSearchEngineParams.FragmentMassType)
+
+            .WriteAttributeString("search_id", "1")
+
+            .WriteStartElement("search_database")
+
+            If Not String.IsNullOrEmpty(mSearchEngineParams.FastaFilePath) Then
+                Try
+                    ' Update the folder to be the start with C:\Database
+                    strFastaFilePathToUse = Path.Combine("C:\Database", Path.GetFileName(mSearchEngineParams.FastaFilePath))
+                Catch ex As Exception
+                    strFastaFilePathToUse = mSearchEngineParams.FastaFilePath
+                End Try
+            Else
+                strFastaFilePathToUse = String.Copy(strFastaFilePath)
+            End If
+            .WriteAttributeString("local_path", strFastaFilePathToUse)
+
+            .WriteAttributeString("type", "AA")
+            .WriteEndElement()      ' search_database			
+        End With
 
-		mXMLWriter.WriteStartElement("enzymatic_search_constraint")
-		WriteAttribute("enzyme", mSearchEngineParams.Enzyme)
-		WriteAttribute("max_num_internal_cleavages", mSearchEngineParams.MaxNumberInternalCleavages)
-		WriteAttribute("min_number_termini", mSearchEngineParams.MinNumberTermini)
-		mXMLWriter.WriteEndElement()		' enzymatic_search_constraint
+        mXMLWriter.WriteStartElement("enzymatic_search_constraint")
+        WriteAttribute("enzyme", mSearchEngineParams.Enzyme)
+        WriteAttribute("max_num_internal_cleavages", mSearchEngineParams.MaxNumberInternalCleavages)
+        WriteAttribute("min_number_termini", mSearchEngineParams.MinNumberTermini)
+        mXMLWriter.WriteEndElement()        ' enzymatic_search_constraint
 
-		' Amino acid mod details
-		For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
-			If objModDef.CanAffectPeptideResidues() Then
+        ' Amino acid mod details
+        For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
+            If objModDef.CanAffectPeptideResidues() Then
 
-				If String.IsNullOrEmpty(objModDef.TargetResidues) Then
-					' This modification can affect any amino acid (skip BJOUXZ)
-					strTargetResidues = "ACDEFGHIKLMNPQRSTVWY"
-				Else
-					strTargetResidues = objModDef.TargetResidues
-				End If
+                If String.IsNullOrEmpty(objModDef.TargetResidues) Then
+                    ' This modification can affect any amino acid (skip BJOUXZ)
+                    strTargetResidues = "ACDEFGHIKLMNPQRSTVWY"
+                Else
+                    strTargetResidues = objModDef.TargetResidues
+                End If
 
-				For Each chChar In strTargetResidues
-					If Not lstTerminalSymbols.Contains(chChar) Then
+                For Each chChar In strTargetResidues
+                    If Not lstTerminalSymbols.Contains(chChar) Then
 
-						mXMLWriter.WriteStartElement("aminoacid_modification")
+                        mXMLWriter.WriteStartElement("aminoacid_modification")
 
-						WriteAttribute("aminoacid", chChar)							' Amino acid symbol, e.g. A
-						WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)			' Mass difference, must begin with + or -
+                        WriteAttribute("aminoacid", chChar)                         ' Amino acid symbol, e.g. A
+                        WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must begin with + or -
 
-						dblAAMass = mPeptideMassCalculator.GetAminoAcidMass(chChar)
+                        dblAAMass = mPeptideMassCalculator.GetAminoAcidMass(chChar)
 
-						WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
+                        WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-						If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
-							WriteAttribute("variable", "Y")
-						Else
-							WriteAttribute("variable", "N")
-						End If
-						WriteAttribute("symbol", objModDef.ModificationSymbol)				' Symbol used by search-engine to denote this mod
+                        If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
+                            WriteAttribute("variable", "Y")
+                        Else
+                            WriteAttribute("variable", "N")
+                        End If
+                        WriteAttribute("symbol", objModDef.ModificationSymbol)              ' Symbol used by search-engine to denote this mod
 
-						WriteAttribute("description", objModDef.MassCorrectionTag)
+                        WriteAttribute("description", objModDef.MassCorrectionTag)
 
-						mXMLWriter.WriteEndElement()		' aminoacid_modification
+                        mXMLWriter.WriteEndElement()        ' aminoacid_modification
 
-					End If
-				Next
+                    End If
+                Next
 
-			End If
-		Next
+            End If
+        Next
 
-		' Protein/Peptide terminal mods
-		For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
-			If objModDef.CanAffectPeptideOrProteinTerminus() Then
+        ' Protein/Peptide terminal mods
+        For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
+            If objModDef.CanAffectPeptideOrProteinTerminus() Then
 
-				If String.IsNullOrEmpty(objModDef.TargetResidues) Then
-					' Target residues should not be empty for terminal mods
-					' But, we'll list them anyway
-					strTargetResidues = clsAminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS & clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS
-				Else
-					strTargetResidues = objModDef.TargetResidues
-				End If
+                If String.IsNullOrEmpty(objModDef.TargetResidues) Then
+                    ' Target residues should not be empty for terminal mods
+                    ' But, we'll list them anyway
+                    strTargetResidues = clsAminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS & clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS
+                Else
+                    strTargetResidues = objModDef.TargetResidues
+                End If
 
-				For Each chChar In strTargetResidues
-					If lstTerminalSymbols.Contains(chChar) Then
+                For Each chChar In strTargetResidues
+                    If lstTerminalSymbols.Contains(chChar) Then
 
-						mXMLWriter.WriteStartElement("terminal_modification")
+                        mXMLWriter.WriteStartElement("terminal_modification")
 
-						If chChar = clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
-							WriteAttribute("terminus", "c")
-							dblAAMass = clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE
-						Else
-							WriteAttribute("terminus", "n")
-							dblAAMass = clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE
-						End If
+                        If chChar = clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
+                            WriteAttribute("terminus", "c")
+                            dblAAMass = clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE
+                        Else
+                            WriteAttribute("terminus", "n")
+                            dblAAMass = clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE
+                        End If
 
-						WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)			' Mass difference, must beging with + or -
-						WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
+                        WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must beging with + or -
+                        WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-						If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
-							WriteAttribute("variable", "Y")
-						Else
-							WriteAttribute("variable", "N")
-						End If
+                        If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
+                            WriteAttribute("variable", "Y")
+                        Else
+                            WriteAttribute("variable", "N")
+                        End If
 
-						WriteAttribute("symbol", objModDef.ModificationSymbol)				' Symbol used by search-engine to denote this mod
+                        WriteAttribute("symbol", objModDef.ModificationSymbol)              ' Symbol used by search-engine to denote this mod
 
-						If chChar = clsAminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
-							' Modification can only occur at the protein terminus
-							WriteAttribute("protein_terminus", "Y")
-						Else
-							WriteAttribute("protein_terminus", "N")
-						End If
+                        If chChar = clsAminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
+                            ' Modification can only occur at the protein terminus
+                            WriteAttribute("protein_terminus", "Y")
+                        Else
+                            WriteAttribute("protein_terminus", "N")
+                        End If
 
-						WriteAttribute("description", objModDef.MassCorrectionTag)
+                        WriteAttribute("description", objModDef.MassCorrectionTag)
 
-						mXMLWriter.WriteEndElement()		' terminal_modification
+                        mXMLWriter.WriteEndElement()        ' terminal_modification
 
-					End If
-				Next
+                    End If
+                Next
 
-			End If
-		Next
+            End If
+        Next
 
-		' Parameters specific to the search engine
-		If mSearchEngineParams.Parameters Is Nothing OrElse mSearchEngineParams.Parameters.Count = 0 Then
-			' Write out two dummy-parameters
-			mXMLWriter.WriteComment("Dummy search-engine parameters")
+        ' Parameters specific to the search engine
+        If mSearchEngineParams.Parameters Is Nothing OrElse mSearchEngineParams.Parameters.Count = 0 Then
+            ' Write out two dummy-parameters
+            mXMLWriter.WriteComment("Dummy search-engine parameters")
 
-			WriteNameValueElement("parameter", "peptide_mass_tol", "3.000")
-			WriteNameValueElement("parameter", "fragment_ion_tol", "0.000")
-		Else
+            WriteNameValueElement("parameter", "peptide_mass_tol", "3.000")
+            WriteNameValueElement("parameter", "fragment_ion_tol", "0.000")
+        Else
 
-			mXMLWriter.WriteComment("Search-engine parameters")
+            mXMLWriter.WriteComment("Search-engine parameters")
 
-			' Write out the search-engine parameters
-			For Each objItem As KeyValuePair(Of String, String) In mSearchEngineParams.Parameters
-				WriteNameValueElement("parameter", objItem.Key, objItem.Value)
-			Next
-		End If
+            ' Write out the search-engine parameters
+            For Each objItem As KeyValuePair(Of String, String) In mSearchEngineParams.Parameters
+                WriteNameValueElement("parameter", objItem.Key, objItem.Value)
+            Next
+        End If
 
-		mXMLWriter.WriteEndElement()					' search_summary
+        mXMLWriter.WriteEndElement()                    ' search_summary
 
-	End Sub
+    End Sub
 
 	Public Sub WriteSpectrum(ByRef objSpectrum As udtSpectrumInfoType, ByRef lstHits As List(Of clsPSM), ByRef lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)))
 

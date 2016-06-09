@@ -26,18 +26,18 @@ Public Class clsPSMInfo
 		End Get
 	End Property
 
-	Public Sub New(ByVal strSpectrumKey As String, objPSM As PHRPReader.clsPSM)
-		mSpectrumKey = strSpectrumKey
-		mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
-		mPSM = objPSM
+    Public Sub New(strSpectrumKey As String, objPSM As PHRPReader.clsPSM)
+        mSpectrumKey = strSpectrumKey
+        mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+        mPSM = objPSM
 
-		If mPSM Is Nothing Then
-			mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
-		Else
-			If Not Double.TryParse(mPSM.MSGFSpecProb, mMSGFSpecProb) Then
-				mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
-			End If
-		End If
-	End Sub
+        If mPSM Is Nothing Then
+            mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+        Else
+            If Not Double.TryParse(mPSM.MSGFSpecProb, mMSGFSpecProb) Then
+                mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+            End If
+        End If
+    End Sub
 
 End Class

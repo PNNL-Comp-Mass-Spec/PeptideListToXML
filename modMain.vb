@@ -17,7 +17,7 @@
 
 Module modMain
 
-    Public Const PROGRAM_DATE As String = "May 19, 2015"
+    Public Const PROGRAM_DATE As String = "June 8, 2016"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
@@ -167,133 +167,133 @@ Module modMain
 
 	End Function
 
-	Private Sub DisplayProgressPercent(ByVal taskDescription As String, ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
-		If blnAddCarriageReturn Then
-			Console.WriteLine()
-		End If
-		If intPercentComplete > 100 Then intPercentComplete = 100
-		If String.IsNullOrEmpty(taskDescription) Then taskDescription = "Processing"
+    Private Sub DisplayProgressPercent(taskDescription As String, intPercentComplete As Integer, blnAddCarriageReturn As Boolean)
+        If blnAddCarriageReturn Then
+            Console.WriteLine()
+        End If
+        If intPercentComplete > 100 Then intPercentComplete = 100
+        If String.IsNullOrEmpty(taskDescription) Then taskDescription = "Processing"
 
-		Console.Write(taskDescription & ": " & intPercentComplete.ToString() & "% ")
-		If blnAddCarriageReturn Then
-			Console.WriteLine()
-		End If
-	End Sub
+        Console.Write(taskDescription & ": " & intPercentComplete.ToString() & "% ")
+        If blnAddCarriageReturn Then
+            Console.WriteLine()
+        End If
+    End Sub
 
-	Private Function GetAppVersion() As String
-		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
-	End Function
+    Private Function GetAppVersion() As String
+        Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
+    End Function
 
-	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
-		' Returns True if no problems; otherwise, returns false
+    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
+        ' Returns True if no problems; otherwise, returns false
 
-		Dim strValue As String = String.Empty
-		Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "O", "F", "E", "H", "X", "PepFilter", "ChargeFilter", "TopHitOnly", "MaxProteins", "NoMods", "NoMSGF", "NoScanStats", "Preview", "P", "S", "A", "R", "L", "Q"}
-		Dim intValue As Integer
+        Dim strValue As String = String.Empty
+        Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "O", "F", "E", "H", "X", "PepFilter", "ChargeFilter", "TopHitOnly", "MaxProteins", "NoMods", "NoMSGF", "NoScanStats", "Preview", "P", "S", "A", "R", "L", "Q"}
+        Dim intValue As Integer
 
-		Try
-			' Make sure no invalid parameters are present
-			If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
-				ShowErrorMessage("Invalid commmand line parameters",
-				  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
-				Return False
-			Else
-				With objParseCommandLine
-					' Query objParseCommandLine to see if various parameters are present
-					If .RetrieveValueForParameter("I", strValue) Then
-						mInputFilePath = strValue
-					ElseIf .NonSwitchParameterCount > 0 Then
-						mInputFilePath = .RetrieveNonSwitchParameter(0)
-					End If
+        Try
+            ' Make sure no invalid parameters are present
+            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
+                ShowErrorMessage("Invalid commmand line parameters",
+                  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
+                Return False
+            Else
+                With objParseCommandLine
+                    ' Query objParseCommandLine to see if various parameters are present
+                    If .RetrieveValueForParameter("I", strValue) Then
+                        mInputFilePath = strValue
+                    ElseIf .NonSwitchParameterCount > 0 Then
+                        mInputFilePath = .RetrieveNonSwitchParameter(0)
+                    End If
 
-					If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
+                    If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
 
-					' Future enum; mzIdentML is not yet supported
-					'If .RetrieveValueForParameter("M", strValue) Then
-					'    mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.mzIdentML
-					'End If
+                    ' Future enum; mzIdentML is not yet supported
+                    'If .RetrieveValueForParameter("M", strValue) Then
+                    '    mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.mzIdentML
+                    'End If
 
-					If .RetrieveValueForParameter("F", strValue) Then mFastaFilePath = strValue
+                    If .RetrieveValueForParameter("F", strValue) Then mFastaFilePath = strValue
 
-					If .RetrieveValueForParameter("E", strValue) Then mSearchEngineParamFileName = strValue
+                    If .RetrieveValueForParameter("E", strValue) Then mSearchEngineParamFileName = strValue
 
-					If .RetrieveValueForParameter("H", strValue) Then
-						If Integer.TryParse(strValue, intValue) Then
-							mHitsPerSpectrum = intValue
-						End If
-					End If
+                    If .RetrieveValueForParameter("H", strValue) Then
+                        If Integer.TryParse(strValue, intValue) Then
+                            mHitsPerSpectrum = intValue
+                        End If
+                    End If
 
-					If .RetrieveValueForParameter("X", strValue) Then mSkipXPeptides = True
-					If .RetrieveValueForParameter("TopHitOnly", strValue) Then mTopHitOnly = True
+                    If .RetrieveValueForParameter("X", strValue) Then mSkipXPeptides = True
+                    If .RetrieveValueForParameter("TopHitOnly", strValue) Then mTopHitOnly = True
 
 
-					If .RetrieveValueForParameter("MaxProteins", strValue) Then
-						If Integer.TryParse(strValue, intValue) Then
-							mMaxProteinsPerPSM = intValue
-						End If
-					End If
+                    If .RetrieveValueForParameter("MaxProteins", strValue) Then
+                        If Integer.TryParse(strValue, intValue) Then
+                            mMaxProteinsPerPSM = intValue
+                        End If
+                    End If
 
-					If .RetrieveValueForParameter("PepFilter", strValue) Then mPeptideFilterFilePath = strValue
-					If .RetrieveValueForParameter("ChargeFilter", strValue) Then
-						Try
-							If String.IsNullOrEmpty(strValue) Then
-								ShowErrorMessage("ChargeFilter switch must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3")
-								Console.WriteLine()
-								Return False
-							Else
-								For Each strCharge As String In strValue.Split(","c).ToList()
-									Dim intCharge As Integer
-									If Integer.TryParse(strCharge, intCharge) Then
-										mChargeFilterList.Add(intCharge)
-									Else
-										ShowErrorMessage("Invalid charge specified: " & strCharge)
-										Console.WriteLine()
-										Return False
-									End If
-								Next
-							End If
-						Catch ex As Exception
-							ShowErrorMessage("Error parsing the list of charges """ & strValue & """; should be a command separated list")
-							Console.WriteLine()
-							Return False
-						End Try
-					End If
+                    If .RetrieveValueForParameter("PepFilter", strValue) Then mPeptideFilterFilePath = strValue
+                    If .RetrieveValueForParameter("ChargeFilter", strValue) Then
+                        Try
+                            If String.IsNullOrEmpty(strValue) Then
+                                ShowErrorMessage("ChargeFilter switch must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3")
+                                Console.WriteLine()
+                                Return False
+                            Else
+                                For Each strCharge As String In strValue.Split(","c).ToList()
+                                    Dim intCharge As Integer
+                                    If Integer.TryParse(strCharge, intCharge) Then
+                                        mChargeFilterList.Add(intCharge)
+                                    Else
+                                        ShowErrorMessage("Invalid charge specified: " & strCharge)
+                                        Console.WriteLine()
+                                        Return False
+                                    End If
+                                Next
+                            End If
+                        Catch ex As Exception
+                            ShowErrorMessage("Error parsing the list of charges """ & strValue & """; should be a command separated list")
+                            Console.WriteLine()
+                            Return False
+                        End Try
+                    End If
 
-					If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
+                    If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
-					If .RetrieveValueForParameter("NoMods", strValue) Then mLoadModsAndSeqInfo = False
-					If .RetrieveValueForParameter("NoMSGF", strValue) Then mLoadMSGFResults = False
-					If .RetrieveValueForParameter("NoScanStats", strValue) Then mLoadScanStats = False
+                    If .RetrieveValueForParameter("NoMods", strValue) Then mLoadModsAndSeqInfo = False
+                    If .RetrieveValueForParameter("NoMSGF", strValue) Then mLoadMSGFResults = False
+                    If .RetrieveValueForParameter("NoScanStats", strValue) Then mLoadScanStats = False
 
-					If .RetrieveValueForParameter("Preview", strValue) Then mPreview = True
+                    If .RetrieveValueForParameter("Preview", strValue) Then mPreview = True
 
-					If .RetrieveValueForParameter("S", strValue) Then
-						mRecurseFolders = True
-						If Not Integer.TryParse(strValue, mRecurseFoldersMaxLevels) Then
-							mRecurseFoldersMaxLevels = 0
-						End If
-					End If
+                    If .RetrieveValueForParameter("S", strValue) Then
+                        mRecurseFolders = True
+                        If Not Integer.TryParse(strValue, mRecurseFoldersMaxLevels) Then
+                            mRecurseFoldersMaxLevels = 0
+                        End If
+                    End If
 
-					If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
-					If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
+                    If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
+                    If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
 
-					If .RetrieveValueForParameter("L", strValue) Then mLogMessagesToFile = True
-					If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
+                    If .RetrieveValueForParameter("L", strValue) Then mLogMessagesToFile = True
+                    If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
 
-				End With
+                End With
 
-				Return True
-			End If
+                Return True
+            End If
 
-		Catch ex As Exception
-			ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
+        End Try
 
-		Return False
+        Return False
 
-	End Function
+    End Function
 
-    Private Sub ShowErrorMessage(ByVal strMessage As String)
+    Private Sub ShowErrorMessage(strMessage As String)
         Dim strSeparator As String = "------------------------------------------------------------------------------"
 
         Console.WriteLine()
@@ -302,110 +302,110 @@ Module modMain
         Console.WriteLine(strSeparator)
         Console.WriteLine()
 
-		WriteToErrorStream(strMessage)
+        WriteToErrorStream(strMessage)
     End Sub
 
-	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As List(Of String))
-		Dim strSeparator As String = "------------------------------------------------------------------------------"
-		Dim strMessage As String
+    Private Sub ShowErrorMessage(strTitle As String, items As List(Of String))
+        Dim strSeparator As String = "------------------------------------------------------------------------------"
+        Dim strMessage As String
 
-		Console.WriteLine()
-		Console.WriteLine(strSeparator)
-		Console.WriteLine(strTitle)
-		strMessage = strTitle & ":"
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strTitle)
+        strMessage = strTitle & ":"
 
-		For Each item As String In items
-			Console.WriteLine("   " + item)
-			strMessage &= " " & item
-		Next
-		Console.WriteLine(strSeparator)
-		Console.WriteLine()
+        For Each item As String In items
+            Console.WriteLine("   " + item)
+            strMessage &= " " & item
+        Next
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
 
-		WriteToErrorStream(strMessage)
-	End Sub
+        WriteToErrorStream(strMessage)
+    End Sub
 
-	Private Sub ShowProgramHelp()
+    Private Sub ShowProgramHelp()
 
-		Try
-			Console.WriteLine("This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) and " & _
-			  "creates a PepXML with the appropriate information.  The various _SeqInfo files created by PHRP must be present in the same folder as the text file. " & _
-			  "If the MASIC Scan Stats file is also present, then elution time information will be extracted and included in the PepXML file. " & _
-			  "You should ideally also include the name of the parameter file used for the MS/MS search engine.")
-			Console.WriteLine()
+        Try
+            Console.WriteLine("This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) and " & _
+              "creates a PepXML with the appropriate information.  The various _SeqInfo files created by PHRP must be present in the same folder as the text file. " & _
+              "If the MASIC Scan Stats file is also present, then elution time information will be extracted and included in the PepXML file. " & _
+              "You should ideally also include the name of the parameter file used for the MS/MS search engine.")
+            Console.WriteLine()
 
-			Console.WriteLine("Program syntax:")
-			Console.WriteLine(IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " /I:PHRPResultsFile [/O:OutputFolderPath]")
-			Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]")
-			Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" & clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM & "]")
-			Console.WriteLine(" [/PepFilter:PeptideFilterFilePath] [/ChargeFilter:ChargeList]")
-			Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]")
-			Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
-			Console.WriteLine()
-			Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
-			   "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
-			Console.WriteLine()
-			Console.WriteLine("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder.")
-			Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGFDB)")
-			Console.WriteLine("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)")
-			Console.WriteLine("Use /X to specify that peptides with X residues should be skipped")
-			Console.WriteLine("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)")
-			Console.WriteLine("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " & clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM & ")")
-			Console.WriteLine("Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)")
-			Console.WriteLine("Use /ChargeFilter:ChargeList to specify one or more charges to filter on. Examples:")
-			Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2")
-			Console.WriteLine("  2+ and 3+ peptides:  /ChargeFilter:2,3")
-			Console.WriteLine()
-			Console.WriteLine("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; use /NoMods to skip these files")
-			Console.WriteLine("By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; use /NoMSGF to skip this file")
-			Console.WriteLine("By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded to determine elution times for scan numbers; use /NoScanStats to skip these files")
-			Console.WriteLine("Use /Preview to preview the files that would be required for the specified dataset (taking into account the other command line switches used)")
-			Console.WriteLine()
-			Console.WriteLine("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X")
-			Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " & _
-			   "When using /S, you can redirect the output of the results using /A. " & _
-			   "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
+            Console.WriteLine("Program syntax:")
+            Console.WriteLine(IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & " /I:PHRPResultsFile [/O:OutputFolderPath]")
+            Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]")
+            Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" & clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM & "]")
+            Console.WriteLine(" [/PepFilter:PeptideFilterFilePath] [/ChargeFilter:ChargeList]")
+            Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]")
+            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
+            Console.WriteLine()
+            Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
+               "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
+            Console.WriteLine()
+            Console.WriteLine("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder.")
+            Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGFDB)")
+            Console.WriteLine("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)")
+            Console.WriteLine("Use /X to specify that peptides with X residues should be skipped")
+            Console.WriteLine("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)")
+            Console.WriteLine("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " & clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM & ")")
+            Console.WriteLine("Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)")
+            Console.WriteLine("Use /ChargeFilter:ChargeList to specify one or more charges to filter on. Examples:")
+            Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2")
+            Console.WriteLine("  2+ and 3+ peptides:  /ChargeFilter:2,3")
+            Console.WriteLine()
+            Console.WriteLine("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; use /NoMods to skip these files")
+            Console.WriteLine("By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; use /NoMSGF to skip this file")
+            Console.WriteLine("By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded to determine elution times for scan numbers; use /NoScanStats to skip these files")
+            Console.WriteLine("Use /Preview to preview the files that would be required for the specified dataset (taking into account the other command line switches used)")
+            Console.WriteLine()
+            Console.WriteLine("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X")
+            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " & _
+               "When using /S, you can redirect the output of the results using /A. " & _
+               "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
 
-			Console.WriteLine("Use /L to log messages to a file.  If /Q is used, then no messages will be displayed at the console.")
-			Console.WriteLine()
+            Console.WriteLine("Use /L to log messages to a file.  If /Q is used, then no messages will be displayed at the console.")
+            Console.WriteLine()
 
-			Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012")
-			Console.WriteLine("Version: " & GetAppVersion())
-			Console.WriteLine()
+            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012")
+            Console.WriteLine("Version: " & GetAppVersion())
+            Console.WriteLine()
 
-			Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-			Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
-			Console.WriteLine()
+            Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
+            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
+            Console.WriteLine()
 
-			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			System.Threading.Thread.Sleep(750)
+            ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+            System.Threading.Thread.Sleep(750)
 
-		Catch ex As Exception
-			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
+        End Try
 
-	End Sub
+    End Sub
 
-	Private Sub WriteToErrorStream(strErrorMessage As String)
-		Try
-			Using swErrorStream As IO.StreamWriter = New IO.StreamWriter(Console.OpenStandardError())
-				swErrorStream.WriteLine(strErrorMessage)
-			End Using
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
-	End Sub
+    Private Sub WriteToErrorStream(strErrorMessage As String)
+        Try
+            Using swErrorStream As IO.StreamWriter = New IO.StreamWriter(Console.OpenStandardError())
+                swErrorStream.WriteLine(strErrorMessage)
+            End Using
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+    End Sub
 
-	Private Sub mPeptideListConverter_ErrorEvent(strMessage As String) Handles mPeptideListConverter.ErrorEvent
-		WriteToErrorStream(strMessage)
-	End Sub
+    Private Sub mPeptideListConverter_ErrorEvent(strMessage As String) Handles mPeptideListConverter.ErrorEvent
+        WriteToErrorStream(strMessage)
+    End Sub
 
-    Private Sub mPeptideListConverter_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideListConverter.ProgressChanged
+    Private Sub mPeptideListConverter_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideListConverter.ProgressChanged
         Const PROGRESS_DOT_INTERVAL_MSEC As Integer = 250
 
         If DateTime.UtcNow.Subtract(mLastPercentDisplayed).TotalSeconds >= 15 Then
             Console.WriteLine()
 
-			DisplayProgressPercent(taskDescription, CInt(percentComplete), False)
+            DisplayProgressPercent(taskDescription, CInt(percentComplete), False)
             mLastPercentDisplayed = DateTime.UtcNow
         Else
             If DateTime.UtcNow.Subtract(mLastProgressReportTime).TotalMilliseconds > PROGRESS_DOT_INTERVAL_MSEC Then
