@@ -58,11 +58,11 @@ Module modMain
     Private mLastProgressReportTime As System.DateTime
     Private mLastPercentDisplayed As System.DateTime
 
-	''' <summary>
-	''' Program entry point
-	''' </summary>
-	''' <returns>0 if no error, error code if an error</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Program entry point
+    ''' </summary>
+    ''' <returns>0 if no error, error code if an error</returns>
+    ''' <remarks></remarks>
     Public Function Main() As Integer
 
         Dim intReturnCode As Integer
@@ -230,7 +230,6 @@ Module modMain
                     If .IsParameterPresent("X") Then mSkipXPeptides = True
                     If .IsParameterPresent("TopHitOnly") Then mTopHitOnly = True
 
-
                     If .RetrieveValueForParameter("MaxProteins", strValue) Then
                         If Integer.TryParse(strValue, intValue) Then
                             mMaxProteinsPerPSM = intValue
@@ -345,11 +344,11 @@ Module modMain
             Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]")
             Console.WriteLine()
-            Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfdb_syn.txt or Dataset_inspect_syn.txt) " & _
+            Console.WriteLine("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_inspect_syn.txt) " &
                "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
             Console.WriteLine()
             Console.WriteLine("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder.")
-            Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGFDB)")
+            Console.WriteLine("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGF+)")
             Console.WriteLine("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)")
             Console.WriteLine("Use /X to specify that peptides with X residues should be skipped")
             Console.WriteLine("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)")
