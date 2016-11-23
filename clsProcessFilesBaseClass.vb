@@ -420,10 +420,10 @@ Public MustInherit Class clsProcessFilesBaseClass
 
                 ' Call RecurseFoldersWork
                 Const intRecursionLevel As Integer = 1
-                blnSuccess = RecurseFoldersWork(strInputFolderPath, strInputFilePathOrFolder, strOutputFolderName, _
-                  strParameterFilePath, strOutputFolderAlternatePath, _
-                  blnRecreateFolderHierarchyInAlternatePath, strExtensionsToParse, _
-                  intFileProcessCount, intFileProcessFailCount, _
+                blnSuccess = RecurseFoldersWork(strInputFolderPath, strInputFilePathOrFolder, strOutputFolderName,
+                  strParameterFilePath, strOutputFolderAlternatePath,
+                  blnRecreateFolderHierarchyInAlternatePath, strExtensionsToParse,
+                  intFileProcessCount, intFileProcessFailCount,
                   intRecursionLevel, intRecurseFoldersMaxLevels)
 
             Else
@@ -440,10 +440,10 @@ Public MustInherit Class clsProcessFilesBaseClass
 
     End Function
 
-    Private Function RecurseFoldersWork(strInputFolderPath As String, strFileNameMatch As String, strOutputFolderName As String, _
-       strParameterFilePath As String, strOutputFolderAlternatePath As String, _
-       blnRecreateFolderHierarchyInAlternatePath As Boolean, strExtensionsToParse() As String, _
-       ByRef intFileProcessCount As Integer, ByRef intFileProcessFailCount As Integer, _
+    Private Function RecurseFoldersWork(strInputFolderPath As String, strFileNameMatch As String, strOutputFolderName As String,
+       strParameterFilePath As String, strOutputFolderAlternatePath As String,
+       blnRecreateFolderHierarchyInAlternatePath As Boolean, strExtensionsToParse() As String,
+       ByRef intFileProcessCount As Integer, ByRef intFileProcessFailCount As Integer,
        intRecursionLevel As Integer, intRecurseFoldersMaxLevels As Integer) As Boolean
         ' If intRecurseFoldersMaxLevels is <=0 then we recurse infinitely
 
@@ -544,10 +544,10 @@ Public MustInherit Class clsProcessFilesBaseClass
             If intRecurseFoldersMaxLevels <= 0 OrElse intRecursionLevel <= intRecurseFoldersMaxLevels Then
                 ' Call this function for each of the subfolders of ioInputFolderInfo
                 For Each ioSubFolderInfo As DirectoryInfo In ioInputFolderInfo.GetDirectories()
-                    blnSuccess = RecurseFoldersWork(ioSubFolderInfo.FullName, strFileNameMatch, strOutputFolderName, _
-                      strParameterFilePath, strOutputFolderAlternatePath, _
-                      blnRecreateFolderHierarchyInAlternatePath, strExtensionsToParse, _
-                      intFileProcessCount, intFileProcessFailCount, _
+                    blnSuccess = RecurseFoldersWork(ioSubFolderInfo.FullName, strFileNameMatch, strOutputFolderName,
+                      strParameterFilePath, strOutputFolderAlternatePath,
+                      blnRecreateFolderHierarchyInAlternatePath, strExtensionsToParse,
+                      intFileProcessCount, intFileProcessFailCount,
                       intRecursionLevel + 1, intRecurseFoldersMaxLevels)
 
                     If Not blnSuccess Then Exit For
@@ -566,11 +566,11 @@ Public MustInherit Class clsProcessFilesBaseClass
     '' The following functions should be placed in any derived class
     '' Cannot define as MustOverride since it contains a customized enumerated type (eDerivedClassErrorCodes) in the function declaration
 
-    ''Private Sub SetLocalErrorCode(ByVal eNewErrorCode As eDerivedClassErrorCodes)
+    ''Private Sub SetLocalErrorCode(eNewErrorCode As eDerivedClassErrorCodes)
     ''    SetLocalErrorCode(eNewErrorCode, False)
     ''End Sub
 
-    ''Private Sub SetLocalErrorCode(ByVal eNewErrorCode As eDerivedClassErrorCodes, ByVal blnLeaveExistingErrorCodeUnchanged As Boolean)
+    ''Private Sub SetLocalErrorCode(eNewErrorCode As eDerivedClassErrorCodes, blnLeaveExistingErrorCodeUnchanged As Boolean)
     ''    If blnLeaveExistingErrorCodeUnchanged AndAlso mLocalErrorCode <> eDerivedClassErrorCodes.NoError Then
     ''        ' An error code is already defined; do not change it
     ''    Else

@@ -12,7 +12,7 @@ Imports System.Collections.Generic
 ''' <remarks>
 ''' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 ''' Created in October 2013
-''' Last updated in November 2013
+''' Last updated in October 2015
 ''' </remarks>
 Public MustInherit Class clsProcessFilesOrFoldersBase
 
@@ -56,9 +56,9 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     ''' Keys in this dictionary are the log type and message (separated by an underscore), values are the most recent time the string was logged
     ''' </summary>
     ''' <remarks></remarks>
-    Protected mLogDataCache As Dictionary(Of String, DateTime)
-    Protected mLogDataCacheStartTime As DateTime
-    Protected Const MAX_LOGDATA_CACHE_SIZE As Integer = 100000
+    Private ReadOnly mLogDataCache As Dictionary(Of String, DateTime)
+
+    Private Const MAX_LOGDATA_CACHE_SIZE As Integer = 100000
 
 #End Region
 
@@ -148,8 +148,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
         mLogFolderPath = String.Empty
         mLogFilePath = String.Empty
 
-        mLogDataCache = New Dictionary(Of String, DateTime)
-        mLogDataCacheStartTime = DateTime.UtcNow
+        mLogDataCache = New Dictionary(Of String, DateTime)        
     End Sub
 
 
@@ -216,7 +215,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     ''' </summary>
     ''' <remarks></remarks>
     Public Shared Sub GarbageCollectNow()
-        Const intMaxWaitTimeMSec As Integer = 1000
+        Const intMaxWaitTimeMSec = 1000
         GarbageCollectNow(intMaxWaitTimeMSec)
     End Sub
 
@@ -226,7 +225,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     ''' <param name="intMaxWaitTimeMSec"></param>
     ''' <remarks></remarks>
     Public Shared Sub GarbageCollectNow(intMaxWaitTimeMSec As Integer)
-        Const THREAD_SLEEP_TIME_MSEC As Integer = 100
+        Const THREAD_SLEEP_TIME_MSEC = 100
 
         Dim intTotalThreadWaitTimeMsec As Integer
         If intMaxWaitTimeMSec < 100 Then intMaxWaitTimeMSec = 100
@@ -434,8 +433,8 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
                 mLogFile.AutoFlush = True
 
                 If Not blnOpeningExistingFile Then
-                    mLogFile.WriteLine("Date" & ControlChars.Tab & _
-                     "Type" & ControlChars.Tab & _
+                    mLogFile.WriteLine("Date" & ControlChars.Tab &
+                     "Type" & ControlChars.Tab &
                      "Message")
                 End If
 
@@ -449,7 +448,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
         End If
 
         If Not mLogFile Is Nothing Then
-            Dim blnWriteToLog As Boolean = True
+            Dim blnWriteToLog = True
 
             Dim strLogKey As String = strMessageType & "_" & strMessage
             Dim dtLastLogTime As DateTime
@@ -469,8 +468,8 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
             If blnWriteToLog Then
 
                 mLogFile.WriteLine(
-                  DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & _
-                  strMessageType & ControlChars.Tab & _
+                  DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab &
+                  strMessageType & ControlChars.Tab &
                   strMessage)
 
                 If blnMessageCached Then
@@ -499,7 +498,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
         Static dtLastReportTime As DateTime
 
         If Not String.IsNullOrWhiteSpace(strMessage) Then
-            If String.Equals(strMessage, strLastMessage) AndAlso _
+            If String.Equals(strMessage, strLastMessage) AndAlso
                DateTime.UtcNow.Subtract(dtLastReportTime).TotalSeconds < 0.5 Then
                 ' Duplicate message; do not raise any events
             Else
@@ -547,7 +546,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     End Sub
 
     Protected Sub ShowErrorMessage(strMessage As String, blnAllowLogToFile As Boolean, intDuplicateHoldoffHours As Integer)
-        Const strSeparator As String = "------------------------------------------------------------------------------"
+        Const strSeparator = "------------------------------------------------------------------------------"
 
         Console.WriteLine()
         Console.WriteLine(strSeparator)
@@ -579,7 +578,6 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     Protected Sub ShowMessage(strMessage As String, blnAllowLogToFile As Boolean, blnPrecedeWithNewline As Boolean)
         ShowMessage(strMessage, blnAllowLogToFile, blnPrecedeWithNewline, intDuplicateHoldoffHours:=0)
     End Sub
-
 
     Protected Sub ShowMessage(
       strMessage As String,
@@ -636,7 +634,7 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
             ' Sort by date
             lstDates.Sort()
 
-            Dim intThresholdIndex As Integer = CInt(Math.Floor(mLogDataCache.Count - MAX_LOGDATA_CACHE_SIZE * 0.8))
+            Dim intThresholdIndex = CInt(Math.Floor(mLogDataCache.Count - MAX_LOGDATA_CACHE_SIZE * 0.8))
             If intThresholdIndex < 0 Then intThresholdIndex = 0
 
             Dim dtThreshold = lstDates(intThresholdIndex)
@@ -658,14 +656,13 @@ Public MustInherit Class clsProcessFilesOrFoldersBase
     Private Sub UpdateLogDataCache(strLogFilePath As String, dtDateThresholdToStore As DateTime)
         Static dtLastErrorShown As DateTime = DateTime.UtcNow.AddSeconds(-60)
 
-        Dim reParseLine As Regex = New Regex("^([^\t]+)\t([^\t]+)\t(.+)", RegexOptions.Compiled)
+        Dim reParseLine = New Regex("^([^\t]+)\t([^\t]+)\t(.+)", RegexOptions.Compiled)
 
         Try
             mLogDataCache.Clear()
-            mLogDataCacheStartTime = dtDateThresholdToStore
 
             Using srLogFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While srLogFile.Peek > -1
+                While Not srLogFile.EndOfStream
                     Dim strLineIn = srLogFile.ReadLine()
                     Dim reMatch = reParseLine.Match(strLineIn)
 
