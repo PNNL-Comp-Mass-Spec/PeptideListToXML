@@ -227,8 +227,8 @@ Module modMain
                         End If
                     End If
 
-                    If .RetrieveValueForParameter("X", strValue) Then mSkipXPeptides = True
-                    If .RetrieveValueForParameter("TopHitOnly", strValue) Then mTopHitOnly = True
+                    If .IsParameterPresent("X") Then mSkipXPeptides = True
+                    If .IsParameterPresent("TopHitOnly") Then mTopHitOnly = True
 
 
                     If .RetrieveValueForParameter("MaxProteins", strValue) Then
@@ -265,11 +265,11 @@ Module modMain
 
                     If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
-                    If .RetrieveValueForParameter("NoMods", strValue) Then mLoadModsAndSeqInfo = False
-                    If .RetrieveValueForParameter("NoMSGF", strValue) Then mLoadMSGFResults = False
-                    If .RetrieveValueForParameter("NoScanStats", strValue) Then mLoadScanStats = False
+                    If .IsParameterPresent("NoMods") Then mLoadModsAndSeqInfo = False
+                    If .IsParameterPresent("NoMSGF") Then mLoadMSGFResults = False
+                    If .IsParameterPresent("NoScanStats") Then mLoadScanStats = False
 
-                    If .RetrieveValueForParameter("Preview", strValue) Then mPreview = True
+                    If .IsParameterPresent("Preview") Then mPreview = True
 
                     If .RetrieveValueForParameter("S", strValue) Then
                         mRecurseFolders = True
@@ -279,10 +279,10 @@ Module modMain
                     End If
 
                     If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
-                    If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
+                    If .IsParameterPresent("R") Then mRecreateFolderHierarchyInAlternatePath = True
 
-                    If .RetrieveValueForParameter("L", strValue) Then mLogMessagesToFile = True
-                    If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
+                    If .IsParameterPresent("L") Then mLogMessagesToFile = True
+                    If .IsParameterPresent("Q") Then mQuietMode = True
 
                 End With
 
