@@ -17,155 +17,159 @@
 
 Module modMain
 
-    Public Const PROGRAM_DATE As String = "June 13, 2016"
+    Public Const PROGRAM_DATE As String = "November 23, 2016"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
     Private mParameterFilePath As String            ' Optional
 
-	Private mFastaFilePath As String
-	Private mSearchEngineParamFileName As String
-	Private mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
-	Private mPreview As Boolean
+    Private mFastaFilePath As String
+    Private mSearchEngineParamFileName As String
+    Private mHitsPerSpectrum As Integer              ' Number of hits per spectrum to store; 0 means to store all hits
+    Private mPreview As Boolean
 
-	Private mSkipXPeptides As Boolean
-	Private mTopHitOnly As Boolean
-	Private mMaxProteinsPerPSM As Integer
+    Private mSkipXPeptides As Boolean
+    Private mTopHitOnly As Boolean
+    Private mMaxProteinsPerPSM As Integer
 
-	Private mPeptideFilterFilePath As String
-	Private mChargeFilterList As List(Of Integer)
+    Private mPeptideFilterFilePath As String
+    Private mChargeFilterList As List(Of Integer)
 
-	Private mLoadModsAndSeqInfo As Boolean
-	Private mLoadMSGFResults As Boolean
-	Private mLoadScanStats As Boolean
+    Private mLoadModsAndSeqInfo As Boolean
+    Private mLoadMSGFResults As Boolean
+    Private mLoadScanStats As Boolean
 
-	' Future enum; mzIdentML is not yet supported
-	' Private mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
+    ' Future enum; mzIdentML is not yet supported
+    ' Private mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
 
-	Private mOutputFolderAlternatePath As String				' Optional
-	Private mRecreateFolderHierarchyInAlternatePath As Boolean	' Optional
+    Private mOutputFolderAlternatePath As String                ' Optional
+    Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
 
-	Private mRecurseFolders As Boolean
-	Private mRecurseFoldersMaxLevels As Integer
+    Private mRecurseFolders As Boolean
+    Private mRecurseFoldersMaxLevels As Integer
 
-	Private mLogMessagesToFile As Boolean
-	Private mLogFilePath As String = String.Empty
-	Private mLogFolderPath As String = String.Empty
+    Private mLogMessagesToFile As Boolean
+    Private mLogFilePath As String = String.Empty
+    Private mLogFolderPath As String = String.Empty
 
-	Private mQuietMode As Boolean
+    Private mQuietMode As Boolean
 
-	Private WithEvents mPeptideListConverter As clsPeptideListToXML
-	Private mLastProgressReportTime As System.DateTime
-	Private mLastPercentDisplayed As System.DateTime
+    Private WithEvents mPeptideListConverter As clsPeptideListToXML
+    Private mLastProgressReportTime As System.DateTime
+    Private mLastPercentDisplayed As System.DateTime
 
-	Public Function Main() As Integer
-		' Returns 0 if no error, error code if an error
+	''' <summary>
+	''' Program entry point
+	''' </summary>
+	''' <returns>0 if no error, error code if an error</returns>
+	''' <remarks></remarks>
+    Public Function Main() As Integer
 
-		Dim intReturnCode As Integer
-		Dim objParseCommandLine As New clsParseCommandLine
-		Dim blnProceed As Boolean
+        Dim intReturnCode As Integer
+        Dim objParseCommandLine As New clsParseCommandLine
+        Dim blnProceed As Boolean
 
-		' Initialize the options
-		intReturnCode = 0
-		mInputFilePath = String.Empty
-		mOutputFolderPath = String.Empty
-		mParameterFilePath = String.Empty
+        ' Initialize the options
+        intReturnCode = 0
+        mInputFilePath = String.Empty
+        mOutputFolderPath = String.Empty
+        mParameterFilePath = String.Empty
 
-		mFastaFilePath = String.Empty
-		mSearchEngineParamFileName = String.Empty
-		mHitsPerSpectrum = 3
-		mPreview = False
+        mFastaFilePath = String.Empty
+        mSearchEngineParamFileName = String.Empty
+        mHitsPerSpectrum = 3
+        mPreview = False
 
-		mSkipXPeptides = False
-		mTopHitOnly = False
-		mMaxProteinsPerPSM = 100
+        mSkipXPeptides = False
+        mTopHitOnly = False
+        mMaxProteinsPerPSM = 100
 
-		mPeptideFilterFilePath = String.Empty
-		mChargeFilterList = New List(Of Integer)
+        mPeptideFilterFilePath = String.Empty
+        mChargeFilterList = New List(Of Integer)
 
-		mLoadModsAndSeqInfo = True
-		mLoadMSGFResults = True
-		mLoadScanStats = True
+        mLoadModsAndSeqInfo = True
+        mLoadMSGFResults = True
+        mLoadScanStats = True
 
-		' Future enum; mzIdentML is not yet supported
-		' mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.PepXML
+        ' Future enum; mzIdentML is not yet supported
+        ' mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.PepXML
 
-		mRecurseFolders = False
-		mRecurseFoldersMaxLevels = 0
+        mRecurseFolders = False
+        mRecurseFoldersMaxLevels = 0
 
-		mQuietMode = False
-		mLogMessagesToFile = False
-		mLogFilePath = String.Empty
-		mLogFolderPath = String.Empty
+        mQuietMode = False
+        mLogMessagesToFile = False
+        mLogFilePath = String.Empty
+        mLogFolderPath = String.Empty
 
-		Try
-			blnProceed = False
-			If objParseCommandLine.ParseCommandLine Then
-				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
-			End If
+        Try
+            blnProceed = False
+            If objParseCommandLine.ParseCommandLine Then
+                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+            End If
 
-			If Not blnProceed OrElse _
-			   objParseCommandLine.NeedToShowHelp OrElse _
-			   objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
-			   mInputFilePath.Length = 0 Then
-				ShowProgramHelp()
-				intReturnCode = -1
-			Else
+            If Not blnProceed OrElse _
+               objParseCommandLine.NeedToShowHelp OrElse _
+               objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
+               mInputFilePath.Length = 0 Then
+                ShowProgramHelp()
+                intReturnCode = -1
+            Else
 
-				mPeptideListConverter = New clsPeptideListToXML
+                mPeptideListConverter = New clsPeptideListToXML()
 
-				' Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-				With mPeptideListConverter
-					.ShowMessages = Not mQuietMode
-					.LogMessagesToFile = mLogMessagesToFile
+                ' Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
+                With mPeptideListConverter
+                    .ShowMessages = Not mQuietMode
+                    .LogMessagesToFile = mLogMessagesToFile
 
-					.FastaFilePath = mFastaFilePath
-					.SearchEngineParamFileName = mSearchEngineParamFileName
+                    .FastaFilePath = mFastaFilePath
+                    .SearchEngineParamFileName = mSearchEngineParamFileName
 
-					.HitsPerSpectrum = mHitsPerSpectrum
-					.PreviewMode = mPreview
-					.SkipXPeptides = mSkipXPeptides
-					.TopHitOnly = mTopHitOnly
-					.MaxProteinsPerPSM = mMaxProteinsPerPSM
+                    .HitsPerSpectrum = mHitsPerSpectrum
+                    .PreviewMode = mPreview
+                    .SkipXPeptides = mSkipXPeptides
+                    .TopHitOnly = mTopHitOnly
+                    .MaxProteinsPerPSM = mMaxProteinsPerPSM
 
-					.PeptideFilterFilePath = mPeptideFilterFilePath
-					.ChargeFilterList = mChargeFilterList
+                    .PeptideFilterFilePath = mPeptideFilterFilePath
+                    .ChargeFilterList = mChargeFilterList
 
-					.LoadModsAndSeqInfo = mLoadModsAndSeqInfo
-					.LoadMSGFResults = mLoadMSGFResults
-					.LoadScanStats = mLoadScanStats
+                    .LoadModsAndSeqInfo = mLoadModsAndSeqInfo
+                    .LoadMSGFResults = mLoadMSGFResults
+                    .LoadScanStats = mLoadScanStats
 
-					' .OutputFormat = mOutputFormat
+                    ' .OutputFormat = mOutputFormat
 
-				End With
+                End With
 
-				If mRecurseFolders Then
-					If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
-						intReturnCode = 0
-					Else
-						intReturnCode = mPeptideListConverter.ErrorCode
-					End If
-				Else
-					If mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
-						intReturnCode = 0
-					Else
-						intReturnCode = mPeptideListConverter.ErrorCode
-						If intReturnCode <> 0 AndAlso Not mQuietMode Then
-							ShowErrorMessage("Error while processing: " & mPeptideListConverter.GetErrorMessage())
-						End If
-					End If
-				End If
+                If mRecurseFolders Then
+                    If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
+                        intReturnCode = 0
+                    Else
+                        intReturnCode = mPeptideListConverter.ErrorCode
+                    End If
+                Else
+                    If mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
+                        intReturnCode = 0
+                    Else
+                        intReturnCode = mPeptideListConverter.ErrorCode
+                        If intReturnCode <> 0 AndAlso Not mQuietMode Then
+                            ShowErrorMessage("Error while processing: " & mPeptideListConverter.GetErrorMessage())
+                        End If
+                    End If
+                End If
 
-			End If
+            End If
 
-		Catch ex As Exception
-			ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
-			intReturnCode = -1
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
+            intReturnCode = -1
+        End Try
 
-		Return intReturnCode
+        Return intReturnCode
 
-	End Function
+    End Function
 
     Private Sub DisplayProgressPercent(taskDescription As String, intPercentComplete As Integer, blnAddCarriageReturn As Boolean)
         If blnAddCarriageReturn Then

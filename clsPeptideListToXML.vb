@@ -10,41 +10,41 @@ Option Strict On
 Imports System.IO
 
 Public Class clsPeptideListToXML
-	Inherits clsProcessFilesBaseClass
+    Inherits clsProcessFilesBaseClass
 
-	Public Sub New()
+    Public Sub New()
         MyBase.mFileDate = "June 13, 2016"
-		InitializeLocalVariables()
-	End Sub
+        InitializeLocalVariables()
+    End Sub
 
 #Region "Constants and Enums"
 
-	Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
-	Public Const DEFAULT_HITS_PER_SPECTRUM As Integer = 3
-	Public Const DEFAULT_MAX_PROTEINS_PER_PSM As Integer = 100
+    Public Const XML_SECTION_OPTIONS As String = "PeptideListToXMLOptions"
+    Public Const DEFAULT_HITS_PER_SPECTRUM As Integer = 3
+    Public Const DEFAULT_MAX_PROTEINS_PER_PSM As Integer = 100
 
-	Protected Const PREVIEW_PAD_WIDTH As Integer = 22
+    Protected Const PREVIEW_PAD_WIDTH As Integer = 22
 
-	' Future enum; mzIdentML is not yet supported
-	'Public Enum ePeptideListOutputFormat
-	'    PepXML = 0
-	'    mzIdentML = 1
-	'End Enum
+    ' Future enum; mzIdentML is not yet supported
+    'Public Enum ePeptideListOutputFormat
+    '    PepXML = 0
+    '    mzIdentML = 1
+    'End Enum
 
-	''' <summary>
-	''' Error codes specialized for this class
-	''' </summary>
-	''' <remarks></remarks>
-	Public Enum ePeptideListToXMLErrorCodes
-		NoError = 0
-		ErrorReadingInputFile = 1
-		ErrorWritingOutputFile = 2
-		ModSummaryFileNotFound = 3
-		SeqInfoFileNotFound = 4
-		MSGFStatsFileNotFound = 5
-		ScanStatsFileNotFound = 6
-		UnspecifiedError = -1
-	End Enum
+    ''' <summary>
+    ''' Error codes specialized for this class
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Enum ePeptideListToXMLErrorCodes
+        NoError = 0
+        ErrorReadingInputFile = 1
+        ErrorWritingOutputFile = 2
+        ModSummaryFileNotFound = 3
+        SeqInfoFileNotFound = 4
+        MSGFStatsFileNotFound = 5
+        ScanStatsFileNotFound = 6
+        UnspecifiedError = -1
+    End Enum
 
 #End Region
 
@@ -54,242 +54,242 @@ Public Class clsPeptideListToXML
 
 #Region "Classwide Variables"
 
-	' Future enum; mzIdentML is not yet supported
-	'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
+    ' Future enum; mzIdentML is not yet supported
+    'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
 
-	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
-	Protected WithEvents mXMLWriter As clsPepXMLWriter
+    Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
+    Protected WithEvents mXMLWriter As clsPepXMLWriter
 
-	' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
-	Protected mDatasetName As String
-	Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
-	Protected mSeqToProteinMapCached As SortedList(Of Integer, List(Of PHRPReader.clsProteinInfo))
+    ' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
+    Protected mDatasetName As String
+    Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+    Protected mSeqToProteinMapCached As SortedList(Of Integer, List(Of PHRPReader.clsProteinInfo))
 
-	' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
-	Protected mFastaFilePath As String
-	Protected mSearchEngineParamFileName As String
-	Protected mHitsPerSpectrum As Integer				 ' Number of hits per spectrum to store; 0 means to store all hits
-	Protected mPreviewMode As Boolean
+    ' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
+    Protected mFastaFilePath As String
+    Protected mSearchEngineParamFileName As String
+    Protected mHitsPerSpectrum As Integer                ' Number of hits per spectrum to store; 0 means to store all hits
+    Protected mPreviewMode As Boolean
 
-	Protected mSkipXPeptides As Boolean
-	Protected mTopHitOnly As Boolean
-	Protected mMaxProteinsPerPSM As Integer
+    Protected mSkipXPeptides As Boolean
+    Protected mTopHitOnly As Boolean
+    Protected mMaxProteinsPerPSM As Integer
 
-	Protected mPeptideFilterFilePath As String
-	Protected mChargeFilterList As List(Of Integer)
+    Protected mPeptideFilterFilePath As String
+    Protected mChargeFilterList As List(Of Integer)
 
-	Protected mLoadModsAndSeqInfo As Boolean
-	Protected mLoadMSGFResults As Boolean
-	Protected mLoadScanStats As Boolean
+    Protected mLoadModsAndSeqInfo As Boolean
+    Protected mLoadMSGFResults As Boolean
+    Protected mLoadScanStats As Boolean
 
-	' This dictionary tracks the PSMs (hits) for each spectrum
-	' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-	Protected mPSMsBySpectrumKey As Dictionary(Of String, List(Of PHRPReader.clsPSM))
+    ' This dictionary tracks the PSMs (hits) for each spectrum
+    ' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
+    Protected mPSMsBySpectrumKey As Dictionary(Of String, List(Of PHRPReader.clsPSM))
 
-	' This dictionary tracks the spectrum info
-	' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-	Protected mSpectrumInfo As Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
+    ' This dictionary tracks the spectrum info
+    ' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
+    Protected mSpectrumInfo As Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
 
-	Private mLocalErrorCode As ePeptideListToXMLErrorCodes
+    Private mLocalErrorCode As ePeptideListToXMLErrorCodes
 #End Region
 
 #Region "Processing Options Interface Functions"
 
-	Public Property ChargeFilterList As List(Of Integer)
-		Get
-			Return mChargeFilterList
-		End Get
-		Set(value As List(Of Integer))
-			If value Is Nothing Then
-				mChargeFilterList = New List(Of Integer)
-			Else
-				mChargeFilterList = value
-			End If
-		End Set
-	End Property
-	''' <summary>
-	''' Dataset name; auto-determined by the PHRP Reader class
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property DatasetName() As String
-		Get
-			Return mDatasetName
-		End Get
-	End Property
+    Public Property ChargeFilterList As List(Of Integer)
+        Get
+            Return mChargeFilterList
+        End Get
+        Set(value As List(Of Integer))
+            If value Is Nothing Then
+                mChargeFilterList = New List(Of Integer)
+            Else
+                mChargeFilterList = value
+            End If
+        End Set
+    End Property
+    ''' <summary>
+    ''' Dataset name; auto-determined by the PHRP Reader class
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property DatasetName() As String
+        Get
+            Return mDatasetName
+        End Get
+    End Property
 
-	''' <summary>
-	''' Fasta file path to store in the pepXML file
-	''' Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for Sequest and X!Tandem)
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Property FastaFilePath() As String
-		Get
-			Return mFastaFilePath
-		End Get
-		Set(value As String)
-			mFastaFilePath = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' Fasta file path to store in the pepXML file
+    ''' Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for Sequest and X!Tandem)
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property FastaFilePath() As String
+        Get
+            Return mFastaFilePath
+        End Get
+        Set(value As String)
+            mFastaFilePath = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Property HitsPerSpectrum() As Integer
-		Get
-			Return mHitsPerSpectrum
-		End Get
-		Set(value As Integer)
-			mHitsPerSpectrum = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property HitsPerSpectrum() As Integer
+        Get
+            Return mHitsPerSpectrum
+        End Get
+        Set(value As Integer)
+            mHitsPerSpectrum = value
+        End Set
+    End Property
 
-	Public Property LoadModsAndSeqInfo() As Boolean
-		Get
-			Return mLoadModsAndSeqInfo
-		End Get
-		Set(value As Boolean)
-			mLoadModsAndSeqInfo = value
-		End Set
-	End Property
+    Public Property LoadModsAndSeqInfo() As Boolean
+        Get
+            Return mLoadModsAndSeqInfo
+        End Get
+        Set(value As Boolean)
+            mLoadModsAndSeqInfo = value
+        End Set
+    End Property
 
-	Public Property LoadMSGFResults() As Boolean
-		Get
-			Return mLoadMSGFResults
-		End Get
-		Set(value As Boolean)
-			mLoadMSGFResults = value
-		End Set
-	End Property
+    Public Property LoadMSGFResults() As Boolean
+        Get
+            Return mLoadMSGFResults
+        End Get
+        Set(value As Boolean)
+            mLoadMSGFResults = value
+        End Set
+    End Property
 
-	Public Property LoadScanStats() As Boolean
-		Get
-			Return mLoadScanStats
-		End Get
-		Set(value As Boolean)
-			mLoadScanStats = value
-		End Set
-	End Property
+    Public Property LoadScanStats() As Boolean
+        Get
+            Return mLoadScanStats
+        End Get
+        Set(value As Boolean)
+            mLoadScanStats = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' Local error code
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property LocalErrorCode() As ePeptideListToXMLErrorCodes
-		Get
-			Return mLocalErrorCode
-		End Get
-	End Property
+    ''' <summary>
+    ''' Local error code
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property LocalErrorCode() As ePeptideListToXMLErrorCodes
+        Get
+            Return mLocalErrorCode
+        End Get
+    End Property
 
-	Public Property MaxProteinsPerPSM() As Integer
-		Get
-			Return mMaxProteinsPerPSM
-		End Get
-		Set(value As Integer)
-			mMaxProteinsPerPSM = value
-		End Set
-	End Property
+    Public Property MaxProteinsPerPSM() As Integer
+        Get
+            Return mMaxProteinsPerPSM
+        End Get
+        Set(value As Integer)
+            mMaxProteinsPerPSM = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Property PreviewMode As Boolean
-		Get
-			Return mPreviewMode
-		End Get
-		Set(value As Boolean)
-			mPreviewMode = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property PreviewMode As Boolean
+        Get
+            Return mPreviewMode
+        End Get
+        Set(value As Boolean)
+            mPreviewMode = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' Name of the paramter file used by the search engine that produced the results file that we are parsing
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Property SearchEngineParamFileName() As String
-		Get
-			Return mSearchEngineParamFileName
-		End Get
-		Set(value As String)
-			mSearchEngineParamFileName = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' Name of the paramter file used by the search engine that produced the results file that we are parsing
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property SearchEngineParamFileName() As String
+        Get
+            Return mSearchEngineParamFileName
+        End Get
+        Set(value As String)
+            mSearchEngineParamFileName = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' If True, then skip peptides with X residues
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Property SkipXPeptides As Boolean
-		Get
-			Return mSkipXPeptides
-		End Get
-		Set(value As Boolean)
-			mSkipXPeptides = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' If True, then skip peptides with X residues
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property SkipXPeptides As Boolean
+        Get
+            Return mSkipXPeptides
+        End Get
+        Set(value As Boolean)
+            mSkipXPeptides = value
+        End Set
+    End Property
 
-	''' <summary>
-	''' If True, then only keeps the top-scoring peptide for each scan number
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
-	Public Property TopHitOnly As Boolean
-		Get
-			Return mTopHitOnly
-		End Get
-		Set(value As Boolean)
-			mTopHitOnly = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' If True, then only keeps the top-scoring peptide for each scan number
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
+    Public Property TopHitOnly As Boolean
+        Get
+            Return mTopHitOnly
+        End Get
+        Set(value As Boolean)
+            mTopHitOnly = value
+        End Set
+    End Property
 
-	Public Property PeptideFilterFilePath As String
-		Get
-			Return mPeptideFilterFilePath
-		End Get
-		Set(value As String)
-			If String.IsNullOrEmpty(value) Then
-				mPeptideFilterFilePath = String.Empty
-			Else
-				mPeptideFilterFilePath = value
-			End If
-		End Set
-	End Property
+    Public Property PeptideFilterFilePath As String
+        Get
+            Return mPeptideFilterFilePath
+        End Get
+        Set(value As String)
+            If String.IsNullOrEmpty(value) Then
+                mPeptideFilterFilePath = String.Empty
+            Else
+                mPeptideFilterFilePath = value
+            End If
+        End Set
+    End Property
 
-	' Future enum; mzIdentML is not yet supported
-	'Public Property OutputFormat() As ePeptideListOutputFormat
-	'    Get
-	'        Return mOutputFormat
-	'    End Get
-	'    Set(value As ePeptideListOutputFormat)
-	'        mOutputFormat = value
-	'    End Set
-	'End Property
+    ' Future enum; mzIdentML is not yet supported
+    'Public Property OutputFormat() As ePeptideListOutputFormat
+    '    Get
+    '        Return mOutputFormat
+    '    End Get
+    '    Set(value As ePeptideListOutputFormat)
+    '        mOutputFormat = value
+    '    End Set
+    'End Property
 
 #End Region
 
-	''' <summary>
-	''' Create a PepXML file using the peptides in file strInputFilePath
-	''' </summary>
-	''' <param name="strInputFilePath"></param>
-	''' <param name="strOutputFolderPath"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Create a PepXML file using the peptides in file strInputFilePath
+    ''' </summary>
+    ''' <param name="strInputFilePath"></param>
+    ''' <param name="strOutputFolderPath"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Public Function ConvertPHRPDataToXML(strInputFilePath As String, strOutputFolderPath As String) As Boolean
 
         Dim objSearchEngineParams As PHRPReader.clsSearchEngineParameters = Nothing
@@ -600,7 +600,7 @@ Public Class clsPeptideListToXML
 
         Dim strErrorMessage As String
 
-        If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Or _
+        If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Or
            MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
             Select Case mLocalErrorCode
                 Case ePeptideListToXMLErrorCodes.NoError
@@ -1048,19 +1048,19 @@ Public Class clsPeptideListToXML
         Return blnSuccess
     End Function
 
-	Private Sub mXMLWriter_ErrorEvent(Message As String) Handles mXMLWriter.ErrorEvent
-		ShowErrorMessage(Message)
-	End Sub
+    Private Sub mXMLWriter_ErrorEvent(Message As String) Handles mXMLWriter.ErrorEvent
+        ShowErrorMessage(Message)
+    End Sub
 
-	Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-		ShowErrorMessage(strErrorMessage)
-	End Sub
+    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
+        ShowErrorMessage(strErrorMessage)
+    End Sub
 
-	Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-		ShowMessage(strMessage)
-	End Sub
+    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
+        ShowMessage(strMessage)
+    End Sub
 
-	Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-		ShowWarningMessage(strWarningMessage)
-	End Sub
+    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
+        ShowWarningMessage(strWarningMessage)
+    End Sub
 End Class
