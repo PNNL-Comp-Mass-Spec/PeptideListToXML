@@ -542,6 +542,7 @@ Public Class clsPeptideListToXML
                     SetLocalErrorCode(ePeptideListToXMLErrorCodes.ModSummaryFileNotFound)
                 Else
                     SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+                    ShowMessage(ex.StackTrace)
                 End If
             End If
 
