@@ -26,20 +26,14 @@ Public Class clsPepXMLWriter
 #End Region
 
 #Region "Module-wide variables"
-    Protected ReadOnly mPeptideMassCalculator As clsPeptideMassCalculator
+    Private ReadOnly mPeptideMassCalculator As clsPeptideMassCalculator
 
-    Protected mMaxProteinsPerPSM As Integer
+    Private mXMLWriter As XmlWriter
 
-    Protected mXMLWriter As Xml.XmlWriter
-
-    Protected ReadOnly mSearchEngineParams As clsSearchEngineParameters
-    Protected ReadOnly mDatasetName As String
-    Protected ReadOnly mSourceFilePath As String
-
-    Protected mFileOpen As Boolean
+    Private mFileOpen As Boolean
 
     ' This dictionary maps PNNL-based score names to pep-xml standard score names
-    Protected mPNNLScoreNameMap As Dictionary(Of String, String)
+    Private mPNNLScoreNameMap As Dictionary(Of String, String)
 #End Region
 
 #Region "Properties"
@@ -128,7 +122,7 @@ Public Class clsPepXMLWriter
         Return True
     End Function
 
-    Protected Function GetPepXMLCollisionMode(strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
+    Private Function GetPepXMLCollisionMode(strPSMCollisionMode As String, ByRef strPepXMLCollisionMode As String) As Boolean
 
         Dim strCollisionModeUCase As String = strPSMCollisionMode.ToUpper()
 
@@ -164,7 +158,7 @@ Public Class clsPepXMLWriter
     ''' <param name="strFastaFilePath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function InitializePepXMLFile(strOutputFilePath As String, strFastaFilePath As String) As Boolean
+    Private Function InitializePepXMLFile(strOutputFilePath As String, strFastaFilePath As String) As Boolean
 
         Dim fiOutputFile As FileInfo
 
@@ -194,7 +188,7 @@ Public Class clsPepXMLWriter
 
     End Function
 
-    Protected Sub InitializePNNLScoreNameMap()
+    Private Sub InitializePNNLScoreNameMap()
         mPNNLScoreNameMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
         ' Sequest scores
@@ -212,7 +206,7 @@ Public Class clsPepXMLWriter
 
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As String)
+    Private Sub WriteAttribute(strAttributeName As String, Value As String)
         If String.IsNullOrEmpty(Value) Then
             mXMLWriter.WriteAttributeString(strAttributeName, String.Empty)
         Else
@@ -220,16 +214,17 @@ Public Class clsPepXMLWriter
         End If
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As Integer)
+    Private Sub WriteAttribute(strAttributeName As String, Value As Integer)
         mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString())
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As Single)
+    ' ReSharper disable once UnusedMember.Local
+    Private Sub WriteAttribute(strAttributeName As String, Value As Single)
         WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As Single, DigitsOfPrecision As Integer)
-        Dim strFormatString As String = "0"
+    Private Sub WriteAttribute(strAttributeName As String, Value As Single, DigitsOfPrecision As Integer)
+        Dim strFormatString = "0"
         If DigitsOfPrecision > 0 Then
             strFormatString &= "." & New String("0"c, DigitsOfPrecision)
         End If
@@ -237,16 +232,16 @@ Public Class clsPepXMLWriter
         mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
     End Sub
 
-    Protected Sub WriteAttributePlusMinus(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
-        mXMLWriter.WriteAttributeString(strAttributeName, PHRPReader.clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
+    Private Sub WriteAttributePlusMinus(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
+        mXMLWriter.WriteAttributeString(strAttributeName, clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As Double)
+    Private Sub WriteAttribute(strAttributeName As String, Value As Double)
         WriteAttribute(strAttributeName, Value, DigitsOfPrecision:=4)
     End Sub
 
-    Protected Sub WriteAttribute(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
-        Dim strFormatString As String = "0"
+    Private Sub WriteAttribute(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
+        Dim strFormatString = "0"
         If DigitsOfPrecision > 0 Then
             strFormatString &= "." & New String("0"c, DigitsOfPrecision)
         End If
@@ -254,28 +249,21 @@ Public Class clsPepXMLWriter
         mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString))
     End Sub
 
-    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As String)
+    Private Sub WriteNameValueElement(strElementName As String, strName As String, Value As String)
         mXMLWriter.WriteStartElement(strElementName)
         WriteAttribute("name", strName)
         WriteAttribute("value", Value)
         mXMLWriter.WriteEndElement()
     End Sub
 
-    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As Double)
-        mXMLWriter.WriteStartElement(strElementName)
-        WriteAttribute("name", strName)
-        WriteAttribute("value", Value)
-        mXMLWriter.WriteEndElement()
-    End Sub
-
-    Protected Sub WriteNameValueElement(strElementName As String, strName As String, Value As Double, DigitsOfPrecision As Integer)
+    Private Sub WriteNameValueElement(strElementName As String, strName As String, Value As Double, DigitsOfPrecision As Integer)
         mXMLWriter.WriteStartElement(strElementName)
         WriteAttribute("name", strName)
         WriteAttribute("value", Value, DigitsOfPrecision)
         mXMLWriter.WriteEndElement()
     End Sub
 
-    Protected Sub WriteHeaderElements(fiOutputFile As FileInfo)
+    Private Sub WriteHeaderElements(fiOutputFile As FileSystemInfo)
 
         Dim dtSearchDate As System.DateTime
 
@@ -338,7 +326,7 @@ Public Class clsPepXMLWriter
 
     End Sub
 
-    Protected Sub WriteSearchSummary(strFastaFilePath As String)
+    Private Sub WriteSearchSummary(strFastaFilePath As String)
         Dim lstTerminalSymbols As SortedSet(Of Char)
         lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
 
@@ -745,7 +733,7 @@ Public Class clsPepXMLWriter
     End Sub
 
     ' Old, unused
-    'Protected Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef objSearchHit As clsSearchHit, ByVal iNumTrypticTerminii As Integer, ByVal iNumMissedCleavages As Integer)
+    'Private Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef objSearchHit As clsSearchHit, ByVal iNumTrypticTerminii As Integer, ByVal iNumMissedCleavages As Integer)
 
     '	Dim strMSGF As String
     '	Dim strFVal As String
@@ -795,7 +783,7 @@ Public Class clsPepXMLWriter
     'End Sub
 
     ' Old, unused
-    'Protected Class clsMSGFConversion
+    'Private Class clsMSGFConversion
 
     '	''' <summary>
     '	''' Performs a crude approximation of Probability using a MSGF SpecProb value
