@@ -726,9 +726,6 @@ Public Class clsPeptideListToXML
 
     Protected Function LoadPeptideFilterFile(strInputFilePath As String, ByRef lstPeptides As SortedSet(Of String)) As Boolean
 
-        Dim strLineIn As String
-        Dim intTabIndex As Integer
-
         Try
             If lstPeptides Is Nothing Then
                 lstPeptides = New SortedSet(Of String)
@@ -747,21 +744,21 @@ Public Class clsPeptideListToXML
                 Return True
             End If
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+            Using reader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srInFile.Peek > -1
-                    strLineIn = srInFile.ReadLine
+                Do While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(dataLine) Then
                         ' Remove any text present after a tab character
-                        intTabIndex = strLineIn.IndexOf(ControlChars.Tab)
-                        If intTabIndex > 0 Then
-                            strLineIn = strLineIn.Substring(0, intTabIndex)
+                        Dim tabIndex = dataLine.IndexOf(ControlChars.Tab)
+                        If tabIndex > 0 Then
+                            dataLine = dataLine.Substring(0, tabIndex)
                         End If
 
-                        If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                            strLineIn = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strLineIn, True)
-                            lstPeptides.Add(strLineIn)
+                        If Not String.IsNullOrWhiteSpace(dataLine) Then
+                            dataLine = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(dataLine, True)
+                            lstPeptides.Add(dataLine)
                         End If
                     End If
                 Loop
