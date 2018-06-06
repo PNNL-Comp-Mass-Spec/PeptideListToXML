@@ -1,5 +1,8 @@
 PeptideListToXML Revision History
 
+Version 1.1.6731; June 6, 2018
+	- Use clsEventNotifier, clsParseCommandLine, and ProcessFilesBase in PRISM.dll
+
 Version 1.0.6008; November 23, 2016
 	- New PHRPReader.dll that preferentially uses _msgfplus files instead of _msgfdb files
 
