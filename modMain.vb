@@ -179,14 +179,18 @@ Module modMain
     End Sub
 
     Private Function GetAppVersion() As String
-        Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
+        Return Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
     End Function
 
     Private Function SetOptionsUsingCommandLineParameters(commandLineParser As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "O", "F", "E", "H", "X", "PepFilter", "ChargeFilter", "TopHitOnly", "MaxProteins", "NoMods", "NoMSGF", "NoScanStats", "Preview", "P", "S", "A", "R", "L", "Q"}
+        Dim lstValidParameters = New List(Of String) From {
+                "I", "O", "F", "E", "H", "X",
+                "PepFilter", "ChargeFilter", "TopHitOnly",
+                "MaxProteins", "NoMods", "NoMSGF", "NoScanStats",
+                "Preview", "P", "S", "A", "R", "L"}
         Dim intValue As Integer
 
         Try
@@ -275,7 +279,6 @@ Module modMain
                     If .IsParameterPresent("R") Then mRecreateFolderHierarchyInAlternatePath = True
 
                     If .IsParameterPresent("L") Then mLogMessagesToFile = True
-                    If .IsParameterPresent("Q") Then mQuietMode = True
 
                 End With
 
@@ -355,7 +358,7 @@ Module modMain
             Console.WriteLine()
 
             ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-            System.Threading.Thread.Sleep(750)
+            Thread.Sleep(750)
 
         Catch ex As Exception
             ShowErrorMessage("Error displaying the program syntax", ex)
