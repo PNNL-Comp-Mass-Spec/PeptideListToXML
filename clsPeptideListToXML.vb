@@ -328,7 +328,6 @@ Public Class clsPeptideListToXML
         ' Keys in this dictionary are scan numbers
         Dim dctBestPSMByScan As Dictionary(Of Integer, clsPSMInfo)
 
-        Dim intPeptidesParsed As Integer
         Dim intPeptidesStored As Integer
 
         Try
@@ -354,7 +353,6 @@ Public Class clsPeptideListToXML
 
             If mChargeFilterList Is Nothing Then mChargeFilterList = New List(Of Integer)
 
-            intPeptidesParsed = 0
             intPeptidesStored = 0
 
             Dim oStartupOptions = New PHRPReader.clsPHRPStartupOptions()
@@ -493,8 +491,6 @@ Public Class clsPeptideListToXML
                     intPeptidesStored += 1
 
                 End If
-
-                intPeptidesParsed += 1
 
                 UpdateProgress(mPHRPReader.PercentComplete)
 
