@@ -38,11 +38,8 @@ Public Class clsPepXMLWriter
 
 #Region "Properties"
 
+    ' ReSharper disable once UnusedMember.Global
     Public ReadOnly Property DatasetName As String
-        Get
-            Return mDatasetName
-        End Get
-    End Property
 
     Public ReadOnly Property IsWritable As Boolean
         Get
@@ -50,26 +47,13 @@ Public Class clsPepXMLWriter
         End Get
     End Property
 
-    Public Property MaxProteinsPerPSM() As Integer
-        Get
-            Return mMaxProteinsPerPSM
-        End Get
-        Set(value As Integer)
-            mMaxProteinsPerPSM = value
-        End Set
-    End Property
+    Public Property MaxProteinsPerPSM As Integer
 
+    ' ReSharper disable once UnusedMember.Global
     Public ReadOnly Property SearchEngineParams As clsSearchEngineParameters
-        Get
-            Return mSearchEngineParams
-        End Get
-    End Property
 
+    ' ReSharper disable once UnusedMember.Global
     Public ReadOnly Property SourceFilePath As String
-        Get
-            Return mSourceFilePath
-        End Get
-    End Property
 #End Region
 
     ''' <summary>
@@ -81,20 +65,22 @@ Public Class clsPepXMLWriter
     ''' <param name="strSourceFilePath">Source file path</param>
     ''' <param name="strOutputFilePath">Path to the PepXML file to create</param>
     ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strFastaFilePath As String, objSearchEngineParams As clsSearchEngineParameters, strSourceFilePath As String, strOutputFilePath As String)
+    Public Sub New(strDatasetName As String, strFastaFilePath As String,
+                   objSearchEngineParams As clsSearchEngineParameters,
+                   strSourceFilePath As String, strOutputFilePath As String)
 
-        mSearchEngineParams = objSearchEngineParams
-        mDatasetName = strDatasetName
-        If mDatasetName Is Nothing Then mDatasetName = "Unknown"
+        SearchEngineParams = objSearchEngineParams
+        DatasetName = strDatasetName
+        If DatasetName Is Nothing Then DatasetName = "Unknown"
 
         If String.IsNullOrEmpty(strSourceFilePath) Then strSourceFilePath = String.Empty
-        mSourceFilePath = strSourceFilePath
+        SourceFilePath = strSourceFilePath
 
         mPeptideMassCalculator = New clsPeptideMassCalculator()
 
         InitializePNNLScoreNameMap()
 
-        mMaxProteinsPerPSM = 0
+        MaxProteinsPerPSM = 0
 
         Try
             If Not InitializePepXMLFile(strOutputFilePath, strFastaFilePath) Then
@@ -168,13 +154,13 @@ Public Class clsPepXMLWriter
 
         fiOutputFile = New FileInfo(strOutputFilePath)
 
-        Dim oSettings As System.Xml.XmlWriterSettings = New System.Xml.XmlWriterSettings()
+        Dim oSettings = New XmlWriterSettings()
         oSettings.Indent = True
         oSettings.OmitXmlDeclaration = False
         oSettings.NewLineOnAttributes = False
-        oSettings.Encoding = System.Text.Encoding.ASCII
+        oSettings.Encoding = Encoding.ASCII
 
-        mXMLWriter = System.Xml.XmlWriter.Create(strOutputFilePath, oSettings)
+        mXMLWriter = XmlWriter.Create(strOutputFilePath, oSettings)
         mFileOpen = True
 
         mXMLWriter.WriteStartDocument()
@@ -265,12 +251,12 @@ Public Class clsPepXMLWriter
 
     Private Sub WriteHeaderElements(fiOutputFile As FileSystemInfo)
 
-        Dim dtSearchDate As System.DateTime
+        Dim dtSearchDate As DateTime
 
         With mXMLWriter
 
             .WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML")
-            .WriteAttributeString("date", System.DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"))
+            .WriteAttributeString("date", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"))
             .WriteAttributeString("summary_xml", fiOutputFile.Name)
             .WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML")
             .WriteAttributeString("xmlns", "xsi", Nothing, "http://www.w3.org/2001/XMLSchema-instance")
@@ -280,32 +266,32 @@ Public Class clsPepXMLWriter
 
             .WriteStartElement("analysis_summary")
 
-            dtSearchDate = mSearchEngineParams.SearchDate
-            If dtSearchDate < New System.DateTime(1980, 1, 2) Then
+            dtSearchDate = SearchEngineParams.SearchDate
+            If dtSearchDate < New DateTime(1980, 1, 2) Then
                 ' Use the date of the input file since the reported SeachDate is invalid
-                Dim fiSourceFile As FileInfo = New FileInfo(mSourceFilePath)
+                Dim fiSourceFile = New FileInfo(SourceFilePath)
                 If fiSourceFile.Exists Then
                     dtSearchDate = fiSourceFile.LastWriteTime
                 End If
             End If
 
             .WriteAttributeString("time", dtSearchDate.ToString("yyyy-MM-ddTHH:mm:ss"))
-            .WriteAttributeString("analysis", mSearchEngineParams.SearchEngineName)
-            .WriteAttributeString("version", mSearchEngineParams.SearchEngineVersion)
+            .WriteAttributeString("analysis", SearchEngineParams.SearchEngineName)
+            .WriteAttributeString("version", SearchEngineParams.SearchEngineVersion)
             .WriteEndElement()
 
             .WriteStartElement("msms_run_summary")
 
-            .WriteAttributeString("base_name", mDatasetName)
+            .WriteAttributeString("base_name", DatasetName)
             .WriteAttributeString("raw_data_type", "raw")
             .WriteAttributeString("raw_data", ".mzXML")
 
             .WriteStartElement("sample_enzyme")
-            .WriteAttributeString("name", mSearchEngineParams.Enzyme)
+            .WriteAttributeString("name", SearchEngineParams.Enzyme)
 
             ' ToDo: get the specificity info from mSearchEngineParams
 
-            If mSearchEngineParams.Enzyme.ToLower().Contains("trypsin") Then
+            If SearchEngineParams.Enzyme.ToLower().Contains("trypsin") Then
                 .WriteStartElement("specificity")
                 .WriteAttributeString("cut", "KR")
                 .WriteAttributeString("no_cut", "P")
@@ -330,7 +316,7 @@ Public Class clsPepXMLWriter
         Dim lstTerminalSymbols As SortedSet(Of Char)
         lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
 
-        Dim strFastaFilePathToUse As String = String.Empty
+        Dim strFastaFilePathToUse As String
         Dim strTargetResidues As String
         Dim dblAAMass As Double
 
@@ -338,24 +324,24 @@ Public Class clsPepXMLWriter
 
             .WriteStartElement("search_summary")
 
-            .WriteAttributeString("base_name", mDatasetName)
-            .WriteAttributeString("source_file", Path.GetFileName(mSourceFilePath))
+            .WriteAttributeString("base_name", DatasetName)
+            .WriteAttributeString("source_file", Path.GetFileName(SourceFilePath))
 
-            .WriteAttributeString("search_engine", mSearchEngineParams.SearchEngineName)
-            .WriteAttributeString("search_engine_version", mSearchEngineParams.SearchEngineVersion)
-            .WriteAttributeString("precursor_mass_type", mSearchEngineParams.PrecursorMassType)
-            .WriteAttributeString("fragment_mass_type", mSearchEngineParams.FragmentMassType)
+            .WriteAttributeString("search_engine", SearchEngineParams.SearchEngineName)
+            .WriteAttributeString("search_engine_version", SearchEngineParams.SearchEngineVersion)
+            .WriteAttributeString("precursor_mass_type", SearchEngineParams.PrecursorMassType)
+            .WriteAttributeString("fragment_mass_type", SearchEngineParams.FragmentMassType)
 
             .WriteAttributeString("search_id", "1")
 
             .WriteStartElement("search_database")
 
-            If Not String.IsNullOrEmpty(mSearchEngineParams.FastaFilePath) Then
+            If Not String.IsNullOrEmpty(SearchEngineParams.FastaFilePath) Then
                 Try
                     ' Update the folder to be the start with C:\Database
-                    strFastaFilePathToUse = Path.Combine("C:\Database", Path.GetFileName(mSearchEngineParams.FastaFilePath))
+                    strFastaFilePathToUse = Path.Combine("C:\Database", Path.GetFileName(SearchEngineParams.FastaFilePath))
                 Catch ex As Exception
-                    strFastaFilePathToUse = mSearchEngineParams.FastaFilePath
+                    strFastaFilePathToUse = SearchEngineParams.FastaFilePath
                 End Try
             Else
                 strFastaFilePathToUse = String.Copy(strFastaFilePath)
@@ -363,17 +349,17 @@ Public Class clsPepXMLWriter
             .WriteAttributeString("local_path", strFastaFilePathToUse)
 
             .WriteAttributeString("type", "AA")
-            .WriteEndElement()      ' search_database			
+            .WriteEndElement()      ' search_database
         End With
 
         mXMLWriter.WriteStartElement("enzymatic_search_constraint")
-        WriteAttribute("enzyme", mSearchEngineParams.Enzyme)
-        WriteAttribute("max_num_internal_cleavages", mSearchEngineParams.MaxNumberInternalCleavages)
-        WriteAttribute("min_number_termini", mSearchEngineParams.MinNumberTermini)
+        WriteAttribute("enzyme", SearchEngineParams.Enzyme)
+        WriteAttribute("max_num_internal_cleavages", SearchEngineParams.MaxNumberInternalCleavages)
+        WriteAttribute("min_number_termini", SearchEngineParams.MinNumberTermini)
         mXMLWriter.WriteEndElement()        ' enzymatic_search_constraint
 
         ' Amino acid mod details
-        For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
+        For Each objModDef As clsModificationDefinition In SearchEngineParams.ModInfo
             If objModDef.CanAffectPeptideResidues() Then
 
                 If String.IsNullOrEmpty(objModDef.TargetResidues) Then
@@ -413,7 +399,7 @@ Public Class clsPepXMLWriter
         Next
 
         ' Protein/Peptide terminal mods
-        For Each objModDef As clsModificationDefinition In mSearchEngineParams.ModInfo
+        For Each objModDef As clsModificationDefinition In SearchEngineParams.ModInfo
             If objModDef.CanAffectPeptideOrProteinTerminus() Then
 
                 If String.IsNullOrEmpty(objModDef.TargetResidues) Then
@@ -466,7 +452,7 @@ Public Class clsPepXMLWriter
         Next
 
         ' Parameters specific to the search engine
-        If mSearchEngineParams.Parameters Is Nothing OrElse mSearchEngineParams.Parameters.Count = 0 Then
+        If SearchEngineParams.Parameters Is Nothing OrElse SearchEngineParams.Parameters.Count = 0 Then
             ' Write out two dummy-parameters
             mXMLWriter.WriteComment("Dummy search-engine parameters")
 
@@ -477,7 +463,7 @@ Public Class clsPepXMLWriter
             mXMLWriter.WriteComment("Search-engine parameters")
 
             ' Write out the search-engine parameters
-            For Each objItem As KeyValuePair(Of String, String) In mSearchEngineParams.Parameters
+            For Each objItem As KeyValuePair(Of String, String) In SearchEngineParams.Parameters
                 WriteNameValueElement("parameter", objItem.Key, objItem.Value)
             Next
         End If
