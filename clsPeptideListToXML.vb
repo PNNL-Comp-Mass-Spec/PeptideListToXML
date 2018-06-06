@@ -100,21 +100,23 @@ Public Class clsPeptideListToXML
         Get
             Return mChargeFilterList
         End Get
-        Set(value As List(Of Integer))
-            If value Is Nothing Then
+        Set
+            If Value Is Nothing Then
                 mChargeFilterList = New List(Of Integer)
             Else
-                mChargeFilterList = value
+                mChargeFilterList = Value
             End If
         End Set
     End Property
+
+    ' ReSharper disable once UnusedMember.Global
     ''' <summary>
     ''' Dataset name; auto-determined by the PHRP Reader class
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property DatasetName() As String
+    Public ReadOnly Property DatasetName As String
         Get
             Return mDatasetName
         End Get
@@ -127,12 +129,12 @@ Public Class clsPeptideListToXML
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Property FastaFilePath() As String
+    Public Property FastaFilePath As String
         Get
             Return mFastaFilePath
         End Get
-        Set(value As String)
-            mFastaFilePath = value
+        Set
+            mFastaFilePath = Value
         End Set
     End Property
 
@@ -142,60 +144,61 @@ Public Class clsPeptideListToXML
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Property HitsPerSpectrum() As Integer
+    Public Property HitsPerSpectrum As Integer
         Get
             Return mHitsPerSpectrum
         End Get
-        Set(value As Integer)
-            mHitsPerSpectrum = value
+        Set
+            mHitsPerSpectrum = Value
         End Set
     End Property
 
-    Public Property LoadModsAndSeqInfo() As Boolean
+    Public Property LoadModsAndSeqInfo As Boolean
         Get
             Return mLoadModsAndSeqInfo
         End Get
-        Set(value As Boolean)
-            mLoadModsAndSeqInfo = value
+        Set
+            mLoadModsAndSeqInfo = Value
         End Set
     End Property
 
-    Public Property LoadMSGFResults() As Boolean
+    Public Property LoadMSGFResults As Boolean
         Get
             Return mLoadMSGFResults
         End Get
-        Set(value As Boolean)
-            mLoadMSGFResults = value
+        Set
+            mLoadMSGFResults = Value
         End Set
     End Property
 
-    Public Property LoadScanStats() As Boolean
+    Public Property LoadScanStats As Boolean
         Get
             Return mLoadScanStats
         End Get
-        Set(value As Boolean)
-            mLoadScanStats = value
+        Set
+            mLoadScanStats = Value
         End Set
     End Property
 
+    ' ReSharper disable once UnusedMember.Global
     ''' <summary>
     ''' Local error code
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property LocalErrorCode() As ePeptideListToXMLErrorCodes
+    Public ReadOnly Property LocalErrorCode As ePeptideListToXMLErrorCodes
         Get
             Return mLocalErrorCode
         End Get
     End Property
 
-    Public Property MaxProteinsPerPSM() As Integer
+    Public Property MaxProteinsPerPSM As Integer
         Get
             Return mMaxProteinsPerPSM
         End Get
-        Set(value As Integer)
-            mMaxProteinsPerPSM = value
+        Set
+            mMaxProteinsPerPSM = Value
         End Set
     End Property
 
@@ -209,8 +212,8 @@ Public Class clsPeptideListToXML
         Get
             Return mPreviewMode
         End Get
-        Set(value As Boolean)
-            mPreviewMode = value
+        Set
+            mPreviewMode = Value
         End Set
     End Property
 
@@ -220,12 +223,12 @@ Public Class clsPeptideListToXML
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Property SearchEngineParamFileName() As String
+    Public Property SearchEngineParamFileName As String
         Get
             Return mSearchEngineParamFileName
         End Get
-        Set(value As String)
-            mSearchEngineParamFileName = value
+        Set
+            mSearchEngineParamFileName = Value
         End Set
     End Property
 
@@ -239,8 +242,8 @@ Public Class clsPeptideListToXML
         Get
             Return mSkipXPeptides
         End Get
-        Set(value As Boolean)
-            mSkipXPeptides = value
+        Set
+            mSkipXPeptides = Value
         End Set
     End Property
 
@@ -254,8 +257,8 @@ Public Class clsPeptideListToXML
         Get
             Return mTopHitOnly
         End Get
-        Set(value As Boolean)
-            mTopHitOnly = value
+        Set
+            mTopHitOnly = Value
         End Set
     End Property
 
@@ -263,11 +266,11 @@ Public Class clsPeptideListToXML
         Get
             Return mPeptideFilterFilePath
         End Get
-        Set(value As String)
-            If String.IsNullOrEmpty(value) Then
+        Set
+            If String.IsNullOrEmpty(Value) Then
                 mPeptideFilterFilePath = String.Empty
             Else
-                mPeptideFilterFilePath = value
+                mPeptideFilterFilePath = Value
             End If
         End Set
     End Property
@@ -355,13 +358,13 @@ Public Class clsPeptideListToXML
 
             intPeptidesStored = 0
 
-            Dim oStartupOptions = New PHRPReader.clsPHRPStartupOptions()
-            With oStartupOptions
-                .LoadModsAndSeqInfo = mLoadModsAndSeqInfo
-                .LoadMSGFResults = mLoadMSGFResults
-                .LoadScanStatsData = mLoadScanStats
+            Dim oStartupOptions = New PHRPReader.clsPHRPStartupOptions() With {
+                .LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
+                .LoadMSGFResults = mLoadMSGFResults,
+                .LoadScanStatsData = mLoadScanStats,
                 .MaxProteinsPerPSM = MaxProteinsPerPSM
-            End With
+            }
+
             mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, oStartupOptions)
             RegisterEvents(mPHRPReader)
 
@@ -475,7 +478,7 @@ Public Class clsPeptideListToXML
 
                     If mTopHitOnly Then
                         Dim objBestPSMInfo As clsPSMInfo = Nothing
-                        Dim objComparisonPSMInfo As clsPSMInfo = New clsPSMInfo(strSpectrumKey, objCurrentPSM)
+                        Dim objComparisonPSMInfo = New clsPSMInfo(strSpectrumKey, objCurrentPSM)
 
                         If dctBestPSMByScan.TryGetValue(objCurrentPSM.ScanNumberStart, objBestPSMInfo) Then
                             If objComparisonPSMInfo.MSGFSpecProb < objBestPSMInfo.MSGFSpecProb Then
@@ -501,7 +504,7 @@ Public Class clsPeptideListToXML
 
             Dim strFilterMessage As String = String.Empty
             If lstPeptidesToFilterOn.Count > 0 Then
-                strFilterMessage = " (filtered using " & lstPeptidesToFilterOn.Count & " peptides in " & IO.Path.GetFileName(mPeptideFilterFilePath) & ")"
+                strFilterMessage = " (filtered using " & lstPeptidesToFilterOn.Count & " peptides in " & Path.GetFileName(mPeptideFilterFilePath) & ")"
             End If
 
             If mTopHitOnly Then
@@ -511,7 +514,7 @@ Public Class clsPeptideListToXML
                 mPSMsBySpectrumKey.Clear()
 
                 For Each item In dctBestPSMByScan
-                    Dim lstPSMs As List(Of PHRPReader.clsPSM) = New List(Of PHRPReader.clsPSM)
+                    Dim lstPSMs = New List(Of PHRPReader.clsPSM)
                     lstPSMs.Add(item.Value.PSM)
                     mPSMsBySpectrumKey.Add(item.Value.SpectrumKey, lstPSMs)
                 Next
@@ -560,9 +563,9 @@ Public Class clsPeptideListToXML
     ''' <remarks></remarks>
     Protected Function ConstructNativeID(intScanNumber As Integer) As String
         ' Examples:
-        ' Most Thermo raw files: "controllerType=0 controllerNumber=1 scan=6" 
-        ' Thermo raw with PQD spectra: "controllerType=1 controllerNumber=1 scan=6" 
-        ' Wiff files: "sample=1 period=1 cycle=123 experiment=2" 
+        ' Most Thermo raw files: "controllerType=0 controllerNumber=1 scan=6"
+        ' Thermo raw with PQD spectra: "controllerType=1 controllerNumber=1 scan=6"
+        ' Wiff files: "sample=1 period=1 cycle=123 experiment=2"
         ' Waters files: "function=2 process=0 scan=123
 
         ' For now, we're assuming all data processed by this program is from Thermo raw files
@@ -571,6 +574,7 @@ Public Class clsPeptideListToXML
 
     End Function
 
+    ' ReSharper disable once UnusedMember.Global
     ''' <summary>
     ''' Returns the default file extensions that this class knows how to parse
     ''' </summary>
@@ -683,7 +687,7 @@ Public Class clsPeptideListToXML
 
             If Not File.Exists(strParameterFilePath) Then
                 ' See if strParameterFilePath points to a file in the same directory as the application
-                strParameterFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
+                strParameterFilePath = Path.Combine(GetAppFolderPath(), Path.GetFileName(strParameterFilePath))
                 If Not File.Exists(strParameterFilePath) Then
                     MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.ParameterFileNotFound)
                     Return False
@@ -792,7 +796,7 @@ Public Class clsPeptideListToXML
             ' Make sure mSearchEngineParams.ModInfo is up-to-date
 
             Dim strSpectrumKey As String
-            Dim udtCurrentSpectrum As clsPepXMLWriter.udtSpectrumInfoType = New clsPepXMLWriter.udtSpectrumInfoType
+            Dim udtCurrentSpectrum = New clsPepXMLWriter.udtSpectrumInfoType
             Dim blnMatchFound As Boolean
 
             For Each objItem In mPSMsBySpectrumKey
@@ -885,6 +889,7 @@ Public Class clsPeptideListToXML
 
     End Sub
 
+    ' ReSharper disable once UnusedMember.Global
     ''' <summary>
     ''' Main processing function; calls ConvertPHRPDataToXML
     ''' </summary>
@@ -989,7 +994,7 @@ Public Class clsPeptideListToXML
         Dim blnSuccess As Boolean
 
         Dim strSpectrumKey As String
-        Dim udtCurrentSpectrum As clsPepXMLWriter.udtSpectrumInfoType = New clsPepXMLWriter.udtSpectrumInfoType
+        Dim udtCurrentSpectrum = New clsPepXMLWriter.udtSpectrumInfoType
 
         MyBase.ResetProgress("Creating the .pepXML file")
 
