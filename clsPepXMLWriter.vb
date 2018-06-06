@@ -525,200 +525,195 @@ Public Class clsPepXMLWriter
 
         For Each oPSMEntry As clsPSM In lstHits
 
-            With mXMLWriter
-                .WriteStartElement("search_hit")
-                WriteAttribute("hit_rank", oPSMEntry.ScoreRank)
+            mXMLWriter.WriteStartElement("search_hit")
+            WriteAttribute("hit_rank", oPSMEntry.ScoreRank)
 
-                Dim strPeptide As String = String.Empty
-                Dim strCleanSequence As String = String.Empty
-                Dim strPrefix As String = String.Empty
-                Dim strSuffix As String = String.Empty
+            Dim strPeptide As String = String.Empty
+            Dim strCleanSequence As String
+            Dim strPrefix As String = String.Empty
+            Dim strSuffix As String = String.Empty
 
-                If PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strPeptide, strPrefix, strSuffix) Then
-                    ' The peptide sequence needs to be just the amino acids; no mod symbols
-                    strCleanSequence = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, False)
-                    .WriteAttributeString("peptide", strCleanSequence)
-                    .WriteAttributeString("peptide_prev_aa", strPrefix)
-                    .WriteAttributeString("peptide_next_aa", strSuffix)
-                Else
-                    strCleanSequence = PHRPReader.clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False)
-                    .WriteAttributeString("peptide", strCleanSequence)
-                    .WriteAttributeString("peptide_prev_aa", String.Empty)
-                    .WriteAttributeString("peptide_next_aa", String.Empty)
-                End If
+            If clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strPeptide, strPrefix, strSuffix) Then
+                ' The peptide sequence needs to be just the amino acids; no mod symbols
+                strCleanSequence = clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, False)
+                mXMLWriter.WriteAttributeString("peptide", strCleanSequence)
+                mXMLWriter.WriteAttributeString("peptide_prev_aa", strPrefix)
+                mXMLWriter.WriteAttributeString("peptide_next_aa", strSuffix)
+            Else
+                strCleanSequence = clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False)
+                mXMLWriter.WriteAttributeString("peptide", strCleanSequence)
+                mXMLWriter.WriteAttributeString("peptide_prev_aa", String.Empty)
+                mXMLWriter.WriteAttributeString("peptide_next_aa", String.Empty)
+            End If
 
-                If strCleanSequence <> strPeptide Then
-                    .WriteAttributeString("peptide_with_mods", oPSMEntry.PeptideWithNumericMods)
-                End If
+            If strCleanSequence <> strPeptide Then
+                mXMLWriter.WriteAttributeString("peptide_with_mods", oPSMEntry.PeptideWithNumericMods)
+            End If
 
-                .WriteAttributeString("protein", oPSMEntry.ProteinFirst)
+            mXMLWriter.WriteAttributeString("protein", oPSMEntry.ProteinFirst)
 
-                ' Could optionally write out protein description
-                '.WriteAttributeString("protein_descr", objSearchHit.StrProteinDescription)
+            ' Could optionally write out protein description
+            '.WriteAttributeString("protein_descr", objSearchHit.StrProteinDescription)
 
-                WriteAttribute("num_tot_proteins", oPSMEntry.Proteins.Count)
-                WriteAttribute("num_matched_ions", 0)
-                WriteAttribute("tot_num_ions", 0)
-                WriteAttribute("calc_neutral_pep_mass", oPSMEntry.PeptideMonoisotopicMass, 4)
+            WriteAttribute("num_tot_proteins", oPSMEntry.Proteins.Count)
+            WriteAttribute("num_matched_ions", 0)
+            WriteAttribute("tot_num_ions", 0)
+            WriteAttribute("calc_neutral_pep_mass", oPSMEntry.PeptideMonoisotopicMass, 4)
 
-                If Not Double.TryParse(oPSMEntry.MassErrorDa, dblMassErrorDa) Then
-                    dblMassErrorDa = 0
-                End If
-                WriteAttributePlusMinus("massdiff", dblMassErrorDa, 5)
+            If Not Double.TryParse(oPSMEntry.MassErrorDa, dblMassErrorDa) Then
+                dblMassErrorDa = 0
+            End If
+            WriteAttributePlusMinus("massdiff", dblMassErrorDa, 5)
 
-                ' Write the number of tryptic ends (0 for non-tryptic, 1 for partially tryptic, 2 for fully tryptic)
-                WriteAttribute("num_tol_term", oPSMEntry.NumTrypticTerminii)
-                WriteAttribute("num_missed_cleavages", oPSMEntry.NumMissedCleavages)
+            ' Write the number of tryptic ends (0 for non-tryptic, 1 for partially tryptic, 2 for fully tryptic)
+            WriteAttribute("num_tol_term", oPSMEntry.NumTrypticTerminii)
+            WriteAttribute("num_missed_cleavages", oPSMEntry.NumMissedCleavages)
 
-                ' Initially all peptides will have "is_rejected" = 0
-                WriteAttribute("is_rejected", 0)
+            ' Initially all peptides will have "is_rejected" = 0
+            WriteAttribute("is_rejected", 0)
 
-                Dim lstProteins As List(Of clsProteinInfo) = Nothing
-                Dim blnProteinInfoAvailable As Boolean
-                Dim intNumTrypticTerminii As Integer
+            Dim lstProteins As List(Of clsProteinInfo) = Nothing
+            Dim blnProteinInfoAvailable As Boolean
+            Dim intNumTrypticTerminii As Integer
 
-                If Not lstSeqToProteinMap Is Nothing AndAlso lstSeqToProteinMap.Count > 0 Then
-                    blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, lstProteins)
-                Else
-                    blnProteinInfoAvailable = False
-                End If
+            If Not lstSeqToProteinMap Is Nothing AndAlso lstSeqToProteinMap.Count > 0 Then
+                blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, lstProteins)
+            Else
+                blnProteinInfoAvailable = False
+            End If
 
-                Dim intProteinsWritten As Integer = 0
+            Dim intProteinsWritten = 0
 
-                ' Write out the additional proteins
-                For Each strProteinAddnl As String In oPSMEntry.Proteins
+            ' Write out the additional proteins
+            For Each strProteinAddnl As String In oPSMEntry.Proteins
 
-                    If strProteinAddnl <> oPSMEntry.ProteinFirst Then
-                        .WriteStartElement("alternative_protein")
-                        .WriteAttributeString("protein", strProteinAddnl)
-                        '.WriteAttributeString("protein_descr", strProteinAddnlDescription)
+                If strProteinAddnl <> oPSMEntry.ProteinFirst Then
+                    mXMLWriter.WriteStartElement("alternative_protein")
+                    mXMLWriter.WriteAttributeString("protein", strProteinAddnl)
+                    '.WriteAttributeString("protein_descr", strProteinAddnlDescription)
 
-                        ' Initially use .NumTrypticTerminii
-                        ' We'll update this using lstProteins if possible
-                        intNumTrypticTerminii = oPSMEntry.NumTrypticTerminii
+                    ' Initially use .NumTrypticTerminii
+                    ' We'll update this using lstProteins if possible
+                    intNumTrypticTerminii = oPSMEntry.NumTrypticTerminii
 
-                        If blnProteinInfoAvailable Then
-                            For Each objProtein In lstProteins
-                                If objProtein.ProteinName = strProteinAddnl Then
-                                    intNumTrypticTerminii = CInt(objProtein.CleavageState)
-                                    Exit For
-                                End If
-                            Next
-                        End If
-
-                        WriteAttribute("num_tol_term", intNumTrypticTerminii)
-
-                        .WriteEndElement()      ' alternative_protein
-
-                    End If
-
-                    intProteinsWritten += 1
-                    If mMaxProteinsPerPSM > 0 AndAlso intProteinsWritten >= mMaxProteinsPerPSM Then
-                        Exit For
-                    End If
-                Next
-
-
-                If oPSMEntry.ModifiedResidues.Count > 0 Then
-                    .WriteStartElement("modification_info")
-
-                    Dim dblNTermAddon As Double = 0
-                    Dim dblCTermAddon As Double = 0
-
-                    ' Look for N and C terminal mods in oPSMEntry.ModifiedResidues
-                    For Each objResidue In oPSMEntry.ModifiedResidues
-
-                        If objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                           objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod Then
-
-                            Select Case objResidue.ResidueTerminusState
-                                Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideNTerminus,
-                                 clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNTerminus,
-                                 clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNandCCTerminus
-                                    dblNTermAddon += objResidue.ModDefinition.ModificationMass
-
-                                Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideCTerminus,
-                                 clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinCTerminus
-                                    dblCTermAddon += objResidue.ModDefinition.ModificationMass
-
-                                Case Else
-                                    ' This is unexpected
-                                    ReportError("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " & objResidue.Residue & " at position " & objResidue.ResidueLocInPeptide & " in peptide " & oPSMEntry.Peptide & ", scan " & oPSMEntry.ScanNumber)
-                            End Select
-
-                        End If
-
-                    Next
-
-                    ' If a peptide-terminal mod, add either of these attributes:
-                    If dblNTermAddon <> 0 Then
-                        WriteAttributePlusMinus("mod_nterm_mass", (clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + dblNTermAddon), 5)
-                    End If
-
-                    If dblCTermAddon <> 0 Then
-                        WriteAttributePlusMinus("mod_cterm_mass", (clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + dblCTermAddon), 5)
-                    End If
-
-
-                    ' Write out an entry for each modified amino acid
-                    ' We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
-                    lstModifiedResidues.Clear()
-
-                    For Each objResidue In oPSMEntry.ModifiedResidues
-
-                        If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                          objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod) Then
-
-                            If lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, dblTotalMass) Then
-                                ' This residue has more than one modification applied to it
-                                dblTotalMass += objResidue.ModDefinition.ModificationMass
-                                lstModifiedResidues(objResidue.ResidueLocInPeptide) = dblTotalMass
-                            Else
-                                dblTotalMass = mPeptideMassCalculator.GetAminoAcidMass(objResidue.Residue) + objResidue.ModDefinition.ModificationMass
-                                lstModifiedResidues.Add(objResidue.ResidueLocInPeptide, dblTotalMass)
+                    If blnProteinInfoAvailable Then
+                        For Each objProtein In lstProteins
+                            If objProtein.ProteinName = strProteinAddnl Then
+                                intNumTrypticTerminii = CInt(objProtein.CleavageState)
+                                Exit For
                             End If
+                        Next
+                    End If
 
-                        End If
-                    Next
+                    WriteAttribute("num_tol_term", intNumTrypticTerminii)
 
-                    For Each objItem In lstModifiedResidues
-                        .WriteStartElement("mod_aminoacid_mass")
+                    mXMLWriter.WriteEndElement()      ' alternative_protein
 
-                        WriteAttribute("position", objItem.Key)     ' Position of residue in peptide
-                        WriteAttribute("mass", objItem.Value, 5)    ' Total amino acid mass, including all mods (but excluding N or C terminal mods)
-
-                        .WriteEndElement()      ' mod_aminoacid_mass
-                    Next
-
-                    .WriteEndElement()      ' modification_info
                 End If
 
-                ' Write out the search scores
-                For Each objItem In oPSMEntry.AdditionalScores
-                    If mPNNLScoreNameMap.TryGetValue(objItem.Key, strAlternateScoreName) Then
-                        WriteNameValueElement("search_score", strAlternateScoreName, objItem.Value)
-                    Else
-                        WriteNameValueElement("search_score", objItem.Key, objItem.Value)
+                intProteinsWritten += 1
+                If MaxProteinsPerPSM > 0 AndAlso intProteinsWritten >= MaxProteinsPerPSM Then
+                    Exit For
+                End If
+            Next
+
+
+            If oPSMEntry.ModifiedResidues.Count > 0 Then
+                mXMLWriter.WriteStartElement("modification_info")
+
+                Dim dblNTermAddon As Double = 0
+                Dim dblCTermAddon As Double = 0
+
+                ' Look for N and C terminal mods in oPSMEntry.ModifiedResidues
+                For Each objResidue In oPSMEntry.ModifiedResidues
+
+                    If objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
+                       objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod Then
+
+                        Select Case objResidue.ResidueTerminusState
+                            Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideNTerminus,
+                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNTerminus,
+                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNandCCTerminus
+                                dblNTermAddon += objResidue.ModDefinition.ModificationMass
+
+                            Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideCTerminus,
+                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinCTerminus
+                                dblCTermAddon += objResidue.ModDefinition.ModificationMass
+
+                            Case Else
+                                ' This is unexpected
+                                OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " &
+                                             objResidue.Residue & " at position " & objResidue.ResidueLocInPeptide & " in peptide " &
+                                             oPSMEntry.Peptide & ", scan " & oPSMEntry.ScanNumber)
+                        End Select
+
+                    End If
+
+                Next
+
+                ' If a peptide-terminal mod, add either of these attributes:
+                If Math.Abs(dblNTermAddon) > Single.Epsilon Then
+                    WriteAttributePlusMinus("mod_nterm_mass", (clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + dblNTermAddon), 5)
+                End If
+
+                If Math.Abs(dblCTermAddon) > Single.Epsilon Then
+                    WriteAttributePlusMinus("mod_cterm_mass", (clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + dblCTermAddon), 5)
+                End If
+
+
+                ' Write out an entry for each modified amino acid
+                ' We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
+                lstModifiedResidues.Clear()
+
+                For Each objResidue In oPSMEntry.ModifiedResidues
+
+                    If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
+                      objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod) Then
+
+                        If lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, dblTotalMass) Then
+                            ' This residue has more than one modification applied to it
+                            dblTotalMass += objResidue.ModDefinition.ModificationMass
+                            lstModifiedResidues(objResidue.ResidueLocInPeptide) = dblTotalMass
+                        Else
+                            dblTotalMass = mPeptideMassCalculator.GetAminoAcidMass(objResidue.Residue) + objResidue.ModDefinition.ModificationMass
+                            lstModifiedResidues.Add(objResidue.ResidueLocInPeptide, dblTotalMass)
+                        End If
+
                     End If
                 Next
 
-            End With
+                For Each objItem In lstModifiedResidues
+                    mXMLWriter.WriteStartElement("mod_aminoacid_mass")
 
+                    WriteAttribute("position", objItem.Key)     ' Position of residue in peptide
+                    WriteAttribute("mass", objItem.Value, 5)    ' Total amino acid mass, including all mods (but excluding N or C terminal mods)
 
-            With mXMLWriter
+                    mXMLWriter.WriteEndElement()      ' mod_aminoacid_mass
+                Next
 
-                WriteNameValueElement("search_score", "msgfspecprob", oPSMEntry.MSGFSpecProb)
+                mXMLWriter.WriteEndElement()      ' modification_info
+            End If
 
-                ' Write out the mass error ppm value as a custom search score
-                WriteNameValueElement("search_score", "MassErrorPPM", oPSMEntry.MassErrorPPM)
-
-                If Not Double.TryParse(oPSMEntry.MassErrorPPM, dblMassErrorPPM) Then
-                    dblMassErrorPPM = 0
+            ' Write out the search scores
+            For Each objItem In oPSMEntry.AdditionalScores
+                If mPNNLScoreNameMap.TryGetValue(objItem.Key, strAlternateScoreName) Then
+                    WriteNameValueElement("search_score", strAlternateScoreName, objItem.Value)
+                Else
+                    WriteNameValueElement("search_score", objItem.Key, objItem.Value)
                 End If
+            Next
 
-                WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(dblMassErrorPPM), 4)
 
-            End With
+            WriteNameValueElement("search_score", "msgfspecprob", oPSMEntry.MSGFSpecEValue)
+
+            ' Write out the mass error ppm value as a custom search score
+            WriteNameValueElement("search_score", "MassErrorPPM", oPSMEntry.MassErrorPPM)
+
+            If Not Double.TryParse(oPSMEntry.MassErrorPPM, dblMassErrorPPM) Then
+                dblMassErrorPPM = 0
+            End If
+
+            WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(dblMassErrorPPM), 4)
 
             '' Old, unused
             ' WritePeptideProphetUsingMSGF(mXMLWriter, objSearchHit, iNumTrypticTerminii, iNumMissedCleavages)
