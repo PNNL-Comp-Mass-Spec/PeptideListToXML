@@ -1,5 +1,9 @@
 ﻿Option Strict On
 
+Imports System.IO
+Imports System.Reflection
+Imports System.Threading
+Imports PRISM
 ' This program reads a tab-delimited text file of peptide sequence and
 ' creates a PepXML or mzIdentML file with the appropriate information
 
@@ -49,14 +53,12 @@ Module modMain
     Private mRecurseFoldersMaxLevels As Integer
 
     Private mLogMessagesToFile As Boolean
-    Private mLogFilePath As String = String.Empty
-    Private mLogFolderPath As String = String.Empty
+    ' Unused: Private mLogFilePath As String = String.Empty
+    ' Unused: Private mLogFolderPath As String = String.Empty
 
-    Private mQuietMode As Boolean
-
-    Private WithEvents mPeptideListConverter As clsPeptideListToXML
-    Private mLastProgressReportTime As System.DateTime
-    Private mLastPercentDisplayed As System.DateTime
+    Private mPeptideListConverter As clsPeptideListToXML
+    Private mLastProgressReportTime As DateTime
+    Private mLastPercentDisplayed As DateTime
 
     ''' <summary>
     ''' Program entry point
@@ -66,11 +68,10 @@ Module modMain
     Public Function Main() As Integer
 
         Dim intReturnCode As Integer
-        Dim objParseCommandLine As New clsParseCommandLine
+        Dim commandLineParser As New clsParseCommandLine
         Dim blnProceed As Boolean
 
         ' Initialize the options
-        intReturnCode = 0
         mInputFilePath = String.Empty
         mOutputFolderPath = String.Empty
         mParameterFilePath = String.Empty
@@ -97,51 +98,44 @@ Module modMain
         mRecurseFolders = False
         mRecurseFoldersMaxLevels = 0
 
-        mQuietMode = False
         mLogMessagesToFile = False
-        mLogFilePath = String.Empty
-        mLogFolderPath = String.Empty
+        ' Unused: mLogFilePath = String.Empty
+        ' Unused: mLogFolderPath = String.Empty
 
         Try
             blnProceed = False
-            If objParseCommandLine.ParseCommandLine Then
-                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+            If commandLineParser.ParseCommandLine Then
+                If SetOptionsUsingCommandLineParameters(commandLineParser) Then blnProceed = True
             End If
 
-            If Not blnProceed OrElse _
-               objParseCommandLine.NeedToShowHelp OrElse _
-               objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
+            If Not blnProceed OrElse
+               commandLineParser.NeedToShowHelp OrElse
+               commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount = 0 OrElse
                mInputFilePath.Length = 0 Then
                 ShowProgramHelp()
                 intReturnCode = -1
             Else
-
-                mPeptideListConverter = New clsPeptideListToXML()
-
                 ' Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-                With mPeptideListConverter
-                    .ShowMessages = Not mQuietMode
-                    .LogMessagesToFile = mLogMessagesToFile
 
-                    .FastaFilePath = mFastaFilePath
-                    .SearchEngineParamFileName = mSearchEngineParamFileName
-
-                    .HitsPerSpectrum = mHitsPerSpectrum
-                    .PreviewMode = mPreview
-                    .SkipXPeptides = mSkipXPeptides
-                    .TopHitOnly = mTopHitOnly
-                    .MaxProteinsPerPSM = mMaxProteinsPerPSM
-
-                    .PeptideFilterFilePath = mPeptideFilterFilePath
-                    .ChargeFilterList = mChargeFilterList
-
-                    .LoadModsAndSeqInfo = mLoadModsAndSeqInfo
-                    .LoadMSGFResults = mLoadMSGFResults
+                mPeptideListConverter = New clsPeptideListToXML() With {
+                    .LogMessagesToFile = mLogMessagesToFile,
+                    .FastaFilePath = mFastaFilePath,
+                    .SearchEngineParamFileName = mSearchEngineParamFileName,
+                    .HitsPerSpectrum = mHitsPerSpectrum,
+                    .PreviewMode = mPreview,
+                    .SkipXPeptides = mSkipXPeptides,
+                    .TopHitOnly = mTopHitOnly,
+                    .MaxProteinsPerPSM = mMaxProteinsPerPSM,
+                    .PeptideFilterFilePath = mPeptideFilterFilePath,
+                    .ChargeFilterList = mChargeFilterList,
+                    .LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
+                    .LoadMSGFResults = mLoadMSGFResults,
                     .LoadScanStats = mLoadScanStats
+                }
 
-                    ' .OutputFormat = mOutputFormat
-
-                End With
+                RegisterEvents(mPeptideListConverter)
+                mLastProgressReportTime = DateTime.UtcNow
+                mLastPercentDisplayed = DateTime.UtcNow
 
                 If mRecurseFolders Then
                     If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
@@ -154,7 +148,7 @@ Module modMain
                         intReturnCode = 0
                     Else
                         intReturnCode = mPeptideListConverter.ErrorCode
-                        If intReturnCode <> 0 AndAlso Not mQuietMode Then
+                        If intReturnCode <> 0 Then
                             ShowErrorMessage("Error while processing: " & mPeptideListConverter.GetErrorMessage())
                         End If
                     End If
@@ -163,7 +157,7 @@ Module modMain
             End If
 
         Catch ex As Exception
-            ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
+            ShowErrorMessage("Error occurred in modMain->Main", ex)
             intReturnCode = -1
         End Try
 
@@ -188,7 +182,7 @@ Module modMain
         Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
     End Function
 
-    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
+    Private Function SetOptionsUsingCommandLineParameters(commandLineParser As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
@@ -197,13 +191,13 @@ Module modMain
 
         Try
             ' Make sure no invalid parameters are present
-            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
+            If commandLineParser.InvalidParametersPresent(lstValidParameters) Then
                 ShowErrorMessage("Invalid commmand line parameters",
-                  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
+                  (From item In commandLineParser.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
                 Return False
             Else
-                With objParseCommandLine
-                    ' Query objParseCommandLine to see if various parameters are present
+                With commandLineParser
+                    ' Query commandLineParser to see if various parameters are present
                     If .RetrieveValueForParameter("I", strValue) Then
                         mInputFilePath = strValue
                     ElseIf .NonSwitchParameterCount > 0 Then
@@ -289,42 +283,19 @@ Module modMain
             End If
 
         Catch ex As Exception
-            ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
+            ShowErrorMessage("Error parsing the command line parameters", ex)
         End Try
 
         Return False
 
     End Function
 
-    Private Sub ShowErrorMessage(strMessage As String)
-        Dim strSeparator As String = "------------------------------------------------------------------------------"
-
-        Console.WriteLine()
-        Console.WriteLine(strSeparator)
-        Console.WriteLine(strMessage)
-        Console.WriteLine(strSeparator)
-        Console.WriteLine()
-
-        WriteToErrorStream(strMessage)
+    Private Sub ShowErrorMessage(errorMessage As String, Optional ex As Exception = Nothing)
+        ConsoleMsgUtils.ShowError(errorMessage, ex)
     End Sub
 
-    Private Sub ShowErrorMessage(strTitle As String, items As List(Of String))
-        Dim strSeparator As String = "------------------------------------------------------------------------------"
-        Dim strMessage As String
-
-        Console.WriteLine()
-        Console.WriteLine(strSeparator)
-        Console.WriteLine(strTitle)
-        strMessage = strTitle & ":"
-
-        For Each item As String In items
-            Console.WriteLine("   " + item)
-            strMessage &= " " & item
-        Next
-        Console.WriteLine(strSeparator)
-        Console.WriteLine()
-
-        WriteToErrorStream(strMessage)
+    Private Sub ShowErrorMessage(title As String, errorMessages As List(Of String))
+        ConsoleMsgUtils.ShowErrors(title, errorMessages)
     End Sub
 
     Private Sub ShowProgramHelp()
@@ -383,32 +354,44 @@ Module modMain
             System.Threading.Thread.Sleep(750)
 
         Catch ex As Exception
-            ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
+            ShowErrorMessage("Error displaying the program syntax", ex)
         End Try
 
     End Sub
 
-    Private Sub WriteToErrorStream(strErrorMessage As String)
-        Try
-            Using swErrorStream As IO.StreamWriter = New IO.StreamWriter(Console.OpenStandardError())
-                swErrorStream.WriteLine(strErrorMessage)
-            End Using
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
+    Private Sub RegisterEvents(processingClass As clsEventNotifier)
+
+        AddHandler processingClass.DebugEvent, AddressOf ProcessingClass_DebugEvent
+        AddHandler processingClass.ErrorEvent, AddressOf ProcessingClass_ErrorEvent
+        AddHandler processingClass.StatusEvent, AddressOf ProcessingClass_StatusEvent
+        AddHandler processingClass.WarningEvent, AddressOf ProcessingClass_WarningEvent
+        AddHandler processingClass.ProgressUpdate, AddressOf ProcessingClass_ProgressUpdate
+
     End Sub
 
-    Private Sub mPeptideListConverter_ErrorEvent(strMessage As String) Handles mPeptideListConverter.ErrorEvent
-        WriteToErrorStream(strMessage)
+    Private Sub ProcessingClass_DebugEvent(message As String)
+        ConsoleMsgUtils.ShowDebug(message)
     End Sub
 
-    Private Sub mPeptideListConverter_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideListConverter.ProgressChanged
-        Const PROGRESS_DOT_INTERVAL_MSEC As Integer = 250
+    Private Sub ProcessingClass_ErrorEvent(message As String, ex As Exception)
+        ConsoleMsgUtils.ShowError(message, ex)
+    End Sub
+
+    Private Sub ProcessingClass_StatusEvent(message As String)
+        Console.WriteLine(message)
+    End Sub
+
+    Private Sub ProcessingClass_WarningEvent(message As String)
+        ConsoleMsgUtils.ShowWarning(message)
+    End Sub
+
+    Private Sub ProcessingClass_ProgressUpdate(progressMessage As String, percentcomplete As Single)
+        Const PROGRESS_DOT_INTERVAL_MSEC = 250
 
         If DateTime.UtcNow.Subtract(mLastPercentDisplayed).TotalSeconds >= 15 Then
             Console.WriteLine()
 
-            DisplayProgressPercent(taskDescription, CInt(percentComplete), False)
+            DisplayProgressPercent(progressMessage, CInt(percentcomplete), False)
             mLastPercentDisplayed = DateTime.UtcNow
         Else
             If DateTime.UtcNow.Subtract(mLastProgressReportTime).TotalMilliseconds > PROGRESS_DOT_INTERVAL_MSEC Then
@@ -416,11 +399,6 @@ Module modMain
                 Console.Write(".")
             End If
         End If
-    End Sub
-
-    Private Sub mPeptideListConverter_ProgressReset() Handles mPeptideListConverter.ProgressReset
-        mLastProgressReportTime = DateTime.UtcNow
-        mLastPercentDisplayed = DateTime.UtcNow
     End Sub
 
 End Module

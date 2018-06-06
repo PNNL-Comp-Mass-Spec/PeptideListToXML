@@ -2,8 +2,12 @@
 
 Imports PHRPReader
 Imports System.IO
+Imports System.Text
+Imports System.Xml
+Imports PRISM
 
 Public Class clsPepXMLWriter
+    Inherits clsEventNotifier
 
 #Region "Structures"
 
@@ -36,10 +40,6 @@ Public Class clsPepXMLWriter
 
     ' This dictionary maps PNNL-based score names to pep-xml standard score names
     Protected mPNNLScoreNameMap As Dictionary(Of String, String)
-#End Region
-
-#Region "Events"
-    Public Event ErrorEvent(Message As String)
 #End Region
 
 #Region "Properties"
@@ -742,10 +742,6 @@ Public Class clsPepXMLWriter
 
         mXMLWriter.WriteEndElement()            ' spectrum_query
 
-    End Sub
-
-    Protected Sub ReportError(strMessage As String)
-        RaiseEvent ErrorEvent(strMessage)
     End Sub
 
     ' Old, unused

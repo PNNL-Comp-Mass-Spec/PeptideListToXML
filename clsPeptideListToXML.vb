@@ -8,12 +8,13 @@ Option Strict On
 ' Started April 13, 2012
 
 Imports System.IO
+Imports PRISM
 
 Public Class clsPeptideListToXML
-    Inherits clsProcessFilesBaseClass
+    Inherits FileProcessor.ProcessFilesBase
 
     Public Sub New()
-        MyBase.mFileDate = "June 13, 2016"
+        MyBase.mFileDate = "June 6, 2018"
         InitializeLocalVariables()
     End Sub
 
@@ -57,8 +58,8 @@ Public Class clsPeptideListToXML
     ' Future enum; mzIdentML is not yet supported
     'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
 
-    Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
-    Protected WithEvents mXMLWriter As clsPepXMLWriter
+    Protected mPHRPReader As PHRPReader.clsPHRPReader
+    Protected mXMLWriter As clsPepXMLWriter
 
     ' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
     Protected mDatasetName As String
@@ -364,6 +365,7 @@ Public Class clsPeptideListToXML
                 .MaxProteinsPerPSM = MaxProteinsPerPSM
             End With
             mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, oStartupOptions)
+            RegisterEvents(mPHRPReader)
 
             mDatasetName = mPHRPReader.DatasetName
             mPeptideHitResultType = mPHRPReader.PeptideHitResultType
@@ -578,17 +580,17 @@ Public Class clsPeptideListToXML
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetDefaultExtensionsToParse() As String()
-        Dim strExtensionsToParse(4) As String
+    Public Overrides Function GetDefaultExtensionsToParse() As IList(Of String)
+        Dim extensionsToParse = New List(Of String)
 
-        strExtensionsToParse(0) = PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName("")
-        strExtensionsToParse(1) = PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName("")
-        strExtensionsToParse(2) = PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName("")
-        strExtensionsToParse(3) = PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName("")
-        strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName("")
-        strExtensionsToParse(4) = PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName("")
+        extensionsToParse.Add(PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName(""))
+        extensionsToParse.Add(PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName(""))
+        extensionsToParse.Add(PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(""))
+        extensionsToParse.Add(PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName(""))
+        extensionsToParse.Add(PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName(""))
+        extensionsToParse.Add(PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName(""))
 
-        Return strExtensionsToParse
+        Return extensionsToParse
 
     End Function
 
@@ -601,8 +603,8 @@ Public Class clsPeptideListToXML
 
         Dim strErrorMessage As String
 
-        If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Or
-           MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
+        If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Or
+           MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
             Select Case mLocalErrorCode
                 Case ePeptideListToXMLErrorCodes.NoError
                     strErrorMessage = ""
@@ -687,7 +689,7 @@ Public Class clsPeptideListToXML
                 ' See if strParameterFilePath points to a file in the same directory as the application
                 strParameterFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
                 If Not File.Exists(strParameterFilePath) Then
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.ParameterFileNotFound)
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.ParameterFileNotFound)
                     Return False
                 End If
             End If
@@ -695,7 +697,7 @@ Public Class clsPeptideListToXML
             If objSettingsFile.LoadSettings(strParameterFilePath) Then
                 If Not objSettingsFile.SectionPresent(XML_SECTION_OPTIONS) Then
                     ShowErrorMessage("The node '<section name=""" & XML_SECTION_OPTIONS & """> was not found in the parameter file: " & strParameterFilePath)
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
                     Return False
                 Else
 
@@ -914,8 +916,8 @@ Public Class clsPeptideListToXML
         If Not LoadParameterFileSettings(strParameterFilePath) Then
             ShowErrorMessage("Parameter file load error: " & strParameterFilePath)
 
-            If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
-                MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
+            If MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
+                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
             End If
             Return False
         End If
@@ -923,7 +925,7 @@ Public Class clsPeptideListToXML
         Try
             If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
                 ShowMessage("Input file name is empty")
-                MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidInputFilePath)
+                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidInputFilePath)
             Else
 
                 Console.WriteLine()
@@ -933,7 +935,7 @@ Public Class clsPeptideListToXML
 
                 ' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
                 If Not CleanupFilePaths(strInputFilePath, strOutputFolderPath) Then
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.FilePathError)
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.FilePathError)
                 Else
 
                     If Not mPreviewMode Then
@@ -976,11 +978,11 @@ Public Class clsPeptideListToXML
             mLocalErrorCode = eNewErrorCode
 
             If eNewErrorCode = ePeptideListToXMLErrorCodes.NoError Then
-                If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Then
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError)
+                If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Then
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.NoError)
                 End If
             Else
-                MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError)
+                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.LocalizedError)
             End If
         End If
 
@@ -1003,6 +1005,7 @@ Public Class clsPeptideListToXML
             ShowMessage("Creating PepXML file at " & Path.GetFileName(strOutputFilePath))
 
             mXMLWriter = New clsPepXMLWriter(mDatasetName, mFastaFilePath, objSearchEngineParams, strInputFilePath, strOutputFilePath)
+            RegisterEvents(mXMLWriter)
 
             If Not mXMLWriter.IsWritable Then
                 ShowErrorMessage("XMLWriter is not writable; aborting")
@@ -1049,19 +1052,4 @@ Public Class clsPeptideListToXML
         Return blnSuccess
     End Function
 
-    Private Sub mXMLWriter_ErrorEvent(Message As String) Handles mXMLWriter.ErrorEvent
-        ShowErrorMessage(Message)
-    End Sub
-
-    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-        ShowErrorMessage(strErrorMessage)
-    End Sub
-
-    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-        ShowMessage(strMessage)
-    End Sub
-
-    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-        ShowWarningMessage(strWarningMessage)
-    End Sub
 End Class
