@@ -34,7 +34,7 @@ Public Class clsPSMInfo
         If mPSM Is Nothing Then
             mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
         Else
-            If Not Double.TryParse(mPSM.MSGFSpecProb, mMSGFSpecProb) Then
+            If Not Double.TryParse(mPSM.MSGFSpecEValue, mMSGFSpecProb) Then
                 mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
             End If
         End If
