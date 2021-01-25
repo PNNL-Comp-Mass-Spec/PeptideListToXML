@@ -13,6 +13,8 @@ Imports PRISM
 Public Class clsPeptideListToXML
     Inherits FileProcessor.ProcessFilesBase
 
+    ' Ignore Spelling: mzIdentML, Wiff
+
     Public Sub New()
         MyBase.mFileDate = "June 6, 2018"
         InitializeLocalVariables()
@@ -53,7 +55,7 @@ Public Class clsPeptideListToXML
 
 #End Region
 
-#Region "Classwide Variables"
+#Region "Class wide Variables"
 
     ' Future enum; mzIdentML is not yet supported
     'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
@@ -124,7 +126,7 @@ Public Class clsPeptideListToXML
 
     ''' <summary>
     ''' Fasta file path to store in the pepXML file
-    ''' Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for Sequest and X!Tandem)
+    ''' Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for SEQUEST and X!Tandem)
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
@@ -218,7 +220,7 @@ Public Class clsPeptideListToXML
     End Property
 
     ''' <summary>
-    ''' Name of the paramter file used by the search engine that produced the results file that we are parsing
+    ''' Name of the parameter file used by the search engine that produced the results file that we are parsing
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>

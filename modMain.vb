@@ -21,7 +21,9 @@ Imports PRISM
 
 Module modMain
 
-    Public Const PROGRAM_DATE As String = "June 6, 2018"
+    ' Ignore Spelling: mzIdentML
+
+    Public Const PROGRAM_DATE As String = "January 25, 2021"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional
@@ -196,7 +198,7 @@ Module modMain
         Try
             ' Make sure no invalid parameters are present
             If commandLineParser.InvalidParametersPresent(lstValidParameters) Then
-                ShowErrorMessage("Invalid commmand line parameters",
+                ShowErrorMessage("Invalid command line parameters",
                   (From item In commandLineParser.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
                 Return False
             Else
@@ -325,7 +327,7 @@ Module modMain
                 "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. "))
             Console.WriteLine()
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder."))
-            Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for Sequest and X!Tandem but not Inspect or MSGF+)"))
+            Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for SEQUEST and X!Tandem but not Inspect or MSGF+)"))
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /H to specify the number of matches per spectrum to store (default is " & clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM & "; use 0 to keep all hits)"))
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /X to specify that peptides with X residues should be skipped"))
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"))
@@ -342,7 +344,7 @@ Module modMain
             Console.WriteLine()
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X"))
             Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                "Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine. " &
+                "Use /S to process all valid files in the input directory and subdirectories. Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " &
                 "When using /S, you can redirect the output of the results using /A. " &
                 "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)."))
 

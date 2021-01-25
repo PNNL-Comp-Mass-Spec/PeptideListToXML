@@ -68,7 +68,7 @@ will be displayed at the console.
 Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012
 Version: 1.0.4765.37170 (January 17, 2013)
 
-E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
 Website: http://ncrr.pnnl.gov/ or http://omics.pnl.gov
 -------------------------------------------------------------------------------
 

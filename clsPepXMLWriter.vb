@@ -177,7 +177,7 @@ Public Class clsPepXMLWriter
     Private Sub InitializePNNLScoreNameMap()
         mPNNLScoreNameMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
-        ' Sequest scores
+        ' SEQUEST scores
         mPNNLScoreNameMap.Add("XCorr", "xcorr")
         mPNNLScoreNameMap.Add("DelCn", "deltacn")
         mPNNLScoreNameMap.Add("Sp", "spscore")
@@ -268,7 +268,7 @@ Public Class clsPepXMLWriter
 
             dtSearchDate = SearchEngineParams.SearchDate
             If dtSearchDate < New DateTime(1980, 1, 2) Then
-                ' Use the date of the input file since the reported SeachDate is invalid
+                ' Use the date of the input file since the reported SearchDate is invalid
                 Dim fiSourceFile = New FileInfo(SourceFilePath)
                 If fiSourceFile.Exists Then
                     dtSearchDate = fiSourceFile.LastWriteTime
@@ -714,7 +714,7 @@ Public Class clsPepXMLWriter
     End Sub
 
     ' Old, unused
-    'Private Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef objSearchHit As clsSearchHit, ByVal iNumTrypticTerminii As Integer, ByVal iNumMissedCleavages As Integer)
+    'Private Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef objSearchHit As clsSearchHit, ByVal iNumTrypticTermini As Integer, ByVal iNumMissedCleavages As Integer)
 
     '	Dim strMSGF As String
     '	Dim strFVal As String
@@ -740,7 +740,7 @@ Public Class clsPepXMLWriter
 
     '		.WriteStartElement("parameter")
     '		.WriteAttributeString("name", "ntt")
-    '		.WriteAttributeString("value", iNumTrypticTerminii.ToString("0"))
+    '		.WriteAttributeString("value", iNumTrypticTermini.ToString("0"))
     '		.WriteEndElement()
 
     '		.WriteStartElement("parameter")
