@@ -46,7 +46,7 @@ Module modMain
     Private mLoadScanStats As Boolean
 
     ' Future enum; mzIdentML is not yet supported
-    ' Private mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
+    ' Private mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
 
     Private mOutputFolderAlternatePath As String                ' Optional
     Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
@@ -95,7 +95,7 @@ Module modMain
         mLoadScanStats = True
 
         ' Future enum; mzIdentML is not yet supported
-        ' mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.PepXML
+        ' mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.PepXML
 
         mRecurseFolders = False
         mRecurseFoldersMaxLevels = 0
@@ -214,7 +214,7 @@ Module modMain
 
                     ' Future enum; mzIdentML is not yet supported
                     'If .RetrieveValueForParameter("M", strValue) Then
-                    '    mOutputFormat = clsPeptideListToXML.ePeptideListOutputFormat.mzIdentML
+                    '    mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
                     'End If
 
                     If .RetrieveValueForParameter("F", strValue) Then mFastaFilePath = strValue
@@ -394,13 +394,13 @@ Module modMain
         ConsoleMsgUtils.ShowWarning(message)
     End Sub
 
-    Private Sub ProcessingClass_ProgressUpdate(progressMessage As String, percentcomplete As Single)
+    Private Sub ProcessingClass_ProgressUpdate(progressMessage As String, percentComplete As Single)
         Const PROGRESS_DOT_INTERVAL_MSEC = 250
 
         If DateTime.UtcNow.Subtract(mLastPercentDisplayed).TotalSeconds >= 15 Then
             Console.WriteLine()
 
-            DisplayProgressPercent(progressMessage, CInt(percentcomplete), False)
+            DisplayProgressPercent(progressMessage, CInt(percentComplete), False)
             mLastPercentDisplayed = DateTime.UtcNow
         Else
             If DateTime.UtcNow.Subtract(mLastProgressReportTime).TotalMilliseconds > PROGRESS_DOT_INTERVAL_MSEC Then

@@ -381,7 +381,7 @@ Public Class clsPepXMLWriter
 
                         WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-                        If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
+                        If objModDef.ModificationType = clsModificationDefinition.ModificationTypeConstants.DynamicMod Then
                             WriteAttribute("variable", "Y")
                         Else
                             WriteAttribute("variable", "N")
@@ -426,7 +426,7 @@ Public Class clsPepXMLWriter
                         WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must beging with + or -
                         WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-                        If objModDef.ModificationType = clsModificationDefinition.eModificationTypeConstants.DynamicMod Then
+                        If objModDef.ModificationType = clsModificationDefinition.ModificationTypeConstants.DynamicMod Then
                             WriteAttribute("variable", "Y")
                         Else
                             WriteAttribute("variable", "N")
@@ -552,7 +552,7 @@ Public Class clsPepXMLWriter
             WriteAttributePlusMinus("massdiff", dblMassErrorDa, 5)
 
             ' Write the number of tryptic ends (0 for non-tryptic, 1 for partially tryptic, 2 for fully tryptic)
-            WriteAttribute("num_tol_term", oPSMEntry.NumTrypticTerminii)
+            WriteAttribute("num_tol_term", oPSMEntry.NumTrypticTermini)
             WriteAttribute("num_missed_cleavages", oPSMEntry.NumMissedCleavages)
 
             ' Initially all peptides will have "is_rejected" = 0
@@ -560,7 +560,7 @@ Public Class clsPepXMLWriter
 
             Dim lstProteins As List(Of clsProteinInfo) = Nothing
             Dim blnProteinInfoAvailable As Boolean
-            Dim intNumTrypticTerminii As Integer
+            Dim intNumTrypticTermini As Integer
 
             If Not lstSeqToProteinMap Is Nothing AndAlso lstSeqToProteinMap.Count > 0 Then
                 blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, lstProteins)
@@ -578,20 +578,20 @@ Public Class clsPepXMLWriter
                     mXMLWriter.WriteAttributeString("protein", strProteinAddnl)
                     '.WriteAttributeString("protein_descr", strProteinAddnlDescription)
 
-                    ' Initially use .NumTrypticTerminii
+                    ' Initially use .NumTrypticTermini
                     ' We'll update this using lstProteins if possible
-                    intNumTrypticTerminii = oPSMEntry.NumTrypticTerminii
+                    intNumTrypticTermini = oPSMEntry.NumTrypticTermini
 
                     If blnProteinInfoAvailable Then
                         For Each objProtein In lstProteins
                             If objProtein.ProteinName = strProteinAddnl Then
-                                intNumTrypticTerminii = CInt(objProtein.CleavageState)
+                                intNumTrypticTermini = CInt(objProtein.CleavageState)
                                 Exit For
                             End If
                         Next
                     End If
 
-                    WriteAttribute("num_tol_term", intNumTrypticTerminii)
+                    WriteAttribute("num_tol_term", intNumTrypticTermini)
 
                     mXMLWriter.WriteEndElement()      ' alternative_protein
 
@@ -613,17 +613,17 @@ Public Class clsPepXMLWriter
                 ' Look for N and C terminal mods in oPSMEntry.ModifiedResidues
                 For Each objResidue In oPSMEntry.ModifiedResidues
 
-                    If objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                       objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod Then
+                    If objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod OrElse
+                       objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod Then
 
                         Select Case objResidue.ResidueTerminusState
-                            Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideNTerminus,
-                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNTerminus,
-                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinNandCCTerminus
+                            Case clsAminoAcidModInfo.ResidueTerminusStateConstants.PeptideNTerminus,
+                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinNTerminus,
+                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinNandCCTerminus
                                 dblNTermAddon += objResidue.ModDefinition.ModificationMass
 
-                            Case clsAminoAcidModInfo.eResidueTerminusStateConstants.PeptideCTerminus,
-                             clsAminoAcidModInfo.eResidueTerminusStateConstants.ProteinCTerminus
+                            Case clsAminoAcidModInfo.ResidueTerminusStateConstants.PeptideCTerminus,
+                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinCTerminus
                                 dblCTermAddon += objResidue.ModDefinition.ModificationMass
 
                             Case Else
@@ -653,8 +653,8 @@ Public Class clsPepXMLWriter
 
                 For Each objResidue In oPSMEntry.ModifiedResidues
 
-                    If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                      objResidue.ModDefinition.ModificationType = clsModificationDefinition.eModificationTypeConstants.ProteinTerminusStaticMod) Then
+                    If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod OrElse
+                      objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod) Then
 
                         If lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, dblTotalMass) Then
                             ' This residue has more than one modification applied to it
@@ -702,7 +702,7 @@ Public Class clsPepXMLWriter
             WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(dblMassErrorPPM), 4)
 
             '' Old, unused
-            ' WritePeptideProphetUsingMSGF(mXMLWriter, objSearchHit, iNumTrypticTerminii, iNumMissedCleavages)
+            ' WritePeptideProphetUsingMSGF(mXMLWriter, objSearchHit, iNumTrypticTermini, iNumMissedCleavages)
 
             mXMLWriter.WriteEndElement()              ' search_hit
         Next

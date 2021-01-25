@@ -29,7 +29,7 @@ Public Class clsPeptideListToXML
     Protected Const PREVIEW_PAD_WIDTH As Integer = 22
 
     ' Future enum; mzIdentML is not yet supported
-    'Public Enum ePeptideListOutputFormat
+    'Public Enum PeptideListOutputFormat
     '    PepXML = 0
     '    mzIdentML = 1
     'End Enum
@@ -38,7 +38,7 @@ Public Class clsPeptideListToXML
     ''' Error codes specialized for this class
     ''' </summary>
     ''' <remarks></remarks>
-    Public Enum ePeptideListToXMLErrorCodes
+    Public Enum PeptideListToXMLErrorCodes
         NoError = 0
         ErrorReadingInputFile = 1
         ErrorWritingOutputFile = 2
@@ -58,14 +58,14 @@ Public Class clsPeptideListToXML
 #Region "Class wide Variables"
 
     ' Future enum; mzIdentML is not yet supported
-    'Protected mOutputFormat As clsPeptideListToXML.ePeptideListOutputFormat
+    'Protected mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
 
     Protected mPHRPReader As PHRPReader.clsPHRPReader
     Protected mXMLWriter As clsPepXMLWriter
 
     ' Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
     Protected mDatasetName As String
-    Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+    Protected mPeptideHitResultType As PHRPReader.clsPHRPReader.PeptideHitResultTypes
     Protected mSeqToProteinMapCached As SortedList(Of Integer, List(Of PHRPReader.clsProteinInfo))
 
     ' Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
@@ -93,7 +93,7 @@ Public Class clsPeptideListToXML
     ' The key is the Spectrum Key string (dataset, start scan, end scan, charge)
     Protected mSpectrumInfo As Dictionary(Of String, clsPepXMLWriter.udtSpectrumInfoType)
 
-    Private mLocalErrorCode As ePeptideListToXMLErrorCodes
+    Private mLocalErrorCode As PeptideListToXMLErrorCodes
 #End Region
 
 #Region "Processing Options Interface Functions"
@@ -189,7 +189,7 @@ Public Class clsPeptideListToXML
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property LocalErrorCode As ePeptideListToXMLErrorCodes
+    Public ReadOnly Property LocalErrorCode As PeptideListToXMLErrorCodes
         Get
             Return mLocalErrorCode
         End Get
@@ -278,11 +278,11 @@ Public Class clsPeptideListToXML
     End Property
 
     ' Future enum; mzIdentML is not yet supported
-    'Public Property OutputFormat() As ePeptideListOutputFormat
+    'Public Property OutputFormat() As PeptideListOutputFormat
     '    Get
     '        Return mOutputFormat
     '    End Get
-    '    Set(value As ePeptideListOutputFormat)
+    '    Set(value As PeptideListOutputFormat)
     '        mOutputFormat = value
     '    End Set
     'End Property
@@ -304,7 +304,7 @@ Public Class clsPeptideListToXML
 
         ' Note that CachePHRPData() will update these variables
         mDatasetName = "Unknown"
-        mPeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown
+        mPeptideHitResultType = PHRPReader.clsPHRPReader.PeptideHitResultTypes.Unknown
 
         blnSuccess = CachePHRPData(strInputFilePath, objSearchEngineParams)
 
@@ -542,9 +542,9 @@ Public Class clsPeptideListToXML
                 ShowErrorMessage("Error Reading source file in CachePHRPData: " & ex.Message)
 
                 If ex.Message.Contains("ModSummary file not found") Then
-                    SetLocalErrorCode(ePeptideListToXMLErrorCodes.ModSummaryFileNotFound)
+                    SetLocalErrorCode(PeptideListToXMLErrorCodes.ModSummaryFileNotFound)
                 Else
-                    SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+                    SetLocalErrorCode(PeptideListToXMLErrorCodes.ErrorReadingInputFile)
                     ShowMessage(ex.StackTrace)
                 End If
             End If
@@ -605,31 +605,31 @@ Public Class clsPeptideListToXML
 
         Dim strErrorMessage As String
 
-        If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Or
-           MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
+        If MyBase.ErrorCode = ProcessFilesErrorCodes.LocalizedError Or
+           MyBase.ErrorCode = ProcessFilesErrorCodes.NoError Then
             Select Case mLocalErrorCode
-                Case ePeptideListToXMLErrorCodes.NoError
+                Case PeptideListToXMLErrorCodes.NoError
                     strErrorMessage = ""
 
-                Case ePeptideListToXMLErrorCodes.ErrorReadingInputFile
+                Case PeptideListToXMLErrorCodes.ErrorReadingInputFile
                     strErrorMessage = "Error reading input file"
 
-                Case ePeptideListToXMLErrorCodes.ErrorWritingOutputFile
+                Case PeptideListToXMLErrorCodes.ErrorWritingOutputFile
                     strErrorMessage = "Error writing to the output file"
 
-                Case ePeptideListToXMLErrorCodes.ModSummaryFileNotFound
+                Case PeptideListToXMLErrorCodes.ModSummaryFileNotFound
                     strErrorMessage = "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)"
 
-                Case ePeptideListToXMLErrorCodes.SeqInfoFileNotFound
+                Case PeptideListToXMLErrorCodes.SeqInfoFileNotFound
                     strErrorMessage = "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)"
 
-                Case ePeptideListToXMLErrorCodes.MSGFStatsFileNotFound
+                Case PeptideListToXMLErrorCodes.MSGFStatsFileNotFound
                     strErrorMessage = "MSGF file not found; use the /NoMSGF switch to avoid this error"
 
-                Case ePeptideListToXMLErrorCodes.ScanStatsFileNotFound
+                Case PeptideListToXMLErrorCodes.ScanStatsFileNotFound
                     strErrorMessage = "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error"
 
-                Case ePeptideListToXMLErrorCodes.UnspecifiedError
+                Case PeptideListToXMLErrorCodes.UnspecifiedError
                     strErrorMessage = "Unspecified localized error"
                 Case Else
                     ' This shouldn't happen
@@ -648,10 +648,10 @@ Public Class clsPeptideListToXML
     End Function
 
     Private Sub InitializeLocalVariables()
-        mLocalErrorCode = ePeptideListToXMLErrorCodes.NoError
+        mLocalErrorCode = PeptideListToXMLErrorCodes.NoError
 
         mDatasetName = "Unknown"
-        mPeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown
+        mPeptideHitResultType = PHRPReader.clsPHRPReader.PeptideHitResultTypes.Unknown
 
         mFastaFilePath = String.Empty
         mSearchEngineParamFileName = String.Empty
@@ -691,7 +691,7 @@ Public Class clsPeptideListToXML
                 ' See if strParameterFilePath points to a file in the same directory as the application
                 strParameterFilePath = Path.Combine(GetAppFolderPath(), Path.GetFileName(strParameterFilePath))
                 If Not File.Exists(strParameterFilePath) Then
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.ParameterFileNotFound)
+                    MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.ParameterFileNotFound)
                     Return False
                 End If
             End If
@@ -699,7 +699,7 @@ Public Class clsPeptideListToXML
             If objSettingsFile.LoadSettings(strParameterFilePath) Then
                 If Not objSettingsFile.SectionPresent(XML_SECTION_OPTIONS) Then
                     ShowErrorMessage("The node '<section name=""" & XML_SECTION_OPTIONS & """> was not found in the parameter file: " & strParameterFilePath)
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
+                    MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidParameterFile)
                     Return False
                 Else
 
@@ -737,7 +737,7 @@ Public Class clsPeptideListToXML
 
             If Not File.Exists(strInputFilePath) Then
                 ShowErrorMessage("Peptide filter file not found: " & strInputFilePath)
-                SetLocalErrorCode(ePeptideListToXMLErrorCodes.ErrorReadingInputFile)
+                SetLocalErrorCode(PeptideListToXMLErrorCodes.ErrorReadingInputFile)
                 Return False
             End If
 
@@ -838,7 +838,7 @@ Public Class clsPeptideListToXML
 
     End Function
 
-    Protected Sub PreviewRequiredFiles(strInputFilePath As String, strDatasetName As String, ePeptideHitResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, blnLoadModsAndSeqInfo As Boolean, blnLoadMSGFResults As Boolean, blnLoadScanStats As Boolean, strSearchEngineParamFileName As String)
+    Protected Sub PreviewRequiredFiles(strInputFilePath As String, strDatasetName As String, PeptideHitResultTypes As PHRPReader.clsPHRPReader.PeptideHitResultTypes, blnLoadModsAndSeqInfo As Boolean, blnLoadMSGFResults As Boolean, blnLoadScanStats As Boolean, strSearchEngineParamFileName As String)
 
         Dim fiFileInfo = New FileInfo(strInputFilePath)
 
@@ -855,12 +855,12 @@ Public Class clsPeptideListToXML
 
 
         If blnLoadModsAndSeqInfo Then
-            ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, strDatasetName))
+            ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPModSummaryFileName(PeptideHitResultTypes, strDatasetName))
 
-            If fiFileInfo.Name.ToLower() = PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, strDatasetName).ToLower() Then
-                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, strDatasetName))
-                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, strDatasetName))
-                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, strDatasetName))
+            If fiFileInfo.Name.ToLower() = PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(PeptideHitResultTypes, strDatasetName).ToLower() Then
+                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, strDatasetName))
+                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqInfoFileName(PeptideHitResultTypes, strDatasetName))
+                ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, strDatasetName))
             End If
         End If
 
@@ -875,9 +875,9 @@ Public Class clsPeptideListToXML
 
         If Not String.IsNullOrEmpty(strSearchEngineParamFileName) Then
             ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) & strSearchEngineParamFileName)
-            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetToolVersionInfoFilename(ePeptideHitResultType))
+            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) & PHRPReader.clsPHRPReader.GetToolVersionInfoFilename(PeptideHitResultTypes))
 
-            If mPeptideHitResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.XTandem Then
+            If mPeptideHitResultType = PHRPReader.clsPHRPReader.PeptideHitResultTypes.XTandem Then
                 ' Determine the additional files that will be required
                 Dim lstFileNames As List(Of String)
                 lstFileNames = PHRPReader.clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(fiFileInfo.DirectoryName, strSearchEngineParamFileName))
@@ -910,14 +910,14 @@ Public Class clsPeptideListToXML
         Dim blnSuccess As Boolean
 
         If blnResetErrorCode Then
-            SetLocalErrorCode(ePeptideListToXMLErrorCodes.NoError)
+            SetLocalErrorCode(PeptideListToXMLErrorCodes.NoError)
         End If
 
         If Not LoadParameterFileSettings(strParameterFilePath) Then
             ShowErrorMessage("Parameter file load error: " & strParameterFilePath)
 
-            If MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
-                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
+            If MyBase.ErrorCode = ProcessFilesErrorCodes.NoError Then
+                MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidParameterFile)
             End If
             Return False
         End If
@@ -925,7 +925,7 @@ Public Class clsPeptideListToXML
         Try
             If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
                 ShowMessage("Input file name is empty")
-                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidInputFilePath)
+                MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidInputFilePath)
             Else
 
                 Console.WriteLine()
@@ -935,7 +935,7 @@ Public Class clsPeptideListToXML
 
                 ' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
                 If Not CleanupFilePaths(strInputFilePath, strOutputFolderPath) Then
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.FilePathError)
+                    MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError)
                 Else
 
                     If Not mPreviewMode Then
@@ -966,23 +966,23 @@ Public Class clsPeptideListToXML
         ShowMessage("Warning: " & strWarningMessage)
     End Sub
 
-    Private Sub SetLocalErrorCode(eNewErrorCode As ePeptideListToXMLErrorCodes)
-        SetLocalErrorCode(eNewErrorCode, False)
+    Private Sub SetLocalErrorCode(newErrorCode As PeptideListToXMLErrorCodes)
+        SetLocalErrorCode(newErrorCode, False)
     End Sub
 
-    Private Sub SetLocalErrorCode(eNewErrorCode As ePeptideListToXMLErrorCodes, blnLeaveExistingErrorCodeUnchanged As Boolean)
+    Private Sub SetLocalErrorCode(newErrorCode As PeptideListToXMLErrorCodes, blnLeaveExistingErrorCodeUnchanged As Boolean)
 
-        If blnLeaveExistingErrorCodeUnchanged AndAlso mLocalErrorCode <> ePeptideListToXMLErrorCodes.NoError Then
+        If blnLeaveExistingErrorCodeUnchanged AndAlso mLocalErrorCode <> PeptideListToXMLErrorCodes.NoError Then
             ' An error code is already defined; do not change it
         Else
-            mLocalErrorCode = eNewErrorCode
+            mLocalErrorCode = newErrorCode
 
-            If eNewErrorCode = ePeptideListToXMLErrorCodes.NoError Then
-                If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Then
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.NoError)
+            If newErrorCode = PeptideListToXMLErrorCodes.NoError Then
+                If MyBase.ErrorCode = ProcessFilesErrorCodes.LocalizedError Then
+                    MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.NoError)
                 End If
             Else
-                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.LocalizedError)
+                MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.LocalizedError)
             End If
         End If
 
