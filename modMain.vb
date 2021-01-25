@@ -140,7 +140,7 @@ Module modMain
                 mLastPercentDisplayed = DateTime.UtcNow
 
                 If mRecurseFolders Then
-                    If mPeptideListConverter.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
+                    If mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
                         intReturnCode = 0
                     Else
                         intReturnCode = mPeptideListConverter.ErrorCode
@@ -368,7 +368,7 @@ Module modMain
 
     End Sub
 
-    Private Sub RegisterEvents(processingClass As clsEventNotifier)
+    Private Sub RegisterEvents(processingClass As IEventNotifier)
 
         AddHandler processingClass.DebugEvent, AddressOf ProcessingClass_DebugEvent
         AddHandler processingClass.ErrorEvent, AddressOf ProcessingClass_ErrorEvent

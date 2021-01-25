@@ -7,7 +7,7 @@ Imports System.Xml
 Imports PRISM
 
 Public Class clsPepXMLWriter
-    Inherits clsEventNotifier
+    Inherits EventNotifier
 
 #Region "Structures"
 
