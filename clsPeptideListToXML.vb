@@ -473,8 +473,9 @@ Public Class clsPeptideListToXML
                     If mPSMsBySpectrumKey.TryGetValue(strSpectrumKey, objPSMs) Then
                         objPSMs.Add(objCurrentPSM)
                     Else
-                        objPSMs = New List(Of PHRPReader.clsPSM)
-                        objPSMs.Add(objCurrentPSM)
+                        objPSMs = New List(Of PHRPReader.clsPSM) From {
+                            objCurrentPSM
+                        }
                         mPSMsBySpectrumKey.Add(strSpectrumKey, objPSMs)
                     End If
 
@@ -516,8 +517,9 @@ Public Class clsPeptideListToXML
                 mPSMsBySpectrumKey.Clear()
 
                 For Each item In dctBestPSMByScan
-                    Dim lstPSMs = New List(Of PHRPReader.clsPSM)
-                    lstPSMs.Add(item.Value.PSM)
+                    Dim lstPSMs = New List(Of PHRPReader.clsPSM) From {
+                        item.Value.PSM
+                    }
                     mPSMsBySpectrumKey.Add(item.Value.SpectrumKey, lstPSMs)
                 Next
                 intPeptidesStored = mPSMsBySpectrumKey.Count
@@ -583,14 +585,14 @@ Public Class clsPeptideListToXML
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Overrides Function GetDefaultExtensionsToParse() As IList(Of String)
-        Dim extensionsToParse = New List(Of String)
-
-        extensionsToParse.Add(PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName(""))
-        extensionsToParse.Add(PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName(""))
-        extensionsToParse.Add(PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(""))
-        extensionsToParse.Add(PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName(""))
-        extensionsToParse.Add(PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName(""))
-        extensionsToParse.Add(PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName(""))
+        Dim extensionsToParse = New List(Of String) From {
+            PHRPReader.clsPHRPParserSequest.GetPHRPSynopsisFileName(String.Empty),
+            PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName(String.Empty),
+            PHRPReader.clsPHRPParserMSGFPlus.GetPHRPSynopsisFileName(String.Empty),
+            PHRPReader.clsPHRPParserInspect.GetPHRPSynopsisFileName(String.Empty),
+            PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName(String.Empty),
+            PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName(String.Empty)
+        }
 
         Return extensionsToParse
 

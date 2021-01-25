@@ -4,6 +4,8 @@ Imports System.IO
 Imports System.Reflection
 Imports System.Threading
 Imports PRISM
+Imports PRISM.Logging
+
 ' This program reads a tab-delimited text file of peptide sequence and
 ' creates a PepXML or mzIdentML file with the appropriate information
 
@@ -299,7 +301,7 @@ Module modMain
         ConsoleMsgUtils.ShowError(errorMessage, ex)
     End Sub
 
-    Private Sub ShowErrorMessage(title As String, errorMessages As List(Of String))
+    Private Sub ShowErrorMessage(title As String, errorMessages As IEnumerable(Of String))
         ConsoleMsgUtils.ShowErrors(title, errorMessages)
     End Sub
 
