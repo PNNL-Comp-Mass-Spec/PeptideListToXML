@@ -1025,7 +1025,7 @@ Public Class clsPeptideListToXML
 
                     mXMLWriter.WriteSpectrum(udtCurrentSpectrum, objItem.Value, mSeqToProteinMapCached)
                 Else
-                    ShowErrorMessage("Spectrum key '" & strSpectrumKey & "' not found in mSpectrumInfo; this is unexected")
+                    ShowErrorMessage("Spectrum key '" & strSpectrumKey & "' not found in mSpectrumInfo; this is unexpected")
                 End If
 
                 Dim pctComplete As Single = intSpectra / CSng(mPSMsBySpectrumKey.Count) * 100

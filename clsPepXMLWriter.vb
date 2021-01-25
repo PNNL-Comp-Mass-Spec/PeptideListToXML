@@ -423,7 +423,7 @@ Public Class clsPepXMLWriter
                             dblAAMass = clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE
                         End If
 
-                        WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must beging with + or -
+                        WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must begin with + or -
                         WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
                         If objModDef.ModificationType = clsModificationDefinition.ModificationTypeConstants.DynamicMod Then
