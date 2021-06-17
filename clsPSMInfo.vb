@@ -2,7 +2,7 @@
 
 Public Class clsPSMInfo
 
-    Public Const MSGF_SPEC_NOTDEFINED As Double = 100
+    Public Const MSGF_SPEC_NOT_DEFINED As Double = 100
 
     Protected mPSM As PHRPReader.Data.PSM
     Protected mSpectrumKey As String
@@ -28,14 +28,14 @@ Public Class clsPSMInfo
 
     Public Sub New(strSpectrumKey As String, objPSM As PHRPReader.Data.PSM)
         mSpectrumKey = strSpectrumKey
-        mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+        mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
         mPSM = objPSM
 
         If mPSM Is Nothing Then
-            mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+            mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
         Else
             If Not Double.TryParse(mPSM.MSGFSpecEValue, mMSGFSpecProb) Then
-                mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
+                mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
             End If
         End If
     End Sub
