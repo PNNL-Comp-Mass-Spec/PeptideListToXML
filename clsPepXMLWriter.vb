@@ -9,6 +9,10 @@ Imports PRISM
 Public Class clsPepXMLWriter
     Inherits EventNotifier
 
+    ' Ignore Spelling: href, stylesheet, xmlns, xsi, xsl, yyyy-MM-ddTHH:mm:ss
+    ' Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
+    ' Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
+
 #Region "Structures"
 
     Public Structure udtSpectrumInfoType
