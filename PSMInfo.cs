@@ -1,43 +1,50 @@
-﻿Option Strict On
+﻿
+namespace PeptideListToXML
+{
+    public class clsPSMInfo
+    {
+        public const double MSGF_SPEC_NOT_DEFINED = 100d;
+        protected PHRPReader.Data.PSM mPSM;
+        protected string mSpectrumKey;
+        protected double mMSGFSpecProb;
 
-Public Class clsPSMInfo
+        public PHRPReader.Data.PSM PSM
+        {
+            get
+            {
+                return mPSM;
+            }
+        }
 
-    Public Const MSGF_SPEC_NOT_DEFINED As Double = 100
+        public string SpectrumKey
+        {
+            get
+            {
+                return mSpectrumKey;
+            }
+        }
 
-    Protected mPSM As PHRPReader.Data.PSM
-    Protected mSpectrumKey As String
-    Protected mMSGFSpecProb As Double
+        public double MSGFSpecProb
+        {
+            get
+            {
+                return mMSGFSpecProb;
+            }
+        }
 
-    Public ReadOnly Property PSM As PHRPReader.Data.PSM
-        Get
-            Return mPSM
-        End Get
-    End Property
-
-    Public ReadOnly Property SpectrumKey As String
-        Get
-            Return mSpectrumKey
-        End Get
-    End Property
-
-    Public ReadOnly Property MSGFSpecProb As Double
-        Get
-            Return mMSGFSpecProb
-        End Get
-    End Property
-
-    Public Sub New(strSpectrumKey As String, objPSM As PHRPReader.Data.PSM)
-        mSpectrumKey = strSpectrumKey
-        mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
-        mPSM = objPSM
-
-        If mPSM Is Nothing Then
-            mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
-        Else
-            If Not Double.TryParse(mPSM.MSGFSpecEValue, mMSGFSpecProb) Then
-                mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED
-            End If
-        End If
-    End Sub
-
-End Class
+        public clsPSMInfo(string strSpectrumKey, PHRPReader.Data.PSM objPSM)
+        {
+            mSpectrumKey = strSpectrumKey;
+            mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
+            mPSM = objPSM;
+            if (mPSM is null)
+            {
+                mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
+            }
+            else if (!double.TryParse(mPSM.MSGFSpecEValue, out mMSGFSpecProb))
+            {
+                mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
+            }
+        }
+    }
+}
