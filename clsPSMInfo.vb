@@ -4,11 +4,11 @@ Public Class clsPSMInfo
 
     Public Const MSGF_SPEC_NOTDEFINED As Double = 100
 
-    Protected mPSM As PHRPReader.clsPSM
+    Protected mPSM As PHRPReader.Data.PSM
     Protected mSpectrumKey As String
     Protected mMSGFSpecProb As Double
 
-    Public ReadOnly Property PSM As PHRPReader.clsPSM
+    Public ReadOnly Property PSM As PHRPReader.Data.PSM
         Get
             Return mPSM
         End Get
@@ -26,7 +26,7 @@ Public Class clsPSMInfo
         End Get
     End Property
 
-    Public Sub New(strSpectrumKey As String, objPSM As PHRPReader.clsPSM)
+    Public Sub New(strSpectrumKey As String, objPSM As PHRPReader.Data.PSM)
         mSpectrumKey = strSpectrumKey
         mMSGFSpecProb = MSGF_SPEC_NOTDEFINED
         mPSM = objPSM

@@ -26,7 +26,7 @@ Public Class clsPepXMLWriter
 #End Region
 
 #Region "Module-wide variables"
-    Private ReadOnly mPeptideMassCalculator As clsPeptideMassCalculator
+    Private ReadOnly mPeptideMassCalculator As PeptideMassCalculator
 
     Private mXMLWriter As XmlWriter
 
@@ -50,7 +50,7 @@ Public Class clsPepXMLWriter
     Public Property MaxProteinsPerPSM As Integer
 
     ' ReSharper disable once UnusedMember.Global
-    Public ReadOnly Property SearchEngineParams As clsSearchEngineParameters
+    Public ReadOnly Property SearchEngineParams As Data.SearchEngineParameters
 
     ' ReSharper disable once UnusedMember.Global
     Public ReadOnly Property SourceFilePath As String
@@ -66,7 +66,7 @@ Public Class clsPepXMLWriter
     ''' <param name="strOutputFilePath">Path to the PepXML file to create</param>
     ''' <remarks></remarks>
     Public Sub New(strDatasetName As String, strFastaFilePath As String,
-                   objSearchEngineParams As clsSearchEngineParameters,
+                   objSearchEngineParams As PHRPReader.Data.SearchEngineParameters,
                    strSourceFilePath As String, strOutputFilePath As String)
 
         SearchEngineParams = objSearchEngineParams
@@ -76,7 +76,7 @@ Public Class clsPepXMLWriter
         If String.IsNullOrEmpty(strSourceFilePath) Then strSourceFilePath = String.Empty
         SourceFilePath = strSourceFilePath
 
-        mPeptideMassCalculator = New clsPeptideMassCalculator()
+        mPeptideMassCalculator = New PeptideMassCalculator()
 
         InitializePNNLScoreNameMap()
 
@@ -219,7 +219,7 @@ Public Class clsPepXMLWriter
     End Sub
 
     Private Sub WriteAttributePlusMinus(strAttributeName As String, Value As Double, DigitsOfPrecision As Integer)
-        mXMLWriter.WriteAttributeString(strAttributeName, clsPHRPParser.NumToStringPlusMinus(Value, DigitsOfPrecision))
+        mXMLWriter.WriteAttributeString(strAttributeName, Reader.SynFileReaderBaseClass.NumToStringPlusMinus(Value, DigitsOfPrecision))
     End Sub
 
     Private Sub WriteAttribute(strAttributeName As String, Value As Double)
@@ -314,7 +314,7 @@ Public Class clsPepXMLWriter
 
     Private Sub WriteSearchSummary(strFastaFilePath As String)
         Dim lstTerminalSymbols As SortedSet(Of Char)
-        lstTerminalSymbols = clsModificationDefinition.GetTerminalSymbols()
+        lstTerminalSymbols = Data.ModificationDefinition.GetTerminalSymbols()
 
         Dim strFastaFilePathToUse As String
         Dim strTargetResidues As String
@@ -359,7 +359,7 @@ Public Class clsPepXMLWriter
         mXMLWriter.WriteEndElement()        ' enzymatic_search_constraint
 
         ' Amino acid mod details
-        For Each objModDef As clsModificationDefinition In SearchEngineParams.ModInfo
+        For Each objModDef As Data.ModificationDefinition In SearchEngineParams.ModList
             If objModDef.CanAffectPeptideResidues() Then
 
                 If String.IsNullOrEmpty(objModDef.TargetResidues) Then
@@ -381,7 +381,7 @@ Public Class clsPepXMLWriter
 
                         WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-                        If objModDef.ModificationType = clsModificationDefinition.ModificationTypeConstants.DynamicMod Then
+                        If objModDef.ModificationType = Data.ModificationDefinition.ResidueModificationType.DynamicMod Then
                             WriteAttribute("variable", "Y")
                         Else
                             WriteAttribute("variable", "N")
@@ -399,13 +399,13 @@ Public Class clsPepXMLWriter
         Next
 
         ' Protein/Peptide terminal mods
-        For Each objModDef As clsModificationDefinition In SearchEngineParams.ModInfo
+        For Each objModDef As Data.ModificationDefinition In SearchEngineParams.ModList
             If objModDef.CanAffectPeptideOrProteinTerminus() Then
 
                 If String.IsNullOrEmpty(objModDef.TargetResidues) Then
                     ' Target residues should not be empty for terminal mods
                     ' But, we'll list them anyway
-                    strTargetResidues = clsAminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS & clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS
+                    strTargetResidues = Data.AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS & Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS
                 Else
                     strTargetResidues = objModDef.TargetResidues
                 End If
@@ -415,18 +415,18 @@ Public Class clsPepXMLWriter
 
                         mXMLWriter.WriteStartElement("terminal_modification")
 
-                        If chChar = clsAminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
+                        If chChar = Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS OrElse chChar = Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
                             WriteAttribute("terminus", "c")
-                            dblAAMass = clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE
+                            dblAAMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE
                         Else
                             WriteAttribute("terminus", "n")
-                            dblAAMass = clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE
+                            dblAAMass = PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE
                         End If
 
                         WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5)          ' Mass difference, must begin with + or -
                         WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4)
 
-                        If objModDef.ModificationType = clsModificationDefinition.ModificationTypeConstants.DynamicMod Then
+                        If objModDef.ModificationType = Data.ModificationDefinition.ResidueModificationType.DynamicMod Then
                             WriteAttribute("variable", "Y")
                         Else
                             WriteAttribute("variable", "N")
@@ -434,7 +434,7 @@ Public Class clsPepXMLWriter
 
                         WriteAttribute("symbol", objModDef.ModificationSymbol)              ' Symbol used by search-engine to denote this mod
 
-                        If chChar = clsAminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS OrElse chChar = clsAminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
+                        If chChar = Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS OrElse chChar = Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS Then
                             ' Modification can only occur at the protein terminus
                             WriteAttribute("protein_terminus", "Y")
                         Else
@@ -472,7 +472,7 @@ Public Class clsPepXMLWriter
 
     End Sub
 
-    Public Sub WriteSpectrum(ByRef objSpectrum As udtSpectrumInfoType, ByRef lstHits As List(Of clsPSM), ByRef lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)))
+    Public Sub WriteSpectrum(ByRef objSpectrum As udtSpectrumInfoType, ByRef lstHits As List(Of PHRPReader.Data.PSM), ByRef lstSeqToProteinMap As SortedList(Of Integer, List(Of PHRPReader.Data.ProteinInfo)))
 
         Dim dblMassErrorDa As Double
         Dim dblMassErrorPPM As Double
@@ -509,7 +509,7 @@ Public Class clsPepXMLWriter
             .WriteStartElement("search_result")
         End With
 
-        For Each oPSMEntry As clsPSM In lstHits
+        For Each oPSMEntry As PHRPReader.Data.PSM In lstHits
 
             mXMLWriter.WriteStartElement("search_hit")
             WriteAttribute("hit_rank", oPSMEntry.ScoreRank)
@@ -519,14 +519,14 @@ Public Class clsPepXMLWriter
             Dim strPrefix As String = String.Empty
             Dim strSuffix As String = String.Empty
 
-            If clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strPeptide, strPrefix, strSuffix) Then
+            If PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, strPeptide, strPrefix, strSuffix) Then
                 ' The peptide sequence needs to be just the amino acids; no mod symbols
-                strCleanSequence = clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, False)
+                strCleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, False)
                 mXMLWriter.WriteAttributeString("peptide", strCleanSequence)
                 mXMLWriter.WriteAttributeString("peptide_prev_aa", strPrefix)
                 mXMLWriter.WriteAttributeString("peptide_next_aa", strSuffix)
             Else
-                strCleanSequence = clsPeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False)
+                strCleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, False)
                 mXMLWriter.WriteAttributeString("peptide", strCleanSequence)
                 mXMLWriter.WriteAttributeString("peptide_prev_aa", String.Empty)
                 mXMLWriter.WriteAttributeString("peptide_next_aa", String.Empty)
@@ -558,7 +558,7 @@ Public Class clsPepXMLWriter
             ' Initially all peptides will have "is_rejected" = 0
             WriteAttribute("is_rejected", 0)
 
-            Dim lstProteins As List(Of clsProteinInfo) = Nothing
+            Dim lstProteins As List(Of Data.ProteinInfo) = Nothing
             Dim blnProteinInfoAvailable As Boolean
             Dim intNumTrypticTermini As Integer
 
@@ -613,17 +613,17 @@ Public Class clsPepXMLWriter
                 ' Look for N and C terminal mods in oPSMEntry.ModifiedResidues
                 For Each objResidue In oPSMEntry.ModifiedResidues
 
-                    If objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                       objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod Then
+                    If objResidue.ModDefinition.ModificationType = Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod OrElse
+                       objResidue.ModDefinition.ModificationType = Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod Then
 
-                        Select Case objResidue.ResidueTerminusState
-                            Case clsAminoAcidModInfo.ResidueTerminusStateConstants.PeptideNTerminus,
-                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinNTerminus,
-                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinNandCCTerminus
+                        Select Case objResidue.TerminusState
+                            Case Data.AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus,
+                             Data.AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus,
+                             Data.AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus
                                 dblNTermAddon += objResidue.ModDefinition.ModificationMass
 
-                            Case clsAminoAcidModInfo.ResidueTerminusStateConstants.PeptideCTerminus,
-                             clsAminoAcidModInfo.ResidueTerminusStateConstants.ProteinCTerminus
+                            Case Data.AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus,
+                             Data.AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus
                                 dblCTermAddon += objResidue.ModDefinition.ModificationMass
 
                             Case Else
@@ -639,11 +639,11 @@ Public Class clsPepXMLWriter
 
                 ' If a peptide-terminal mod, add either of these attributes:
                 If Math.Abs(dblNTermAddon) > Single.Epsilon Then
-                    WriteAttributePlusMinus("mod_nterm_mass", (clsPeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + dblNTermAddon), 5)
+                    WriteAttributePlusMinus("mod_nterm_mass", (PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + dblNTermAddon), 5)
                 End If
 
                 If Math.Abs(dblCTermAddon) > Single.Epsilon Then
-                    WriteAttributePlusMinus("mod_cterm_mass", (clsPeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + dblCTermAddon), 5)
+                    WriteAttributePlusMinus("mod_cterm_mass", (PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + dblCTermAddon), 5)
                 End If
 
 
@@ -653,8 +653,8 @@ Public Class clsPepXMLWriter
 
                 For Each objResidue In oPSMEntry.ModifiedResidues
 
-                    If Not (objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod OrElse
-                      objResidue.ModDefinition.ModificationType = clsModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod) Then
+                    If Not (objResidue.ModDefinition.ModificationType = Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod OrElse
+                      objResidue.ModDefinition.ModificationType = Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod) Then
 
                         If lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, dblTotalMass) Then
                             ' This residue has more than one modification applied to it
