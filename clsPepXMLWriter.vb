@@ -779,7 +779,7 @@ Public Class clsPepXMLWriter
     '	''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
     '	''' <returns>Probability</returns>
     '	Public Shared Function MSGFToProbability(dblMSGFScore As Double) As Double
-    '		Const LOG_MSGF_ADJUST As Integer = 6
+    '		Constant LOG_MSGF_ADJUST As Integer = 6
 
     '		Dim dLogMSGF As Double
     '		Dim dblProbability As Double
@@ -813,7 +813,7 @@ Public Class clsPepXMLWriter
     '	''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
     '	''' <returns>FValue</returns>
     '	Public Shared Function MSGFToFValue(dblMSGFScore As Double) As Double
-    '		Const LOG_MSGF_ADJUST As Integer = 6
+    '		Constant LOG_MSGF_ADJUST As Integer = 6
 
     '		Dim dLogMSGF As Double
     '		Dim dblFValue As Double

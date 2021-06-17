@@ -25,7 +25,7 @@ Module modMain
 
     ' Ignore Spelling: mzIdentML
 
-    Public Const PROGRAM_DATE As String = "January 25, 2021"
+    Public Const PROGRAM_DATE As String = "June 17, 2021"
 
     Private mInputFilePath As String
     Private mOutputFolderPath As String             ' Optional

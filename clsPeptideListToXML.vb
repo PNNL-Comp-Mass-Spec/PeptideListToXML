@@ -16,7 +16,7 @@ Public Class clsPeptideListToXML
     ' Ignore Spelling: mzIdentML, Wiff
 
     Public Sub New()
-        MyBase.mFileDate = "June 6, 2018"
+        MyBase.mFileDate = "June 17, 2021"
         InitializeLocalVariables()
     End Sub
 
