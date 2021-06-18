@@ -71,7 +71,7 @@ namespace PeptideListToXML
 
         // This dictionary tracks the spectrum info
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-        private Dictionary<string, PepXMLWriter.SpectrumInfoType> mSpectrumInfo;
+        private Dictionary<string, SpectrumInfo> mSpectrumInfo;
 
         /// <summary>
         /// Charge filter list: list of charges to include in the output file
@@ -218,7 +218,7 @@ namespace PeptideListToXML
 
                 if (mSpectrumInfo is null)
                 {
-                    mSpectrumInfo = new Dictionary<string, PepXMLWriter.SpectrumInfoType>();
+                    mSpectrumInfo = new Dictionary<string, SpectrumInfo>();
                 }
                 else
                 {
@@ -348,9 +348,8 @@ namespace PeptideListToXML
                     if (!mSpectrumInfo.ContainsKey(spectrumKey))
                     {
                         // New spectrum; add a new entry to mSpectrumInfo
-                        var spectrumInfo = new PepXMLWriter.SpectrumInfoType
+                        var spectrumInfo = new SpectrumInfo(spectrumKey)
                         {
-                            SpectrumName = spectrumKey,
                             StartScan = currentPSM.ScanNumberStart,
                             EndScan = currentPSM.ScanNumberEnd,
                             PrecursorNeutralMass = currentPSM.PrecursorNeutralMass,

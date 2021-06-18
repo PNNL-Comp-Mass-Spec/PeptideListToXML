@@ -17,22 +17,6 @@ namespace PeptideListToXML
         // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
         // Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
 
-        /// <summary>
-        /// Spectrum Info
-        /// </summary>
-        public struct SpectrumInfoType
-        {
-            public string SpectrumName;           // Spectrum Title: could be "QC_05_2_05Dec05_Doc_0508-08.9427.9427.1" or just "scan=16134 cs=2"
-            public int StartScan;
-            public int EndScan;
-            public double PrecursorNeutralMass;
-            public int AssumedCharge;
-            public double ElutionTimeMinutes;
-            public string CollisionMode;
-            public int Index;
-            public string NativeID;
-        }
-
         private readonly PeptideMassCalculator mPeptideMassCalculator;
 
         private XmlWriter mXMLWriter;
@@ -495,7 +479,7 @@ namespace PeptideListToXML
         /// <param name="spectrum"></param>
         /// <param name="psms"></param>
         /// <param name="seqToProteinMap"></param>
-        public void WriteSpectrum(SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
+        public void WriteSpectrum(SpectrumInfo spectrum, List<PHRPReader.Data.PSM> psms, SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
         {
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
             var modifiedResidues = new Dictionary<int, double>();
@@ -506,7 +490,7 @@ namespace PeptideListToXML
             }
 
             mXMLWriter.WriteStartElement("spectrum_query");
-            mXMLWriter.WriteAttributeString("spectrum", spectrum.SpectrumName); // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
+            mXMLWriter.WriteAttributeString("spectrum", spectrum.SpectrumTitle); // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
             WriteAttribute("start_scan", spectrum.StartScan);
             WriteAttribute("end_scan", spectrum.EndScan);
             WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
