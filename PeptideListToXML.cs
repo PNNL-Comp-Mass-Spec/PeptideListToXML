@@ -297,7 +297,9 @@ namespace PeptideListToXML
 
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var message in mPHRPReader.ErrorMessages.Distinct())
+                {
                     ShowErrorMessage(message);
+                }
 
                 // Report any warnings cached during instantiation of mPHRPReader
                 foreach (var message in mPHRPReader.WarningMessages.Distinct())
@@ -542,7 +544,7 @@ namespace PeptideListToXML
         public override string GetErrorMessage()
         {
             string errorMessage;
-            if (ErrorCode == ProcessFilesErrorCodes.LocalizedError | ErrorCode == ProcessFilesErrorCodes.NoError)
+            if (ErrorCode == ProcessFilesErrorCodes.LocalizedError || ErrorCode == ProcessFilesErrorCodes.NoError)
             {
                 switch (LocalErrorCode)
                 {
@@ -861,10 +863,11 @@ namespace PeptideListToXML
                 if (mPeptideHitResultType == PHRPReader.PeptideHitResultTypes.XTandem)
                 {
                     // Determine the additional files that will be required
-                    List<string> fileNames;
-                    fileNames = PHRPReader.Reader.XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(Path.Combine(inputFile.DirectoryName, searchEngineParamFileName));
-                    foreach (var fileName in fileNames)
+                    foreach (var fileName in PHRPReader.Reader.XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(
+                        Path.Combine(inputFile.DirectoryName, searchEngineParamFileName)))
+                    {
                         ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + fileName);
+                    }
                 }
             }
         }

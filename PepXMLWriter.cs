@@ -592,8 +592,8 @@ namespace PeptideListToXML
                 WriteAttribute("is_rejected", 0);
                 List<PHRPReader.Data.ProteinInfo> proteins;
                 bool proteinInfoAvailable;
-                int numTrypticTermini;
-                if (seqToProteinMap is object && seqToProteinMap.Count > 0)
+
+                if (seqToProteinMap.Count > 0)
                 {
                     proteinInfoAvailable = seqToProteinMap.TryGetValue(psmEntry.SeqID, out proteins);
                 }
@@ -695,7 +695,8 @@ namespace PeptideListToXML
                     modifiedResidues.Clear();
                     foreach (var residue in psmEntry.ModifiedResidues)
                     {
-                        if (!(residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
+                        if (!(residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod ||
+                              residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
                         {
                             if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
                             {
