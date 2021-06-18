@@ -778,7 +778,7 @@ namespace PeptideListToXML
             if (loadModsAndSeqInfo)
             {
                 ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, datasetName));
-                if ((inputFile.Name.ToLower() ?? string.Empty) == (PHRPReader.ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, datasetName).ToLower() ?? string.Empty))
+                if (inputFile.Name.Equals(PHRPReader.ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, datasetName), StringComparison.OrdinalIgnoreCase))
                 {
                     ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, datasetName));
                     ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, datasetName));

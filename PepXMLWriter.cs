@@ -119,7 +119,7 @@ namespace PeptideListToXML
         private bool GetPepXMLCollisionMode(string psmCollisionMode, out string pepXMLCollisionMode)
         {
             var collisionModeUCase = psmCollisionMode.ToUpper();
-            switch (collisionModeUCase ?? string.Empty)
+            switch (collisionModeUCase)
             {
                 case "CID":
                 case "ETD":
@@ -303,7 +303,7 @@ namespace PeptideListToXML
 
                 // ToDo: get the specificity info from mSearchEngineParams
 
-                if (SearchEngineParams.Enzyme.ToLower().Contains("trypsin"))
+                if (SearchEngineParams.Enzyme.IndexOf("trypsin", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     mXMLWriter.WriteStartElement("specificity");
                     mXMLWriter.WriteAttributeString("cut", "KR");
