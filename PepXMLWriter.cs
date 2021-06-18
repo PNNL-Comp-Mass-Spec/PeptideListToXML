@@ -104,14 +104,16 @@ namespace PeptideListToXML
             }
         }
 
-        public bool CloseDocument()
+        /// <summary>
+        /// Close the pepXML document
+        /// </summary>
+        public void CloseDocument()
         {
             mXMLWriter.WriteEndElement();                // msms_run_summary
             mXMLWriter.WriteEndElement();                // msms_pipeline_analysis
             mXMLWriter.WriteEndDocument();
             mXMLWriter.Flush();
             mXMLWriter.Close();
-            return true;
         }
 
         private bool GetPepXMLCollisionMode(string psmCollisionMode, ref string pepXMLCollisionMode)
