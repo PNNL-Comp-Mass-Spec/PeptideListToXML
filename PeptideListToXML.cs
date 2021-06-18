@@ -213,14 +213,11 @@ namespace PeptideListToXML
             if (PreviewMode)
             {
                 PreviewRequiredFiles(inputFilePath, DatasetName, mPeptideHitResultType, LoadModsAndSeqInfo, LoadMSGFResults, LoadScanStats, SearchEngineParamFileName);
-            }
-            else
-            {
-                var outputFilePath = Path.Combine(outputFolderPath, DatasetName + ".pepXML");
-                success = WriteCachedData(inputFilePath, outputFilePath, searchEngineParams);
+                return true;
             }
 
-            return success;
+            var outputFilePath = Path.Combine(outputFolderPath, DatasetName + ".pepXML");
+            return WriteCachedData(inputFilePath, outputFilePath, searchEngineParams);
         }
 
         private bool CachePHRPData(string inputFilePath, out PHRPReader.Data.SearchEngineParameters searchEngineParams)
@@ -350,96 +347,82 @@ namespace PeptideListToXML
                 while (mPHRPReader.MoveNext())
                 {
                     var currentPSM = mPHRPReader.CurrentPSM;
-                    bool skipPeptide;
 
-                    if (SkipXPeptides && currentPSM.PeptideCleanSequence.Contains("X"))
+                    var skipPeptide = SkipXPeptides && currentPSM.PeptideCleanSequence.Contains("X");
+
+                    if (!skipPeptide && HitsPerSpectrum > 0 && currentPSM.ScoreRank > HitsPerSpectrum)
                     {
                         skipPeptide = true;
                     }
+
+                    if (!skipPeptide && peptidesToFilterOn.Count > 0 && !peptidesToFilterOn.Contains(currentPSM.PeptideCleanSequence))
+                    {
+                        skipPeptide = true;
+                    }
+
+                    if (!skipPeptide && ChargeFilterList.Count > 0 && !ChargeFilterList.Contains(currentPSM.Charge))
+                    {
+                        skipPeptide = true;
+                    }
+
+                    if (skipPeptide)
+                    {
+                        continue;
+                    }
+
+                    var spectrumKey = GetSpectrumKey(currentPSM);
+                    if (!mSpectrumInfo.ContainsKey(spectrumKey))
+                    {
+                        // New spectrum; add a new entry to mSpectrumInfo
+                        var spectrumInfo = new PepXMLWriter.SpectrumInfoType
+                        {
+                            SpectrumName = spectrumKey,
+                            StartScan = currentPSM.ScanNumberStart,
+                            EndScan = currentPSM.ScanNumberEnd,
+                            PrecursorNeutralMass = currentPSM.PrecursorNeutralMass,
+                            AssumedCharge = currentPSM.Charge,
+                            ElutionTimeMinutes = currentPSM.ElutionTimeMinutes,
+                            CollisionMode = currentPSM.CollisionMode,
+                            Index = mSpectrumInfo.Count,
+                            NativeID = ConstructNativeID(currentPSM.ScanNumberStart)
+                        };
+
+                        mSpectrumInfo.Add(spectrumKey, spectrumInfo);
+                    }
+
+                    if (mPSMsBySpectrumKey.TryGetValue(spectrumKey, out var psms))
+                    {
+                        psms.Add(currentPSM);
+                    }
                     else
                     {
-                        skipPeptide = false;
+                        psms = new List<PHRPReader.Data.PSM>
+                        {
+                            currentPSM
+                        };
+
+                        mPSMsBySpectrumKey.Add(spectrumKey, psms);
                     }
 
-                    if (!skipPeptide && HitsPerSpectrum > 0)
+                    if (TopHitOnly)
                     {
-                        if (currentPSM.ScoreRank > HitsPerSpectrum)
-                        {
-                            skipPeptide = true;
-                        }
-                    }
+                        var comparisonPSMInfo = new PSMInfo(spectrumKey, currentPSM);
 
-                    if (!skipPeptide && peptidesToFilterOn.Count > 0)
-                    {
-                        if (!peptidesToFilterOn.Contains(currentPSM.PeptideCleanSequence))
+                        if (bestPSMByScan.TryGetValue(currentPSM.ScanNumberStart, out var bestPSMInfo))
                         {
-                            skipPeptide = true;
-                        }
-                    }
-
-                    if (!skipPeptide && ChargeFilterList.Count > 0)
-                    {
-                        if (!ChargeFilterList.Contains(currentPSM.Charge))
-                        {
-                            skipPeptide = true;
-                        }
-                    }
-
-                    if (!skipPeptide)
-                    {
-                        var spectrumKey = GetSpectrumKey(currentPSM);
-                        if (!mSpectrumInfo.ContainsKey(spectrumKey))
-                        {
-                            // New spectrum; add a new entry to mSpectrumInfo
-                            var spectrumInfo = new PepXMLWriter.SpectrumInfoType
+                            if (comparisonPSMInfo.MSGFSpecProb < bestPSMInfo.MSGFSpecProb)
                             {
-                                SpectrumName = spectrumKey,
-                                StartScan = currentPSM.ScanNumberStart,
-                                EndScan = currentPSM.ScanNumberEnd,
-                                PrecursorNeutralMass = currentPSM.PrecursorNeutralMass,
-                                AssumedCharge = currentPSM.Charge,
-                                ElutionTimeMinutes = currentPSM.ElutionTimeMinutes,
-                                CollisionMode = currentPSM.CollisionMode,
-                                Index = mSpectrumInfo.Count,
-                                NativeID = ConstructNativeID(currentPSM.ScanNumberStart)
-                            };
-
-                            mSpectrumInfo.Add(spectrumKey, spectrumInfo);
-                        }
-
-                        if (mPSMsBySpectrumKey.TryGetValue(spectrumKey, out var psms))
-                        {
-                            psms.Add(currentPSM);
+                                // We have found a better scoring peptide for this scan
+                                bestPSMByScan[currentPSM.ScanNumberStart] = comparisonPSMInfo;
+                            }
                         }
                         else
                         {
-                            psms = new List<PHRPReader.Data.PSM>
-                            {
-                                currentPSM
-                            };
-                            mPSMsBySpectrumKey.Add(spectrumKey, psms);
+                            bestPSMByScan.Add(currentPSM.ScanNumberStart, comparisonPSMInfo);
                         }
-
-                        if (TopHitOnly)
-                        {
-                            var comparisonPSMInfo = new PSMInfo(spectrumKey, currentPSM);
-
-                            if (bestPSMByScan.TryGetValue(currentPSM.ScanNumberStart, out var bestPSMInfo))
-                            {
-                                if (comparisonPSMInfo.MSGFSpecProb < bestPSMInfo.MSGFSpecProb)
-                                {
-                                    // We have found a better scoring peptide for this scan
-                                    bestPSMByScan[currentPSM.ScanNumberStart] = comparisonPSMInfo;
-                                }
-                            }
-                            else
-                            {
-                                bestPSMByScan.Add(currentPSM.ScanNumberStart, comparisonPSMInfo);
-                            }
-                        }
-
-                        peptidesStored += 1;
                     }
+
+                    peptidesStored++;
 
                     UpdateProgress(mPHRPReader.PercentComplete);
                 }
@@ -549,59 +532,41 @@ namespace PeptideListToXML
                 switch (LocalErrorCode)
                 {
                     case PeptideListToXMLErrorCodes.NoError:
-                        {
-                            errorMessage = "";
-                            break;
-                        }
+                        errorMessage = "";
+                        break;
 
                     case PeptideListToXMLErrorCodes.ErrorReadingInputFile:
-                        {
-                            errorMessage = "Error reading input file";
-                            break;
-                        }
+                        errorMessage = "Error reading input file";
+                        break;
 
                     case PeptideListToXMLErrorCodes.ErrorWritingOutputFile:
-                        {
-                            errorMessage = "Error writing to the output file";
-                            break;
-                        }
+                        errorMessage = "Error writing to the output file";
+                        break;
 
                     case PeptideListToXMLErrorCodes.ModSummaryFileNotFound:
-                        {
-                            errorMessage = "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
-                            break;
-                        }
+                        errorMessage = "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
+                        break;
 
                     case PeptideListToXMLErrorCodes.SeqInfoFileNotFound:
-                        {
-                            errorMessage = "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
-                            break;
-                        }
+                        errorMessage = "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
+                        break;
 
                     case PeptideListToXMLErrorCodes.MSGFStatsFileNotFound:
-                        {
-                            errorMessage = "MSGF file not found; use the /NoMSGF switch to avoid this error";
-                            break;
-                        }
+                        errorMessage = "MSGF file not found; use the /NoMSGF switch to avoid this error";
+                        break;
 
                     case PeptideListToXMLErrorCodes.ScanStatsFileNotFound:
-                        {
-                            errorMessage = "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error";
-                            break;
-                        }
+                        errorMessage = "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error";
+                        break;
 
                     case PeptideListToXMLErrorCodes.UnspecifiedError:
-                        {
-                            errorMessage = "Unspecified localized error";
-                            break;
-                        }
+                        errorMessage = "Unspecified localized error";
+                        break;
 
                     default:
-                        {
-                            // This shouldn't happen
-                            errorMessage = "Unknown error state";
-                            break;
-                        }
+                        // This shouldn't happen
+                        errorMessage = "Unknown error state";
+                        break;
                 }
             }
             else
@@ -670,18 +635,16 @@ namespace PeptideListToXML
                         SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidParameterFile);
                         return false;
                     }
-                    else
-                    {
-                        FastaFilePath = settingsFile.GetParam(XML_SECTION_OPTIONS, "FastaFilePath", FastaFilePath);
-                        SearchEngineParamFileName = settingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", SearchEngineParamFileName);
-                        HitsPerSpectrum = settingsFile.GetParam(XML_SECTION_OPTIONS, "HitsPerSpectrum", HitsPerSpectrum);
-                        SkipXPeptides = settingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", SkipXPeptides);
-                        TopHitOnly = settingsFile.GetParam(XML_SECTION_OPTIONS, "TopHitOnly", TopHitOnly);
-                        MaxProteinsPerPSM = settingsFile.GetParam(XML_SECTION_OPTIONS, "MaxProteinsPerPSM", MaxProteinsPerPSM);
-                        LoadModsAndSeqInfo = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadModsAndSeqInfo", LoadModsAndSeqInfo);
-                        LoadMSGFResults = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadMSGFResults", LoadMSGFResults);
-                        LoadScanStats = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadScanStats", LoadScanStats);
-                    }
+
+                    FastaFilePath = settingsFile.GetParam(XML_SECTION_OPTIONS, "FastaFilePath", FastaFilePath);
+                    SearchEngineParamFileName = settingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", SearchEngineParamFileName);
+                    HitsPerSpectrum = settingsFile.GetParam(XML_SECTION_OPTIONS, "HitsPerSpectrum", HitsPerSpectrum);
+                    SkipXPeptides = settingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", SkipXPeptides);
+                    TopHitOnly = settingsFile.GetParam(XML_SECTION_OPTIONS, "TopHitOnly", TopHitOnly);
+                    MaxProteinsPerPSM = settingsFile.GetParam(XML_SECTION_OPTIONS, "MaxProteinsPerPSM", MaxProteinsPerPSM);
+                    LoadModsAndSeqInfo = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadModsAndSeqInfo", LoadModsAndSeqInfo);
+                    LoadMSGFResults = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadMSGFResults", LoadMSGFResults);
+                    LoadScanStats = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadScanStats", LoadScanStats);
                 }
             }
             catch (Exception ex)
@@ -772,30 +735,34 @@ namespace PeptideListToXML
                 foreach (var item in mPSMsBySpectrumKey)
                 {
                     var spectrumKey = item.Key;
-                    if (mSpectrumInfo.ContainsKey(spectrumKey))
+                    if (!mSpectrumInfo.ContainsKey(spectrumKey))
                     {
-                        foreach (var psmEntry in item.Value)
-                        {
-                            if (psmEntry.ModifiedResidues.Count > 0)
-                            {
-                                foreach (var residue in psmEntry.ModifiedResidues)
-                                {
-                                    // Check whether residue.ModDefinition is present in searchEngineParams.ModInfo
-                                    var matchFound = false;
-                                    foreach (var knownMod in searchEngineParams.ModList)
-                                    {
-                                        if (knownMod.EquivalentMassTypeTagAtomAndResidues(residue.ModDefinition))
-                                        {
-                                            matchFound = true;
-                                            break;
-                                        }
-                                    }
+                        continue;
+                    }
 
-                                    if (!matchFound)
-                                    {
-                                        searchEngineParams.ModList.Add(residue.ModDefinition);
-                                    }
+                    foreach (var psmEntry in item.Value)
+                    {
+                        if (psmEntry.ModifiedResidues.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        foreach (var residue in psmEntry.ModifiedResidues)
+                        {
+                            // Check whether residue.ModDefinition is present in searchEngineParams.ModInfo
+                            var matchFound = false;
+                            foreach (var knownMod in searchEngineParams.ModList)
+                            {
+                                if (knownMod.EquivalentMassTypeTagAtomAndResidues(residue.ModDefinition))
+                                {
+                                    matchFound = true;
+                                    break;
                                 }
+                            }
+
+                            if (!matchFound)
+                            {
+                                searchEngineParams.ModList.Add(residue.ModDefinition);
                             }
                         }
                     }
@@ -856,19 +823,24 @@ namespace PeptideListToXML
                 ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetExtendedScanStatsFilename(DatasetName));
             }
 
-            if (!string.IsNullOrEmpty(searchEngineParamFileName))
+            if (string.IsNullOrEmpty(searchEngineParamFileName))
             {
-                ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + searchEngineParamFileName);
-                ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetToolVersionInfoFilenames(PeptideHitResultTypes).First());
-                if (mPeptideHitResultType == PHRPReader.PeptideHitResultTypes.XTandem)
-                {
-                    // Determine the additional files that will be required
-                    foreach (var fileName in PHRPReader.Reader.XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(
-                        Path.Combine(inputFile.DirectoryName, searchEngineParamFileName)))
-                    {
-                        ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + fileName);
-                    }
-                }
+                return;
+            }
+
+            ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + searchEngineParamFileName);
+            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetToolVersionInfoFilenames(PeptideHitResultTypes).First());
+
+            if (mPeptideHitResultType != PHRPReader.PeptideHitResultTypes.XTandem)
+            {
+                return;
+            }
+
+            // Determine the additional files that will be required for X!Tandem
+            foreach (var fileName in PHRPReader.Reader.XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(
+                Path.Combine(inputFile.DirectoryName, searchEngineParamFileName)))
+            {
+                ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + fileName);
             }
         }
 
@@ -902,51 +874,52 @@ namespace PeptideListToXML
 
             try
             {
-                if (inputFilePath is null || inputFilePath.Length == 0)
+                if (string.IsNullOrWhiteSpace(inputFilePath))
                 {
                     ShowMessage("Input file name is empty");
                     SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidInputFilePath);
+                    return false;
+                }
+
+                Console.WriteLine();
+                if (!PreviewMode)
+                {
+                    ShowMessage("Parsing " + Path.GetFileName(inputFilePath));
+                }
+
+                // Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
+                if (!CleanupFilePaths(ref inputFilePath, ref outputFolderPath))
+                {
+                    SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError);
                 }
                 else
                 {
-                    Console.WriteLine();
                     if (!PreviewMode)
                     {
-                        ShowMessage("Parsing " + Path.GetFileName(inputFilePath));
+                        ResetProgress();
                     }
 
-                    // Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
-                    if (!CleanupFilePaths(ref inputFilePath, ref outputFolderPath))
+                    try
                     {
-                        SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError);
+                        // Obtain the full path to the input file
+                        var inputFile = new FileInfo(inputFilePath);
+                        var inputFilePathFull = inputFile.FullName;
+                        return ConvertPHRPDataToXML(inputFilePathFull, outputFolderPath);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        if (!PreviewMode)
-                        {
-                            ResetProgress();
-                        }
-
-                        try
-                        {
-                            // Obtain the full path to the input file
-                            var inputFile = new FileInfo(inputFilePath);
-                            var inputFilePathFull = inputFile.FullName;
-                            success = ConvertPHRPDataToXML(inputFilePathFull, outputFolderPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            HandleException("Error calling ConvertToXML", ex);
-                        }
+                        HandleException("Error calling ConvertToXML", ex);
+                        return false;
                     }
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 HandleException("Error in ProcessFile", ex);
+                return false;
             }
-
-            return success;
         }
 
         private void ShowWarningMessage(string warningMessage)
@@ -954,31 +927,25 @@ namespace PeptideListToXML
             ShowMessage("Warning: " + warningMessage);
         }
 
-        private void SetLocalErrorCode(PeptideListToXMLErrorCodes newErrorCode)
-        {
-            SetLocalErrorCode(newErrorCode, false);
-        }
-
-        private void SetLocalErrorCode(PeptideListToXMLErrorCodes newErrorCode, bool leaveExistingErrorCodeUnchanged)
+        private void SetLocalErrorCode(PeptideListToXMLErrorCodes newErrorCode, bool leaveExistingErrorCodeUnchanged = false)
         {
             if (leaveExistingErrorCodeUnchanged && LocalErrorCode != PeptideListToXMLErrorCodes.NoError)
             {
+                // An error code is already defined; do not change it
+                return;
             }
-            // An error code is already defined; do not change it
+
+            LocalErrorCode = newErrorCode;
+            if (newErrorCode == PeptideListToXMLErrorCodes.NoError)
+            {
+                if (ErrorCode == ProcessFilesErrorCodes.LocalizedError)
+                {
+                    SetBaseClassErrorCode(ProcessFilesErrorCodes.NoError);
+                }
+            }
             else
             {
-                LocalErrorCode = newErrorCode;
-                if (newErrorCode == PeptideListToXMLErrorCodes.NoError)
-                {
-                    if (ErrorCode == ProcessFilesErrorCodes.LocalizedError)
-                    {
-                        SetBaseClassErrorCode(ProcessFilesErrorCodes.NoError);
-                    }
-                }
-                else
-                {
-                    SetBaseClassErrorCode(ProcessFilesErrorCodes.LocalizedError);
-                }
+                SetBaseClassErrorCode(ProcessFilesErrorCodes.LocalizedError);
             }
         }
 

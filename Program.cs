@@ -211,127 +211,119 @@ namespace PeptideListToXML
                                                                          select ("/" + item)).ToList());
                     return false;
                 }
-                else
+
+                // Query commandLineParser to see if various parameters are present
+                if (commandLineParser.RetrieveValueForParameter("I", out var inputFilePath))
                 {
-                    // Query commandLineParser to see if various parameters are present
-                    if (commandLineParser.RetrieveValueForParameter("I", out var inputFilePath))
+                    mInputFilePath = inputFilePath;
+                }
+                else if (commandLineParser.NonSwitchParameterCount > 0)
+                {
+                    mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("O", out var outputFolderPath))
+                    mOutputFolderPath = outputFolderPath;
+
+                // Future enum; mzIdentML is not yet supported
+                // If .RetrieveValueForParameter("M", value) Then
+                // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
+                // End If
+
+                if (commandLineParser.RetrieveValueForParameter("F", out var fastaFilePath))
+                    mFastaFilePath = fastaFilePath;
+
+                if (commandLineParser.RetrieveValueForParameter("E", out var searchEngineParamFileName))
+                    mSearchEngineParamFileName = searchEngineParamFileName;
+
+                if (commandLineParser.RetrieveValueForParameter("H", out var hitsPerSpectrum) &&
+                    int.TryParse(hitsPerSpectrum, out var hitsPerSpectrumValue))
+                {
+                    mHitsPerSpectrum = hitsPerSpectrumValue;
+                }
+
+                if (commandLineParser.IsParameterPresent("X"))
+                    mSkipXPeptides = true;
+
+                if (commandLineParser.IsParameterPresent("TopHitOnly"))
+                    mTopHitOnly = true;
+
+                if (commandLineParser.RetrieveValueForParameter("MaxProteins", out var maxProteins) &&
+                    int.TryParse(maxProteins, out var maxProteinsValue))
+                {
+                    mMaxProteinsPerPSM = maxProteinsValue;
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("PepFilter", out var peptideFilterFilePath))
+                    mPeptideFilterFilePath = peptideFilterFilePath;
+
+                if (commandLineParser.RetrieveValueForParameter("ChargeFilter", out var chargeFilter))
+                {
+                    try
                     {
-                        mInputFilePath = inputFilePath;
-                    }
-                    else if (commandLineParser.NonSwitchParameterCount > 0)
-                    {
-                        mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
-                    }
-
-                    if (commandLineParser.RetrieveValueForParameter("O", out var outputFolderPath))
-                        mOutputFolderPath = outputFolderPath;
-
-                    // Future enum; mzIdentML is not yet supported
-                    // If .RetrieveValueForParameter("M", value) Then
-                    // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
-                    // End If
-
-                    if (commandLineParser.RetrieveValueForParameter("F", out var fastaFilePath))
-                        mFastaFilePath = fastaFilePath;
-
-                    if (commandLineParser.RetrieveValueForParameter("E", out var searchEngineParamFileName))
-                        mSearchEngineParamFileName = searchEngineParamFileName;
-
-                    if (commandLineParser.RetrieveValueForParameter("H", out var hitsPerSpectrum))
-                    {
-                        if (int.TryParse(hitsPerSpectrum, out var hitsPerSpectrumValue))
+                        if (string.IsNullOrEmpty(chargeFilter))
                         {
-                            mHitsPerSpectrum = hitsPerSpectrumValue;
-                        }
-                    }
-
-                    if (commandLineParser.IsParameterPresent("X"))
-                        mSkipXPeptides = true;
-
-                    if (commandLineParser.IsParameterPresent("TopHitOnly"))
-                        mTopHitOnly = true;
-
-                    if (commandLineParser.RetrieveValueForParameter("MaxProteins", out var maxProteins))
-                    {
-                        if (int.TryParse(maxProteins, out var maxProteinsValue))
-                        {
-                            mMaxProteinsPerPSM = maxProteinsValue;
-                        }
-                    }
-
-                    if (commandLineParser.RetrieveValueForParameter("PepFilter", out var peptideFilterFilePath))
-                        mPeptideFilterFilePath = peptideFilterFilePath;
-
-                    if (commandLineParser.RetrieveValueForParameter("ChargeFilter", out var chargeFilter))
-                    {
-                        try
-                        {
-                            if (string.IsNullOrEmpty(chargeFilter))
-                            {
-                                ShowErrorMessage("ChargeFilter argument must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3");
-                                Console.WriteLine();
-                                return false;
-                            }
-                            else
-                            {
-                                foreach (var charge in chargeFilter.Split(',').ToList())
-                                {
-                                    if (int.TryParse(charge, out var chargeValue))
-                                    {
-                                        mChargeFilterList.Add(chargeValue);
-                                    }
-                                    else
-                                    {
-                                        ShowErrorMessage("Invalid charge specified: " + charge);
-                                        Console.WriteLine();
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            ShowErrorMessage("Error parsing the list of charges \"" + chargeFilter + "\"; should be a command separated list", ex);
+                            ShowErrorMessage("ChargeFilter argument must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3");
                             Console.WriteLine();
                             return false;
                         }
-                    }
 
-                    if (commandLineParser.RetrieveValueForParameter("P", out var parameterFilePath))
-                        mParameterFilePath = parameterFilePath;
-
-                    if (commandLineParser.IsParameterPresent("NoMods"))
-                        mLoadModsAndSeqInfo = false;
-
-                    if (commandLineParser.IsParameterPresent("NoMSGF"))
-                        mLoadMSGFResults = false;
-
-                    if (commandLineParser.IsParameterPresent("NoScanStats"))
-                        mLoadScanStats = false;
-
-                    if (commandLineParser.IsParameterPresent("Preview"))
-                        mPreview = true;
-
-                    if (commandLineParser.RetrieveValueForParameter("S", out var recurseFolders))
-                    {
-                        mRecurseFolders = true;
-                        if (!int.TryParse(recurseFolders, out mRecurseFoldersMaxLevels))
+                        foreach (var charge in chargeFilter.Split(',').ToList())
                         {
-                            mRecurseFoldersMaxLevels = 0;
+                            if (int.TryParse(charge, out var chargeValue))
+                            {
+                                mChargeFilterList.Add(chargeValue);
+                            }
+                            else
+                            {
+                                ShowErrorMessage("Invalid charge specified: " + charge);
+                                Console.WriteLine();
+                                return false;
+                            }
                         }
                     }
-
-                    if (commandLineParser.RetrieveValueForParameter("A", out var outputFolderAlternatePath))
-                        mOutputFolderAlternatePath = outputFolderAlternatePath;
-
-                    if (commandLineParser.IsParameterPresent("R"))
-                        mRecreateFolderHierarchyInAlternatePath = true;
-
-                    if (commandLineParser.IsParameterPresent("L"))
-                        mLogMessagesToFile = true;
-
-                    return true;
+                    catch (Exception ex)
+                    {
+                        ShowErrorMessage("Error parsing the list of charges \"" + chargeFilter + "\"; should be a command separated list", ex);
+                        Console.WriteLine();
+                        return false;
+                    }
                 }
+
+                if (commandLineParser.RetrieveValueForParameter("P", out var parameterFilePath))
+                    mParameterFilePath = parameterFilePath;
+
+                if (commandLineParser.IsParameterPresent("NoMods"))
+                    mLoadModsAndSeqInfo = false;
+
+                if (commandLineParser.IsParameterPresent("NoMSGF"))
+                    mLoadMSGFResults = false;
+
+                if (commandLineParser.IsParameterPresent("NoScanStats"))
+                    mLoadScanStats = false;
+
+                if (commandLineParser.IsParameterPresent("Preview"))
+                    mPreview = true;
+
+                if (commandLineParser.RetrieveValueForParameter("S", out var recurseFolders))
+                {
+                    mRecurseFolders = true;
+                    if (!int.TryParse(recurseFolders, out mRecurseFoldersMaxLevels))
+                    {
+                        mRecurseFoldersMaxLevels = 0;
+                    }
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("A", out var outputFolderAlternatePath))
+                    mOutputFolderAlternatePath = outputFolderAlternatePath;
+
+                if (commandLineParser.IsParameterPresent("R"))
+                    mRecreateFolderHierarchyInAlternatePath = true;
+
+                if (commandLineParser.IsParameterPresent("L"))
+                    mLogMessagesToFile = true;
+
+                return true;
             }
             catch (Exception ex)
             {

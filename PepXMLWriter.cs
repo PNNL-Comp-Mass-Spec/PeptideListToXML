@@ -124,49 +124,36 @@ namespace PeptideListToXML
                 case "CID":
                 case "ETD":
                 case "HCD":
-                    {
-                        pepXMLCollisionMode = collisionModeUCase;
-                        break;
-                    }
+                    pepXMLCollisionMode = collisionModeUCase;
+                    break;
 
                 case "ETD/CID":
                 case "ETD-CID":
-                    {
-                        pepXMLCollisionMode = "ETD/CID";
-                        break;
-                    }
+                    pepXMLCollisionMode = "ETD/CID";
+                    break;
 
                 default:
+                    if (collisionModeUCase.StartsWith("CID"))
                     {
-                        if (collisionModeUCase.StartsWith("CID"))
-                        {
-                            pepXMLCollisionMode = "CID";
-                        }
-                        else if (collisionModeUCase.StartsWith("HCD"))
-                        {
-                            pepXMLCollisionMode = "HCD";
-                        }
-                        else if (collisionModeUCase.StartsWith("ETD"))
-                        {
-                            pepXMLCollisionMode = "ETD";
-                        }
-                        else
-                        {
-                            pepXMLCollisionMode = string.Empty;
-                        }
-
-                        break;
+                        pepXMLCollisionMode = "CID";
                     }
+                    else if (collisionModeUCase.StartsWith("HCD"))
+                    {
+                        pepXMLCollisionMode = "HCD";
+                    }
+                    else if (collisionModeUCase.StartsWith("ETD"))
+                    {
+                        pepXMLCollisionMode = "ETD";
+                    }
+                    else
+                    {
+                        pepXMLCollisionMode = string.Empty;
+                    }
+
+                    break;
             }
 
-            if (string.IsNullOrEmpty(pepXMLCollisionMode))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return !string.IsNullOrEmpty(pepXMLCollisionMode);
         }
 
         /// <summary>
@@ -399,26 +386,29 @@ namespace PeptideListToXML
 
                     foreach (var residue in targetResidues)
                     {
-                        if (!terminalSymbols.Contains(residue))
+                        if (terminalSymbols.Contains(residue))
                         {
-                            mXMLWriter.WriteStartElement("aminoacid_modification");
-                            WriteAttribute("aminoacid", residue.ToString());                         // Amino acid symbol, e.g. A
-                            WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5);          // Mass difference, must begin with + or -
-                            aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
-                            WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
-                            if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
-                            {
-                                WriteAttribute("variable", "Y");
-                            }
-                            else
-                            {
-                                WriteAttribute("variable", "N");
-                            }
-
-                            WriteAttribute("symbol", modDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
-                            WriteAttribute("description", modDef.MassCorrectionTag);
-                            mXMLWriter.WriteEndElement();        // aminoacid_modification
+                            continue;
                         }
+
+                        mXMLWriter.WriteStartElement("aminoacid_modification");
+                        WriteAttribute("aminoacid", residue.ToString());                 // Amino acid symbol, e.g. A
+                        WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
+                        aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
+                        WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+
+                        if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
+                        {
+                            WriteAttribute("variable", "Y");
+                        }
+                        else
+                        {
+                            WriteAttribute("variable", "N");
+                        }
+
+                        WriteAttribute("symbol", modDef.ModificationSymbol.ToString()); // Symbol used by search-engine to denote this mod
+                        WriteAttribute("description", modDef.MassCorrectionTag);
+                        mXMLWriter.WriteEndElement(); // aminoacid_modification
                     }
                 }
             }
@@ -426,63 +416,68 @@ namespace PeptideListToXML
             // Protein/Peptide terminal mods
             foreach (var modDef in SearchEngineParams.ModList)
             {
-                if (modDef.CanAffectPeptideOrProteinTerminus())
+                if (!modDef.CanAffectPeptideOrProteinTerminus())
                 {
-                    if (string.IsNullOrEmpty(modDef.TargetResidues))
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(modDef.TargetResidues))
+                {
+                    // Target residues should not be empty for terminal mods
+                    // But, we'll list them anyway
+                    targetResidues = string.Format("{0}{1}",
+                        PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS,
+                        PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS);
+                }
+                else
+                {
+                    targetResidues = modDef.TargetResidues;
+                }
+
+                foreach (var residue in targetResidues)
+                {
+                    if (!terminalSymbols.Contains(residue))
                     {
-                        // Target residues should not be empty for terminal mods
-                        // But, we'll list them anyway
-                        targetResidues = string.Format("{0}{1}",
-                            PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS,
-                            PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS);
+                        continue;
+                    }
+
+                    mXMLWriter.WriteStartElement("terminal_modification");
+                    if (residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                    {
+                        WriteAttribute("terminus", "c");
+                        aminoAcidMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE;
                     }
                     else
                     {
-                        targetResidues = modDef.TargetResidues;
+                        WriteAttribute("terminus", "n");
+                        aminoAcidMass = PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE;
                     }
 
-                    foreach (var residue in targetResidues)
+                    WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
+                    WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+
+                    if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
                     {
-                        if (terminalSymbols.Contains(residue))
-                        {
-                            mXMLWriter.WriteStartElement("terminal_modification");
-                            if (residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
-                            {
-                                WriteAttribute("terminus", "c");
-                                aminoAcidMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE;
-                            }
-                            else
-                            {
-                                WriteAttribute("terminus", "n");
-                                aminoAcidMass = PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE;
-                            }
-
-                            WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5);          // Mass difference, must begin with + or -
-                            WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
-                            if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
-                            {
-                                WriteAttribute("variable", "Y");
-                            }
-                            else
-                            {
-                                WriteAttribute("variable", "N");
-                            }
-
-                            WriteAttribute("symbol", modDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
-                            if (residue == PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
-                            {
-                                // Modification can only occur at the protein terminus
-                                WriteAttribute("protein_terminus", "Y");
-                            }
-                            else
-                            {
-                                WriteAttribute("protein_terminus", "N");
-                            }
-
-                            WriteAttribute("description", modDef.MassCorrectionTag);
-                            mXMLWriter.WriteEndElement();        // terminal_modification
-                        }
+                        WriteAttribute("variable", "Y");
                     }
+                    else
+                    {
+                        WriteAttribute("variable", "N");
+                    }
+
+                    WriteAttribute("symbol", modDef.ModificationSymbol.ToString()); // Symbol used by search-engine to denote this mod
+                    if (residue == PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                    {
+                        // Modification can only occur at the protein terminus
+                        WriteAttribute("protein_terminus", "Y");
+                    }
+                    else
+                    {
+                        WriteAttribute("protein_terminus", "N");
+                    }
+
+                    WriteAttribute("description", modDef.MassCorrectionTag);
+                    mXMLWriter.WriteEndElement(); // terminal_modification
                 }
             }
 
@@ -520,25 +515,26 @@ namespace PeptideListToXML
             var modifiedResidues = new Dictionary<int, double>();
 
             if (psms is null || psms.Count == 0)
-                return;
             {
-                mXMLWriter.WriteStartElement("spectrum_query");
-                mXMLWriter.WriteAttributeString("spectrum", spectrum.SpectrumName);         // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
-                WriteAttribute("start_scan", spectrum.StartScan);
-                WriteAttribute("end_scan", spectrum.EndScan);
-                WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
-
-                if (GetPepXMLCollisionMode(spectrum.CollisionMode, out var collisionMode))
-                {
-                    WriteAttribute("activation_method", collisionMode);
-                }
-
-                WriteAttribute("precursor_neutral_mass", spectrum.PrecursorNeutralMass);
-                WriteAttribute("assumed_charge", spectrum.AssumedCharge);
-                WriteAttribute("index", spectrum.Index);
-                WriteAttribute("spectrumNativeID", spectrum.NativeID);            // Example: controllerType=0 controllerNumber=1 scan=20554
-                mXMLWriter.WriteStartElement("search_result");
+                return;
             }
+
+            mXMLWriter.WriteStartElement("spectrum_query");
+            mXMLWriter.WriteAttributeString("spectrum", spectrum.SpectrumName); // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
+            WriteAttribute("start_scan", spectrum.StartScan);
+            WriteAttribute("end_scan", spectrum.EndScan);
+            WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
+
+            if (GetPepXMLCollisionMode(spectrum.CollisionMode, out var collisionMode))
+            {
+                WriteAttribute("activation_method", collisionMode);
+            }
+
+            WriteAttribute("precursor_neutral_mass", spectrum.PrecursorNeutralMass);
+            WriteAttribute("assumed_charge", spectrum.AssumedCharge);
+            WriteAttribute("index", spectrum.Index);
+            WriteAttribute("spectrumNativeID", spectrum.NativeID); // Example: controllerType=0 controllerNumber=1 scan=20554
+            mXMLWriter.WriteStartElement("search_result");
 
             foreach (var psmEntry in psms)
             {
@@ -657,24 +653,18 @@ namespace PeptideListToXML
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
-                                    {
-                                        nTermAddon += residue.ModDefinition.ModificationMass;
-                                        break;
-                                    }
+                                    nTermAddon += residue.ModDefinition.ModificationMass;
+                                    break;
 
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
-                                    {
-                                        cTermAddon += residue.ModDefinition.ModificationMass;
-                                        break;
-                                    }
+                                    cTermAddon += residue.ModDefinition.ModificationMass;
+                                    break;
 
                                 default:
-                                    {
-                                        // This is unexpected
-                                        OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + residue.Residue + " at position " + residue.ResidueLocInPeptide + " in peptide " + psmEntry.Peptide + ", scan " + psmEntry.ScanNumber);
-                                        break;
-                                    }
+                                    // This is unexpected
+                                    OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + residue.Residue + " at position " + residue.ResidueLocInPeptide + " in peptide " + psmEntry.Peptide + ", scan " + psmEntry.ScanNumber);
+                                    break;
                             }
                         }
                     }
@@ -695,20 +685,23 @@ namespace PeptideListToXML
                     modifiedResidues.Clear();
                     foreach (var residue in psmEntry.ModifiedResidues)
                     {
-                        if (!(residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod ||
-                              residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
+                        if (residue.ModDefinition.ModificationType is
+                            PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod or
+                            PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
                         {
-                            if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
-                            {
-                                // This residue has more than one modification applied to it
-                                totalMass += residue.ModDefinition.ModificationMass;
-                                modifiedResidues[residue.ResidueLocInPeptide] = totalMass;
-                            }
-                            else
-                            {
-                                var totalMass2 = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
-                                modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass2);
-                            }
+                            continue;
+                        }
+
+                        if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
+                        {
+                            // This residue has more than one modification applied to it
+                            totalMass += residue.ModDefinition.ModificationMass;
+                            modifiedResidues[residue.ResidueLocInPeptide] = totalMass;
+                        }
+                        else
+                        {
+                            var totalMass2 = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
+                            modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass2);
                         }
                     }
 
@@ -747,7 +740,7 @@ namespace PeptideListToXML
 
                 WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(massErrorPPM), 4);
 
-                // ' Old, unused
+                // Old, unused
                 // WritePeptideProphetUsingMSGF(mXMLWriter, searchHit, iNumTrypticTermini, iNumMissedCleavages)
 
                 mXMLWriter.WriteEndElement();              // search_hit
