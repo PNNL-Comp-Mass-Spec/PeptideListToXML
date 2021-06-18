@@ -93,10 +93,7 @@ namespace PeptideListToXML
             MaxProteinsPerPSM = 0;
             try
             {
-                if (!InitializePepXMLFile(outputFilePath, fastaFilePath))
-                {
-                    throw new Exception("Error initializing PepXML file");
-                }
+                InitializePepXMLFile(outputFilePath, fastaFilePath);
             }
             catch (Exception ex)
             {
@@ -161,9 +158,7 @@ namespace PeptideListToXML
         /// </summary>
         /// <param name="outputFilePath"></param>
         /// <param name="fastaFilePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private bool InitializePepXMLFile(string outputFilePath, string fastaFilePath)
+        private void InitializePepXMLFile(string outputFilePath, string fastaFilePath)
         {
             if (string.IsNullOrWhiteSpace(fastaFilePath))
             {
@@ -185,7 +180,6 @@ namespace PeptideListToXML
             mXMLWriter.WriteProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"pepXML_std.xsl\"");
             WriteHeaderElements(outputFile);
             WriteSearchSummary(fastaFilePath);
-            return true;
         }
 
         private void InitializePNNLScoreNameMap()
