@@ -8,6 +8,9 @@ using PRISM;
 
 namespace PeptideListToXML
 {
+    /// <summary>
+    /// PepXML writer
+    /// </summary>
     public class PepXMLWriter : EventNotifier
     {
         // Ignore Spelling: href, stylesheet, xmlns, xsi, xsl, yyyy-MM-ddTHH:mm:ss
@@ -16,6 +19,9 @@ namespace PeptideListToXML
 
         #region Structures
 
+        /// <summary>
+        /// Spectrum Info
+        /// </summary>
         public struct SpectrumInfoType
         {
             public string SpectrumName;           // Spectrum Title: could be "QC_05_2_05Dec05_Doc_0508-08.9427.9427.1" or just "scan=16134 cs=2"
@@ -46,8 +52,14 @@ namespace PeptideListToXML
         /// </summary>
         public string DatasetName { get; }
 
+        /// <summary>
+        /// Maximum number of proteins per PSM to store
+        /// </summary>
         public int MaxProteinsPerPSM { get; set; }
 
+        /// <summary>
+        /// Search engine parameters, read by PHRPReader
+        /// </summary>
         public PHRPReader.Data.SearchEngineParameters SearchEngineParams { get; }
 
         public string SourceFilePath { get; }
@@ -55,7 +67,7 @@ namespace PeptideListToXML
         #endregion
 
         /// <summary>
-        /// Instantiate a new PepXML writer
+        /// Constructor
         /// </summary>
         /// <param name="datasetName">Name of the Dataset</param>
         /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
@@ -500,6 +512,12 @@ namespace PeptideListToXML
             mXMLWriter.WriteEndElement();                    // search_summary
         }
 
+        /// <summary>
+        /// Append a spectrum and its PSMs to the .pepXML file
+        /// </summary>
+        /// <param name="spectrum"></param>
+        /// <param name="psms"></param>
+        /// <param name="seqToProteinMap"></param>
         public void WriteSpectrum(ref SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, ref SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
         {
             double massErrorDa;

@@ -67,7 +67,6 @@ namespace PeptideListToXML
         /// Program entry point
         /// </summary>
         /// <returns>0 if no error, error code if an error</returns>
-        /// <remarks></remarks>
         public static int Main()
         {
             var commandLineParser = new clsParseCommandLine();
