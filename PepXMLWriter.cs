@@ -203,20 +203,20 @@ namespace PeptideListToXML
 
         private void InitializePNNLScoreNameMap()
         {
-            mPNNLScoreNameMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-            // SEQUEST scores
-            mPNNLScoreNameMap.Add("XCorr", "xcorr");
-            mPNNLScoreNameMap.Add("DelCn", "deltacn");
-            mPNNLScoreNameMap.Add("Sp", "spscore");
-            mPNNLScoreNameMap.Add("DelCn2", "deltacnstar");
-            mPNNLScoreNameMap.Add("RankSp", "sprank");
-
-            // X!Tandem scores
-            mPNNLScoreNameMap.Add("Peptide_Hyperscore", "hyperscore");
-            mPNNLScoreNameMap.Add("Peptide_Expectation_Value", "expect");
-            mPNNLScoreNameMap.Add("y_score", "yscore");
-            mPNNLScoreNameMap.Add("b_score", "bscore");
+            mPNNLScoreNameMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase)
+            {
+                // SEQUEST scores
+                {"XCorr", "xcorr"},
+                {"DelCn", "deltacn"},
+                {"Sp", "spscore"},
+                {"DelCn2", "deltacnstar"},
+                {"RankSp", "sprank"},
+                // X!Tandem scores
+                {"Peptide_Hyperscore", "hyperscore"},
+                {"Peptide_Expectation_Value", "expect"},
+                {"y_score", "yscore"},
+                {"b_score", "bscore"}
+            };
         }
 
         private void WriteAttribute(string attributeName, string value)

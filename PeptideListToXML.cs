@@ -389,16 +389,19 @@ namespace PeptideListToXML
                         if (!mSpectrumInfo.ContainsKey(spectrumKey))
                         {
                             // New spectrum; add a new entry to mSpectrumInfo
-                            spectrumInfo = new PepXMLWriter.SpectrumInfoType();
-                            spectrumInfo.SpectrumName = spectrumKey;
-                            spectrumInfo.StartScan = currentPSM.ScanNumberStart;
-                            spectrumInfo.EndScan = currentPSM.ScanNumberEnd;
-                            spectrumInfo.PrecursorNeutralMass = currentPSM.PrecursorNeutralMass;
-                            spectrumInfo.AssumedCharge = currentPSM.Charge;
-                            spectrumInfo.ElutionTimeMinutes = currentPSM.ElutionTimeMinutes;
-                            spectrumInfo.CollisionMode = currentPSM.CollisionMode;
-                            spectrumInfo.Index = mSpectrumInfo.Count;
-                            spectrumInfo.NativeID = ConstructNativeID(currentPSM.ScanNumberStart);
+                            var spectrumInfo = new PepXMLWriter.SpectrumInfoType
+                            {
+                                SpectrumName = spectrumKey,
+                                StartScan = currentPSM.ScanNumberStart,
+                                EndScan = currentPSM.ScanNumberEnd,
+                                PrecursorNeutralMass = currentPSM.PrecursorNeutralMass,
+                                AssumedCharge = currentPSM.Charge,
+                                ElutionTimeMinutes = currentPSM.ElutionTimeMinutes,
+                                CollisionMode = currentPSM.CollisionMode,
+                                Index = mSpectrumInfo.Count,
+                                NativeID = ConstructNativeID(currentPSM.ScanNumberStart)
+                            };
+
                             mSpectrumInfo.Add(spectrumKey, spectrumInfo);
                         }
 
@@ -408,7 +411,10 @@ namespace PeptideListToXML
                         }
                         else
                         {
-                            psms = new List<PHRPReader.Data.PSM>() { currentPSM };
+                            psms = new List<PHRPReader.Data.PSM>
+                            {
+                                currentPSM
+                            };
                             mPSMsBySpectrumKey.Add(spectrumKey, psms);
                         }
 
@@ -518,8 +524,16 @@ namespace PeptideListToXML
         /// </summary>
         public override IList<string> GetDefaultExtensionsToParse()
         {
-            var extensionsToParse = new List<string>() { PHRPReader.Reader.SequestSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.XTandemSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MSGFPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.InspectSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MODaSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MODPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty) };
-            return extensionsToParse;
+            return new List<string>()
+            {
+                PHRPReader.Reader.InspectSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.MaxQuantSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.MODaSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.MODPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.MSGFPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.SequestSynFileReader.GetPHRPSynopsisFileName(string.Empty),
+                PHRPReader.Reader.XTandemSynFileReader.GetPHRPSynopsisFileName(string.Empty)
+            };
         }
 
         /// <summary>
