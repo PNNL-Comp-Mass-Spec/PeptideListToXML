@@ -125,11 +125,13 @@ namespace PeptideListToXML
                     TopHitOnly = mTopHitOnly,
                     MaxProteinsPerPSM = mMaxProteinsPerPSM,
                     PeptideFilterFilePath = mPeptideFilterFilePath,
-                    ChargeFilterList = mChargeFilterList,
                     LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
                     LoadMSGFResults = mLoadMSGFResults,
                     LoadScanStats = mLoadScanStats
                 };
+
+                mPeptideListConverter.ChargeFilterList.AddRange(mChargeFilterList);
+
                 RegisterEvents(mPeptideListConverter);
                 mLastProgressReportTime = DateTime.UtcNow;
                 mLastPercentDisplayed = DateTime.UtcNow;

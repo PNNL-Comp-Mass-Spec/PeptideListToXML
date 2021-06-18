@@ -4,45 +4,26 @@ namespace PeptideListToXML
     public class PSMInfo
     {
         public const double MSGF_SPEC_NOT_DEFINED = 100.0;
-        private readonly PHRPReader.Data.PSM mPSM;
-        private readonly string mSpectrumKey;
+
         private readonly double mMSGFSpecProb;
 
-        public PHRPReader.Data.PSM PSM
-        {
-            get
-            {
-                return mPSM;
-            }
-        }
+        public PHRPReader.Data.PSM PSM { get; }
 
-        public string SpectrumKey
-        {
-            get
-            {
-                return mSpectrumKey;
-            }
-        }
+        public string SpectrumKey { get; }
 
-        public double MSGFSpecProb
-        {
-            get
-            {
-                return mMSGFSpecProb;
-            }
-        }
+        public double MSGFSpecProb => mMSGFSpecProb;
 
         public PSMInfo(string spectrumKey, PHRPReader.Data.PSM psm)
         {
-            mSpectrumKey = spectrumKey;
+            SpectrumKey = spectrumKey;
             mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
-            mPSM = psm;
+            PSM = psm;
 
-            if (mPSM is null)
+            if (PSM is null)
             {
                 mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
             }
-            else if (!double.TryParse(mPSM.MSGFSpecEValue, out mMSGFSpecProb))
+            else if (!double.TryParse(PSM.MSGFSpecEValue, out mMSGFSpecProb))
             {
                 mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
             }

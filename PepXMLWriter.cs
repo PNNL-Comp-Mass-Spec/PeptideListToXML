@@ -34,7 +34,6 @@ namespace PeptideListToXML
         #region Module-wide variables
         private readonly PeptideMassCalculator mPeptideMassCalculator;
         private XmlWriter mXMLWriter;
-        private bool mFileOpen;
 
         // This dictionary maps PNNL-based score names to pep-xml standard score names
         private Dictionary<string, string> mPNNLScoreNameMap;
@@ -42,24 +41,17 @@ namespace PeptideListToXML
 
         #region Properties
 
-        // ReSharper disable once UnusedMember.Global
-        public string DatasetName { get; private set; }
-
-        public bool IsWritable
-        {
-            get
-            {
-                return mFileOpen;
-            }
-        }
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        public string DatasetName { get; }
 
         public int MaxProteinsPerPSM { get; set; }
 
-        // ReSharper disable once UnusedMember.Global
-        public PHRPReader.Data.SearchEngineParameters SearchEngineParams { get; private set; }
+        public PHRPReader.Data.SearchEngineParameters SearchEngineParams { get; }
 
-        // ReSharper disable once UnusedMember.Global
-        public string SourceFilePath { get; private set; }
+        public string SourceFilePath { get; }
+
         #endregion
 
         /// <summary>
@@ -74,9 +66,9 @@ namespace PeptideListToXML
         public PepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
         {
             SearchEngineParams = searchEngineParams;
-            DatasetName = datasetName;
-            if (DatasetName is null)
-                DatasetName = "Unknown";
+
+            DatasetName = datasetName ?? "Unknown";
+
             if (string.IsNullOrEmpty(sourceFilePath))
                 sourceFilePath = string.Empty;
             SourceFilePath = sourceFilePath;
@@ -98,11 +90,6 @@ namespace PeptideListToXML
 
         public bool CloseDocument()
         {
-            if (!mFileOpen)
-            {
-                return false;
-            }
-
             mXMLWriter.WriteEndElement();                // msms_run_summary
             mXMLWriter.WriteEndElement();                // msms_pipeline_analysis
             mXMLWriter.WriteEndDocument();
@@ -188,7 +175,6 @@ namespace PeptideListToXML
 
             mXMLWriter = XmlWriter.Create(outputFilePath, writerSettings);
 
-            mFileOpen = true;
             mXMLWriter.WriteStartDocument();
             mXMLWriter.WriteProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"pepXML_std.xsl\"");
             WriteHeaderElements(outputFile);
