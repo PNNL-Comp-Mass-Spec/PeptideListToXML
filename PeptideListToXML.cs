@@ -526,55 +526,30 @@ namespace PeptideListToXML
         /// </summary>
         public override string GetErrorMessage()
         {
-            string errorMessage;
-            if (ErrorCode == ProcessFilesErrorCodes.LocalizedError || ErrorCode == ProcessFilesErrorCodes.NoError)
+            if (ErrorCode is ProcessFilesErrorCodes.LocalizedError or ProcessFilesErrorCodes.NoError)
             {
-                switch (LocalErrorCode)
+                return LocalErrorCode switch
                 {
-                    case PeptideListToXMLErrorCodes.NoError:
-                        errorMessage = "";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.ErrorReadingInputFile:
-                        errorMessage = "Error reading input file";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.ErrorWritingOutputFile:
-                        errorMessage = "Error writing to the output file";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.ModSummaryFileNotFound:
-                        errorMessage = "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.SeqInfoFileNotFound:
-                        errorMessage = "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.MSGFStatsFileNotFound:
-                        errorMessage = "MSGF file not found; use the /NoMSGF switch to avoid this error";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.ScanStatsFileNotFound:
-                        errorMessage = "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error";
-                        break;
-
-                    case PeptideListToXMLErrorCodes.UnspecifiedError:
-                        errorMessage = "Unspecified localized error";
-                        break;
-
-                    default:
-                        // This shouldn't happen
-                        errorMessage = "Unknown error state";
-                        break;
-                }
-            }
-            else
-            {
-                errorMessage = GetBaseClassErrorMessage();
+                    PeptideListToXMLErrorCodes.NoError => string.Empty,
+                    PeptideListToXMLErrorCodes.ErrorReadingInputFile =>
+                        "Error reading input file",
+                    PeptideListToXMLErrorCodes.ErrorWritingOutputFile =>
+                        "Error writing to the output file",
+                    PeptideListToXMLErrorCodes.ModSummaryFileNotFound =>
+                        "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)",
+                    PeptideListToXMLErrorCodes.SeqInfoFileNotFound =>
+                        "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)",
+                    PeptideListToXMLErrorCodes.MSGFStatsFileNotFound =>
+                        "MSGF file not found; use the /NoMSGF switch to silence this error",
+                    PeptideListToXMLErrorCodes.ScanStatsFileNotFound =>
+                        "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error",
+                    PeptideListToXMLErrorCodes.UnspecifiedError =>
+                        "Unspecified localized error",
+                    _ => "Unknown error state"
+                };
             }
 
-            return errorMessage;
+            return GetBaseClassErrorMessage();
         }
 
         private string GetSpectrumKey(PHRPReader.Data.PSM CurrentPSM)
