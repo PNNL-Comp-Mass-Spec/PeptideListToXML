@@ -14,11 +14,11 @@ using PRISM;
 
 namespace PeptideListToXML
 {
-    public class clsPeptideListToXML : PRISM.FileProcessor.ProcessFilesBase
+    public class PeptideListToXML : PRISM.FileProcessor.ProcessFilesBase
     {
         // Ignore Spelling: mzIdentML, Wiff
 
-        public clsPeptideListToXML()
+        public PeptideListToXML()
         {
             mFileDate = "June 17, 2021";
             InitializeLocalVariables();
@@ -65,7 +65,7 @@ namespace PeptideListToXML
         // Protected mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
 
         protected PHRPReader.ReaderFactory mPHRPReader;
-        protected clsPepXMLWriter mXMLWriter;
+        protected PepXMLWriter mXMLWriter;
 
         // Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
         protected string mDatasetName;
@@ -92,7 +92,7 @@ namespace PeptideListToXML
 
         // This dictionary tracks the spectrum info
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-        protected Dictionary<string, clsPepXMLWriter.SpectrumInfoType> mSpectrumInfo;
+        protected Dictionary<string, PepXMLWriter.SpectrumInfoType> mSpectrumInfo;
         private PeptideListToXMLErrorCodes mLocalErrorCode;
         #endregion
 
@@ -383,11 +383,11 @@ namespace PeptideListToXML
         protected bool CachePHRPData(string inputFilePath, out PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
             bool success;
-            clsPepXMLWriter.SpectrumInfoType spectrumInfo;
+            PepXMLWriter.SpectrumInfoType spectrumInfo;
             bool skipPeptide;
 
             // Keys in this dictionary are scan numbers
-            Dictionary<int, clsPSMInfo> bestPSMByScan;
+            Dictionary<int, PSMInfo> bestPSMByScan;
             int peptidesStored;
             try
             {
@@ -411,14 +411,14 @@ namespace PeptideListToXML
 
                 if (mSpectrumInfo is null)
                 {
-                    mSpectrumInfo = new Dictionary<string, clsPepXMLWriter.SpectrumInfoType>();
+                    mSpectrumInfo = new Dictionary<string, PepXMLWriter.SpectrumInfoType>();
                 }
                 else
                 {
                     mSpectrumInfo.Clear();
                 }
 
-                bestPSMByScan = new Dictionary<int, clsPSMInfo>();
+                bestPSMByScan = new Dictionary<int, PSMInfo>();
                 if (mChargeFilterList is null)
                     mChargeFilterList = new List<int>();
 
@@ -552,7 +552,7 @@ namespace PeptideListToXML
                         if (!mSpectrumInfo.ContainsKey(spectrumKey))
                         {
                             // New spectrum; add a new entry to mSpectrumInfo
-                            spectrumInfo = new clsPepXMLWriter.SpectrumInfoType();
+                            spectrumInfo = new PepXMLWriter.SpectrumInfoType();
                             spectrumInfo.SpectrumName = spectrumKey;
                             spectrumInfo.StartScan = currentPSM.ScanNumberStart;
                             spectrumInfo.EndScan = currentPSM.ScanNumberEnd;
@@ -577,7 +577,7 @@ namespace PeptideListToXML
 
                         if (mTopHitOnly)
                         {
-                            var comparisonPSMInfo = new clsPSMInfo(spectrumKey, currentPSM);
+                            var comparisonPSMInfo = new PSMInfo(spectrumKey, currentPSM);
 
                             if (bestPSMByScan.TryGetValue(currentPSM.ScanNumberStart, out var bestPSMInfo))
                             {
@@ -925,7 +925,7 @@ namespace PeptideListToXML
                 // Make sure mSearchEngineParams.ModInfo is up-to-date
 
                 string spectrumKey;
-                var currentSpectrum = new clsPepXMLWriter.SpectrumInfoType();
+                var currentSpectrum = new PepXMLWriter.SpectrumInfoType();
                 bool matchFound;
                 foreach (var item in mPSMsBySpectrumKey)
                 {
@@ -1140,14 +1140,14 @@ namespace PeptideListToXML
             int peptides;
             bool success;
 
-            var currentSpectrum = new clsPepXMLWriter.SpectrumInfoType();
+            var currentSpectrum = new PepXMLWriter.SpectrumInfoType();
 
             ResetProgress("Creating the .pepXML file");
             try
             {
                 Console.WriteLine();
                 ShowMessage("Creating PepXML file at " + Path.GetFileName(outputFilePath));
-                mXMLWriter = new clsPepXMLWriter(mDatasetName, mFastaFilePath, searchEngineParams, inputFilePath, outputFilePath);
+                mXMLWriter = new PepXMLWriter(mDatasetName, mFastaFilePath, searchEngineParams, inputFilePath, outputFilePath);
                 RegisterEvents(mXMLWriter);
                 if (!mXMLWriter.IsWritable)
                 {

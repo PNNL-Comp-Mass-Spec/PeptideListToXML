@@ -8,7 +8,7 @@ using PRISM;
 
 namespace PeptideListToXML
 {
-    public class clsPepXMLWriter : EventNotifier
+    public class PepXMLWriter : EventNotifier
     {
         // Ignore Spelling: href, stylesheet, xmlns, xsi, xsl, yyyy-MM-ddTHH:mm:ss
         // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
@@ -71,7 +71,7 @@ namespace PeptideListToXML
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="outputFilePath">Path to the PepXML file to create</param>
         /// <remarks></remarks>
-        public clsPepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
+        public PepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
         {
             SearchEngineParams = searchEngineParams;
             DatasetName = datasetName;
@@ -771,8 +771,8 @@ namespace PeptideListToXML
         // .WriteAttributeString("analysis", "peptideprophet")
 
         // .WriteStartElement("peptideprophet_result")
-        // msgf = clsMSGFConversion.MSGFToProbability(searchHit.dMSGFSpecProb).ToString("0.0000")
-        // fval = clsMSGFConversion.MSGFToFValue(searchHit.dMSGFSpecProb).ToString("0.0000")
+        // msgf = MSGFConversion.MSGFToProbability(searchHit.dMSGFSpecProb).ToString("0.0000")
+        // fval = MSGFConversion.MSGFToFValue(searchHit.dMSGFSpecProb).ToString("0.0000")
 
         // .WriteAttributeString("probability", msgf)
         // .WriteAttributeString("all_ntt_prob", "(" & msgf & "," & msgf & "," & msgf & ")")
@@ -810,7 +810,7 @@ namespace PeptideListToXML
         // End Sub
 
         // Old, unused
-        // Private Class clsMSGFConversion
+        // Private Class MSGFConversion
 
         // ''' <summary>
         // ''' Performs a crude approximation of Probability using a MSGF SpecProb value

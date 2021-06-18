@@ -56,7 +56,7 @@ namespace PeptideListToXML
         // Unused: Private mLogFilePath As String = String.Empty
         // Unused: Private mLogFolderPath As String = String.Empty
 
-        private static clsPeptideListToXML mPeptideListConverter;
+        private static PeptideListToXML mPeptideListConverter;
         private static DateTime mLastProgressReportTime;
         private static DateTime mLastPercentDisplayed;
 
@@ -111,7 +111,7 @@ namespace PeptideListToXML
                 }
 
                 // Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-                mPeptideListConverter = new clsPeptideListToXML()
+                mPeptideListConverter = new PeptideListToXML()
                 {
                     LogMessagesToFile = mLogMessagesToFile,
                     FastaFilePath = mFastaFilePath,
@@ -355,7 +355,7 @@ namespace PeptideListToXML
                 Console.WriteLine("Program syntax:");
                 Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputFolderPath]");
                 Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]");
-                Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" + clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + "]");
+                Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + "]");
                 Console.WriteLine(" [/PepFilter:PeptideFilterFilePath] [/ChargeFilter:ChargeList]");
                 Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]");
                 Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]");
@@ -364,10 +364,10 @@ namespace PeptideListToXML
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder."));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for SEQUEST and X!Tandem but not Inspect or MSGF+)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /H to specify the number of matches per spectrum to store (default is " + clsPeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use 0 to keep all hits)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /H to specify the number of matches per spectrum to store (default is " + PeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use 0 to keep all hits)"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /X to specify that peptides with X residues should be skipped"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + clsPeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /ChargeFilter:ChargeList to specify one or more charges to filter on. Examples:"));
                 Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2");

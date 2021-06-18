@@ -1,7 +1,7 @@
 ﻿
 namespace PeptideListToXML
 {
-    public class clsPSMInfo
+    public class PSMInfo
     {
         public const double MSGF_SPEC_NOT_DEFINED = 100.0;
         protected PHRPReader.Data.PSM mPSM;
@@ -32,7 +32,7 @@ namespace PeptideListToXML
             }
         }
 
-        public clsPSMInfo(string spectrumKey, PHRPReader.Data.PSM psm)
+        public PSMInfo(string spectrumKey, PHRPReader.Data.PSM psm)
         {
             mSpectrumKey = spectrumKey;
             mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
