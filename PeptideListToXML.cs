@@ -585,7 +585,7 @@ namespace PeptideListToXML
             var settingsFile = new XmlSettingsFileAccessor();
             try
             {
-                if (parameterFilePath is null || parameterFilePath.Length == 0)
+                if (string.IsNullOrWhiteSpace(parameterFilePath))
                 {
                     // No parameter file specified; nothing to load
                     return true;
@@ -803,7 +803,7 @@ namespace PeptideListToXML
             }
 
             ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + searchEngineParamFileName);
-            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetToolVersionInfoFilenames(PeptideHitResultTypes).First());
+            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + PHRPReader.ReaderFactory.GetToolVersionInfoFilenames(PeptideHitResultTypes).FirstOrDefault());
 
             if (mPeptideHitResultType != PHRPReader.PeptideHitResultTypes.XTandem)
             {
@@ -828,8 +828,6 @@ namespace PeptideListToXML
         /// <returns>True if successful, false if an error</returns>
         public override bool ProcessFile(string inputFilePath, string outputFolderPath, string parameterFilePath, bool resetErrorCode)
         {
-            var success = default(bool);
-
             if (resetErrorCode)
             {
                 SetLocalErrorCode(PeptideListToXMLErrorCodes.NoError);
@@ -925,8 +923,6 @@ namespace PeptideListToXML
 
         private bool WriteCachedData(string inputFilePath, string outputFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
-            bool success;
-
             ResetProgress("Creating the .pepXML file");
             try
             {
@@ -945,7 +941,7 @@ namespace PeptideListToXML
 
                     if (mSpectrumInfo.TryGetValue(spectrumKey, out var currentSpectrum))
                     {
-                        spectra += 1;
+                        spectra++;
                         peptides += psm.Count;
 
                         mXMLWriter.WriteSpectrum(currentSpectrum, psm, mSeqToProteinMapCached);
@@ -967,15 +963,14 @@ namespace PeptideListToXML
                 mXMLWriter.CloseDocument();
                 Console.WriteLine();
                 ShowMessage("PepXML file created with " + spectra.ToString("#,##0") + " spectra and " + peptides.ToString("#,##0") + " peptides");
-                success = true;
+
+                return true;
             }
             catch (Exception ex)
             {
                 ShowErrorMessage("Error Reading source file in WriteCachedData: " + ex.Message);
-                success = false;
+                return false;
             }
-
-            return success;
         }
     }
 }

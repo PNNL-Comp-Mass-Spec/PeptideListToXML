@@ -348,7 +348,7 @@ namespace PeptideListToXML
                         // Update the folder to be the start with C:\Database
                         fastaFilePathToUse = Path.Combine(@"C:\Database", Path.GetFileName(SearchEngineParams.FastaFilePath));
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         fastaFilePathToUse = SearchEngineParams.FastaFilePath;
                     }
@@ -630,7 +630,7 @@ namespace PeptideListToXML
                         mXMLWriter.WriteEndElement();      // alternative_protein
                     }
 
-                    proteinsWritten += 1;
+                    proteinsWritten++;
                     if (MaxProteinsPerPSM > 0 && proteinsWritten >= MaxProteinsPerPSM)
                     {
                         break;
