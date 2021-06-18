@@ -18,12 +18,6 @@ namespace PeptideListToXML
     {
         // Ignore Spelling: mzIdentML, Wiff
 
-        public PeptideListToXML()
-        {
-            mFileDate = "June 17, 2021";
-            InitializeLocalVariables();
-        }
-
         #region Constants and Enums
 
         public const string XML_SECTION_OPTIONS = "PeptideListToXMLOptions";
@@ -967,6 +961,13 @@ namespace PeptideListToXML
             return searchEngineParams;
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public PeptideListToXML()
+        {
+            mFileDate = "June 17, 2021";
+            InitializeLocalVariables();
         }
 
         private void PreviewRequiredFiles(string inputFilePath, string datasetName, PHRPReader.PeptideHitResultTypes PeptideHitResultTypes, bool loadModsAndSeqInfo, bool loadMSGFResults, bool loadScanStats, string searchEngineParamFileName)
