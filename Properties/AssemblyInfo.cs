@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCompany("PNNL")]
 [assembly: AssemblyProduct("PeptideListToXML")]
-[assembly: AssemblyCopyright("Copyright © PNNL 2012")]
+[assembly: AssemblyCopyright("Copyright © PNNL 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 
@@ -20,14 +20,11 @@ using System.Runtime.InteropServices;
 [assembly: Guid("926556c3-a3ef-4b59-be79-3a5c28e4122f")]
 
 // Version information for an assembly consists of the following four values:
-// 
+//
 // Major Version
-// Minor Version 
+// Minor Version
 // Build Number
 // Revision
-// 
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// <Assembly: AssemblyVersion("1.0.*")> 
+//
 
-[assembly: AssemblyVersion("1.1.*")]
+[assembly: AssemblyVersion("1.2.*")]
