@@ -62,7 +62,10 @@ namespace PeptideListToXML
         /// </summary>
         public PHRPReader.Data.SearchEngineParameters SearchEngineParams { get; }
 
-        public string SourceFilePath { get; }
+        /// <summary>
+        /// Input file path
+        /// </summary>
+        public string InputFilePath { get; }
 
         #endregion
 
@@ -72,18 +75,19 @@ namespace PeptideListToXML
         /// <param name="datasetName">Name of the Dataset</param>
         /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
         /// <param name="searchEngineParams">Search engine parameters</param>
-        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="inputFilePath">Input file path</param>
         /// <param name="outputFilePath">Path to the PepXML file to create</param>
-        /// <remarks></remarks>
-        public PepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
+        public PepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string inputFilePath, string outputFilePath)
         {
             SearchEngineParams = searchEngineParams;
 
             DatasetName = datasetName ?? "Unknown";
 
-            if (string.IsNullOrEmpty(sourceFilePath))
-                sourceFilePath = string.Empty;
-            SourceFilePath = sourceFilePath;
+            if (string.IsNullOrEmpty(inputFilePath))
+                inputFilePath = string.Empty;
+
+            InputFilePath = inputFilePath;
+
             mPeptideMassCalculator = new PeptideMassCalculator();
             InitializePNNLScoreNameMap();
             MaxProteinsPerPSM = 0;
@@ -300,7 +304,7 @@ namespace PeptideListToXML
                 if (searchDate < new DateTime(1980, 1, 2))
                 {
                     // Use the date of the input file since the reported SearchDate is invalid
-                    var sourceFile = new FileInfo(SourceFilePath);
+                    var sourceFile = new FileInfo(InputFilePath);
                     if (sourceFile.Exists)
                     {
                         searchDate = sourceFile.LastWriteTime;
@@ -353,7 +357,7 @@ namespace PeptideListToXML
                 var withBlock = mXMLWriter;
                 withBlock.WriteStartElement("search_summary");
                 withBlock.WriteAttributeString("base_name", DatasetName);
-                withBlock.WriteAttributeString("source_file", Path.GetFileName(SourceFilePath));
+                withBlock.WriteAttributeString("source_file", Path.GetFileName(InputFilePath));
                 withBlock.WriteAttributeString("search_engine", SearchEngineParams.SearchEngineName);
                 withBlock.WriteAttributeString("search_engine_version", SearchEngineParams.SearchEngineVersion);
                 withBlock.WriteAttributeString("precursor_mass_type", SearchEngineParams.PrecursorMassType);
