@@ -9,7 +9,7 @@
     </SchemaVersion>
     <ProjectGuid>{B0D8FF82-0E39-0505-0DCA-44EA12FF39AA}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>PeptideListToXML.modMain</StartupObject>
+    <StartupObject>PeptideListToXML.Program</StartupObject>
     <RootNamespace>PeptideListToXML</RootNamespace>
     <AssemblyName>PeptideListToXML</AssemblyName>
     <FileAlignment>512</FileAlignment>

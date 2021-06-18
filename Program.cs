@@ -24,7 +24,10 @@ namespace PeptideListToXML
     // in compliance with the License.  You may obtain a copy of the License at
     // http://www.apache.org/licenses/LICENSE-2.0
 
-    static class modMain
+    /// <summary>
+    /// Entry class for the .exe
+    /// </summary>
+    static class Program
     {
         // Ignore Spelling: mzIdentML
 
