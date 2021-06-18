@@ -27,11 +27,12 @@ namespace PeptideListToXML
     /// <summary>
     /// Entry class for the .exe
     /// </summary>
-    static class Program
+    internal static class Program
     {
         // Ignore Spelling: mzIdentML
 
-        public const string PROGRAM_DATE = "June 17, 2021";
+        private const string PROGRAM_DATE = "June 17, 2021";
+
         private static string mInputFilePath;
         private static string mOutputFolderPath;             // Optional
         private static string mParameterFilePath;            // Optional
