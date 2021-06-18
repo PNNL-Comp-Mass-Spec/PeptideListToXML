@@ -118,7 +118,7 @@ namespace PeptideListToXML
 
         private bool GetPepXMLCollisionMode(string psmCollisionMode, ref string pepXMLCollisionMode)
         {
-            string collisionModeUCase = psmCollisionMode.ToUpper();
+            var collisionModeUCase = psmCollisionMode.ToUpper();
             switch (collisionModeUCase ?? string.Empty)
             {
                 case "CID":
@@ -178,18 +178,19 @@ namespace PeptideListToXML
         /// <remarks></remarks>
         private bool InitializePepXMLFile(string outputFilePath, string fastaFilePath)
         {
-            FileInfo outputFile;
             if (string.IsNullOrWhiteSpace(fastaFilePath))
             {
                 fastaFilePath = @"C:\Database\Unknown_Database.fasta";
             }
 
-            outputFile = new FileInfo(outputFilePath);
-            var writerSettings = new XmlWriterSettings();
-            writerSettings.Indent = true;
-            writerSettings.OmitXmlDeclaration = false;
-            writerSettings.NewLineOnAttributes = false;
-            writerSettings.Encoding = Encoding.ASCII;
+            var outputFile = new FileInfo(outputFilePath);
+            var writerSettings = new XmlWriterSettings
+            {
+                Indent = true,
+                OmitXmlDeclaration = false,
+                NewLineOnAttributes = false,
+                Encoding = Encoding.ASCII
+            };
 
             mXMLWriter = XmlWriter.Create(outputFilePath, writerSettings);
 
@@ -349,9 +350,7 @@ namespace PeptideListToXML
 
         private void WriteSearchSummary(string fastaFilePath)
         {
-            SortedSet<char> terminalSymbols;
-            terminalSymbols = PHRPReader.Data.ModificationDefinition.GetTerminalSymbols();
-            string fastaFilePathToUse;
+            var terminalSymbols = PHRPReader.Data.ModificationDefinition.GetTerminalSymbols();
             string targetResidues;
             double aminoAcidMass;
 
@@ -395,7 +394,7 @@ namespace PeptideListToXML
             mXMLWriter.WriteEndElement();        // enzymatic_search_constraint
 
             // Amino acid mod details
-            foreach (PHRPReader.Data.ModificationDefinition modDef in SearchEngineParams.ModList)
+            foreach (var modDef in SearchEngineParams.ModList)
             {
                 if (modDef.CanAffectPeptideResidues())
                 {
@@ -436,7 +435,7 @@ namespace PeptideListToXML
             }
 
             // Protein/Peptide terminal mods
-            foreach (PHRPReader.Data.ModificationDefinition modDef in SearchEngineParams.ModList)
+            foreach (var modDef in SearchEngineParams.ModList)
             {
                 if (modDef.CanAffectPeptideOrProteinTerminus())
                 {
@@ -511,8 +510,10 @@ namespace PeptideListToXML
                 mXMLWriter.WriteComment("Search-engine parameters");
 
                 // Write out the search-engine parameters
-                foreach (KeyValuePair<string, string> item in SearchEngineParams.Parameters)
+                foreach (var item in SearchEngineParams.Parameters)
+                {
                     WriteNameValueElement("parameter", item.Key, item.Value);
+                }
             }
 
             mXMLWriter.WriteEndElement();                    // search_summary
@@ -526,14 +527,9 @@ namespace PeptideListToXML
         /// <param name="seqToProteinMap"></param>
         public void WriteSpectrum(ref SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, ref SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
         {
-            double massErrorDa;
-            double massErrorPPM;
-            double totalMass;
-            string collisionMode = string.Empty;
-
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
-            Dictionary<int, double> modifiedResidues;
-            modifiedResidues = new Dictionary<int, double>();
+            var modifiedResidues = new Dictionary<int, double>();
+
             if (psms is null || psms.Count == 0)
                 return;
             {
@@ -543,7 +539,8 @@ namespace PeptideListToXML
                 WriteAttribute("start_scan", spectrum.StartScan);
                 WriteAttribute("end_scan", spectrum.EndScan);
                 WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
-                if (GetPepXMLCollisionMode(spectrum.CollisionMode, ref collisionMode))
+
+                if (GetPepXMLCollisionMode(spectrum.CollisionMode, out var collisionMode))
                 {
                     WriteAttribute("activation_method", collisionMode);
                 }
@@ -555,15 +552,13 @@ namespace PeptideListToXML
                 withBlock.WriteStartElement("search_result");
             }
 
-            foreach (PHRPReader.Data.PSM psmEntry in psms)
+            foreach (var psmEntry in psms)
             {
                 mXMLWriter.WriteStartElement("search_hit");
                 WriteAttribute("hit_rank", psmEntry.ScoreRank);
-                string peptide = string.Empty;
                 string cleanSequence;
-                string prefix = string.Empty;
-                string suffix = string.Empty;
-                if (PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(psmEntry.Peptide, out peptide, out prefix, out suffix))
+
+                if (PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(psmEntry.Peptide, out var peptide, out var prefix, out var suffix))
                 {
                     // The peptide sequence needs to be just the amino acids; no mod symbols
                     cleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(peptide, false);
@@ -606,7 +601,7 @@ namespace PeptideListToXML
 
                 // Initially all peptides will have "is_rejected" = 0
                 WriteAttribute("is_rejected", 0);
-                List<PHRPReader.Data.ProteinInfo> proteins = null;
+                List<PHRPReader.Data.ProteinInfo> proteins;
                 bool proteinInfoAvailable;
                 int numTrypticTermini;
                 if (seqToProteinMap is object && seqToProteinMap.Count > 0)
@@ -615,13 +610,14 @@ namespace PeptideListToXML
                 }
                 else
                 {
+                    proteins = new List<PHRPReader.Data.ProteinInfo>();
                     proteinInfoAvailable = false;
                 }
 
-                int proteinsWritten = 0;
+                var proteinsWritten = 0;
 
                 // Write out the additional proteins
-                foreach (string proteinAddnl in psmEntry.Proteins)
+                foreach (var proteinAddnl in psmEntry.Proteins)
                 {
                     if (!proteinAddnl.Equals(psmEntry.ProteinFirst))
                     {
@@ -631,14 +627,15 @@ namespace PeptideListToXML
 
                         // Initially use .NumTrypticTermini
                         // We'll update this using proteins if possible
-                        numTrypticTermini = psmEntry.NumTrypticTermini;
+                        var numTrypticTermini = psmEntry.NumTrypticTermini;
+
                         if (proteinInfoAvailable)
                         {
                             foreach (var protein in proteins)
                             {
                                 if (protein.ProteinName.Equals(proteinAddnl))
                                 {
-                                    numTrypticTermini = (int)protein.CleavageState;
+                                    numTrypticTermini = (short)protein.CleavageState;
                                     break;
                                 }
                             }
@@ -658,8 +655,8 @@ namespace PeptideListToXML
                 if (psmEntry.ModifiedResidues.Count > 0)
                 {
                     mXMLWriter.WriteStartElement("modification_info");
-                    double nTermAddon = 0.0;
-                    double cTermAddon = 0.0;
+                    var nTermAddon = 0.0;
+                    var cTermAddon = 0.0;
 
                     // Look for N and C terminal mods in psmEntry.ModifiedResidues
                     foreach (var residue in psmEntry.ModifiedResidues)
@@ -711,7 +708,7 @@ namespace PeptideListToXML
                     {
                         if (!(residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
                         {
-                            if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out totalMass))
+                            if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
                             {
                                 // This residue has more than one modification applied to it
                                 totalMass += residue.ModDefinition.ModificationMass;
@@ -719,8 +716,8 @@ namespace PeptideListToXML
                             }
                             else
                             {
-                                totalMass = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
-                                modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass);
+                                var totalMass2 = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
+                                modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass2);
                             }
                         }
                     }
@@ -753,7 +750,7 @@ namespace PeptideListToXML
 
                 // Write out the mass error ppm value as a custom search score
                 WriteNameValueElement("search_score", "MassErrorPPM", psmEntry.MassErrorPPM);
-                if (!double.TryParse(psmEntry.MassErrorPPM, out massErrorPPM))
+                if (!double.TryParse(psmEntry.MassErrorPPM, out var massErrorPPM))
                 {
                     massErrorPPM = 0.0;
                 }

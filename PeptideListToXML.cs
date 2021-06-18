@@ -202,13 +202,10 @@ namespace PeptideListToXML
         /// <returns>True if successful, false if an error</returns>
         public bool ConvertPHRPDataToXML(string inputFilePath, string outputFolderPath)
         {
-            string outputFilePath;
-            bool success;
-
-            // Note that CachePHRPData() will update these variables
+          // Note that CachePHRPData() will update these variables
             DatasetName = "Unknown";
             mPeptideHitResultType = PHRPReader.PeptideHitResultTypes.Unknown;
-            success = CachePHRPData(inputFilePath, out var searchEngineParams);
+            var success = CachePHRPData(inputFilePath, out var searchEngineParams);
 
             if (!success)
                 return false;
@@ -219,7 +216,7 @@ namespace PeptideListToXML
             }
             else
             {
-                outputFilePath = Path.Combine(outputFolderPath, DatasetName + ".pepXML");
+                var outputFilePath = Path.Combine(outputFolderPath, DatasetName + ".pepXML");
                 success = WriteCachedData(inputFilePath, outputFilePath, searchEngineParams);
             }
 
@@ -228,13 +225,6 @@ namespace PeptideListToXML
 
         private bool CachePHRPData(string inputFilePath, out PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
-            bool success;
-            PepXMLWriter.SpectrumInfoType spectrumInfo;
-            bool skipPeptide;
-
-            // Keys in this dictionary are scan numbers
-            Dictionary<int, PSMInfo> bestPSMByScan;
-            int peptidesStored;
             try
             {
                 if (PreviewMode)
@@ -264,9 +254,10 @@ namespace PeptideListToXML
                     mSpectrumInfo.Clear();
                 }
 
-                bestPSMByScan = new Dictionary<int, PSMInfo>();
+                // Keys in this dictionary are scan numbers
+                var bestPSMByScan = new Dictionary<int, PSMInfo>();
 
-                peptidesStored = 0;
+                var peptidesStored = 0;
                 var startupOptions = new PHRPReader.StartupOptions()
                 {
                     LoadModsAndSeqInfo = LoadModsAndSeqInfo,
@@ -285,7 +276,7 @@ namespace PeptideListToXML
                 SortedSet<string> peptidesToFilterOn;
                 if (!string.IsNullOrWhiteSpace(mPeptideFilterFilePath))
                 {
-                    success = LoadPeptideFilterFile(mPeptideFilterFilePath, out peptidesToFilterOn);
+                    var success = LoadPeptideFilterFile(mPeptideFilterFilePath, out peptidesToFilterOn);
                     if (!success)
                     {
                         searchEngineParams = new PHRPReader.Data.SearchEngineParameters(string.Empty);
@@ -357,6 +348,8 @@ namespace PeptideListToXML
                 while (mPHRPReader.MoveNext())
                 {
                     var currentPSM = mPHRPReader.CurrentPSM;
+                    bool skipPeptide;
+
                     if (SkipXPeptides && currentPSM.PeptideCleanSequence.Contains("X"))
                     {
                         skipPeptide = true;
@@ -445,7 +438,7 @@ namespace PeptideListToXML
 
                 OperationComplete();
                 Console.WriteLine();
-                string filterMessage = string.Empty;
+                var filterMessage = string.Empty;
                 if (peptidesToFilterOn.Count > 0)
                 {
                     filterMessage = " (filtered using " + peptidesToFilterOn.Count + " peptides in " + Path.GetFileName(mPeptideFilterFilePath) + ")";
@@ -455,7 +448,7 @@ namespace PeptideListToXML
                 {
                     // Update mPSMsBySpectrumKey to contain the best hit for each scan number (regardless of charge)
 
-                    int countAtStart = mPSMsBySpectrumKey.Count;
+                    var countAtStart = mPSMsBySpectrumKey.Count;
                     mPSMsBySpectrumKey.Clear();
                     foreach (var item in bestPSMByScan)
                     {
@@ -707,11 +700,11 @@ namespace PeptideListToXML
                 {
                     while (!reader.EndOfStream)
                     {
-                        string dataLine = reader.ReadLine();
+                        var dataLine = reader.ReadLine();
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
                             // Remove any text present after a tab character
-                            int tabIndex = dataLine.IndexOf('\t');
+                            var tabIndex = dataLine.IndexOf('\t');
                             if (tabIndex > 0)
                             {
                                 dataLine = dataLine.Substring(0, tabIndex);
@@ -739,7 +732,6 @@ namespace PeptideListToXML
         {
             PHRPReader.Data.SearchEngineParameters searchEngineParams = null;
 
-            bool success;
             try
             {
                 Console.WriteLine();
@@ -751,7 +743,8 @@ namespace PeptideListToXML
                 else
                 {
                     ShowMessage("Loading Search Engine parameters");
-                    success = reader.SynFileReader.LoadSearchEngineParameters(searchEngineParamFileName, out searchEngineParams);
+                    var success = reader.SynFileReader.LoadSearchEngineParameters(searchEngineParamFileName, out searchEngineParams);
+
                     if (!success)
                     {
                         searchEngineParams = new PHRPReader.Data.SearchEngineParameters(mPeptideHitResultType.ToString());
@@ -760,23 +753,20 @@ namespace PeptideListToXML
 
                 // Make sure mSearchEngineParams.ModInfo is up-to-date
 
-                string spectrumKey;
-                var currentSpectrum = new PepXMLWriter.SpectrumInfoType();
-                bool matchFound;
                 foreach (var item in mPSMsBySpectrumKey)
                 {
-                    spectrumKey = item.Key;
-                    if (mSpectrumInfo.TryGetValue(spectrumKey, out currentSpectrum))
+                    var spectrumKey = item.Key;
+                    if (mSpectrumInfo.ContainsKey(spectrumKey))
                     {
-                        foreach (PHRPReader.Data.PSM psmEntry in item.Value)
+                        foreach (var psmEntry in item.Value)
                         {
                             if (psmEntry.ModifiedResidues.Count > 0)
                             {
-                                foreach (PHRPReader.Data.AminoAcidModInfo residue in psmEntry.ModifiedResidues)
+                                foreach (var residue in psmEntry.ModifiedResidues)
                                 {
                                     // Check whether residue.ModDefinition is present in searchEngineParams.ModInfo
-                                    matchFound = false;
-                                    foreach (PHRPReader.Data.ModificationDefinition knownMod in searchEngineParams.ModList)
+                                    var matchFound = false;
+                                    foreach (var knownMod in searchEngineParams.ModList)
                                     {
                                         if (knownMod.EquivalentMassTypeTagAtomAndResidues(residue.ModDefinition))
                                         {
@@ -875,8 +865,8 @@ namespace PeptideListToXML
         /// <returns>True if successful, false if an error</returns>
         public override bool ProcessFile(string inputFilePath, string outputFolderPath, string parameterFilePath, bool resetErrorCode)
         {
-            string inputFilePathFull;
             var success = default(bool);
+
             if (resetErrorCode)
             {
                 SetLocalErrorCode(PeptideListToXMLErrorCodes.NoError);
@@ -924,7 +914,7 @@ namespace PeptideListToXML
                         {
                             // Obtain the full path to the input file
                             var inputFile = new FileInfo(inputFilePath);
-                            inputFilePathFull = inputFile.FullName;
+                            var inputFilePathFull = inputFile.FullName;
                             success = ConvertPHRPDataToXML(inputFilePathFull, outputFolderPath);
                         }
                         catch (Exception ex)
@@ -977,11 +967,7 @@ namespace PeptideListToXML
 
         private bool WriteCachedData(string inputFilePath, string outputFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
-            int spectra;
-            int peptides;
             bool success;
-
-            var currentSpectrum = new PepXMLWriter.SpectrumInfoType();
 
             ResetProgress("Creating the .pepXML file");
             try
@@ -992,26 +978,26 @@ namespace PeptideListToXML
                 RegisterEvents(mXMLWriter);
 
                 mXMLWriter.MaxProteinsPerPSM = MaxProteinsPerPSM;
-                spectra = 0;
-                peptides = 0;
+                var spectra = 0;
+                var peptides = 0;
 
                 foreach (var spectrumKey in mPSMsBySpectrumKey.Keys)
                 {
                     var psm = mPSMsBySpectrumKey[spectrumKey];
 
-                    if (mSpectrumInfo.TryGetValue(spectrumKey, out currentSpectrum))
+                    if (mSpectrumInfo.TryGetValue(spectrumKey, out var currentSpectrum))
                     {
                         spectra += 1;
                         peptides += psm.Count;
 
-                        mXMLWriter.WriteSpectrum(ref currentSpectrum, psm, ref mSeqToProteinMapCached);
+                        mXMLWriter.WriteSpectrum(currentSpectrum, psm, mSeqToProteinMapCached);
                     }
                     else
                     {
                         ShowErrorMessage("Spectrum key '" + spectrumKey + "' not found in mSpectrumInfo; this is unexpected");
                     }
 
-                    float pctComplete = spectra / (float)mPSMsBySpectrumKey.Count * 100f;
+                    var pctComplete = spectra / (float)mPSMsBySpectrumKey.Count * 100f;
                     UpdateProgress(pctComplete);
                 }
 
