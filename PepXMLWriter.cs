@@ -10,7 +10,6 @@ namespace PeptideListToXML
 {
     public class clsPepXMLWriter : EventNotifier
     {
-
         // Ignore Spelling: href, stylesheet, xmlns, xsi, xsl, yyyy-MM-ddTHH:mm:ss
         // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
         // Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
@@ -64,14 +63,14 @@ namespace PeptideListToXML
         #endregion
 
         /// <summary>
-    /// Instantiate a new PepXML writer
-    /// </summary>
-    /// <param name="datasetName">Name of the Dataset</param>
-    /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
-    /// <param name="searchEngineParams">Search engine parameters</param>
-    /// <param name="sourceFilePath">Source file path</param>
-    /// <param name="outputFilePath">Path to the PepXML file to create</param>
-    /// <remarks></remarks>
+        /// Instantiate a new PepXML writer
+        /// </summary>
+        /// <param name="datasetName">Name of the Dataset</param>
+        /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
+        /// <param name="searchEngineParams">Search engine parameters</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="outputFilePath">Path to the PepXML file to create</param>
+        /// <remarks></remarks>
         public clsPepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
         {
             SearchEngineParams = searchEngineParams;
@@ -166,12 +165,12 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Initialize a Pep.XML file for writing
-    /// </summary>
-    /// <param name="outputFilePath"></param>
-    /// <param name="fastaFilePath"></param>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Initialize a Pep.XML file for writing
+        /// </summary>
+        /// <param name="outputFilePath"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private bool InitializePepXMLFile(string outputFilePath, string fastaFilePath)
         {
             FileInfo outputFile;
@@ -520,7 +519,6 @@ namespace PeptideListToXML
             double massErrorDa;
             double massErrorPPM;
             double totalMass;
-            string alternateScoreName = string.Empty;
             string collisionMode = string.Empty;
 
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
@@ -696,7 +694,6 @@ namespace PeptideListToXML
                         WriteAttributePlusMinus("mod_cterm_mass", PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + cTermAddon, 5);
                     }
 
-
                     // Write out an entry for each modified amino acid
                     // We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
                     modifiedResidues.Clear();
@@ -732,7 +729,7 @@ namespace PeptideListToXML
                 // Write out the search scores
                 foreach (var item in psmEntry.AdditionalScores)
                 {
-                    if (mPNNLScoreNameMap.TryGetValue(item.Key, out alternateScoreName))
+                    if (mPNNLScoreNameMap.TryGetValue(item.Key, out var alternateScoreName))
                     {
                         WriteNameValueElement("search_score", alternateScoreName, item.Value);
                     }
@@ -772,7 +769,6 @@ namespace PeptideListToXML
         // With mXMLWriter
         // .WriteStartElement("analysis_result")
         // .WriteAttributeString("analysis", "peptideprophet")
-
 
         // .WriteStartElement("peptideprophet_result")
         // msgf = clsMSGFConversion.MSGFToProbability(searchHit.dMSGFSpecProb).ToString("0.0000")

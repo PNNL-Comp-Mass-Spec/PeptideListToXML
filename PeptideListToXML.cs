@@ -16,7 +16,6 @@ namespace PeptideListToXML
 {
     public class clsPeptideListToXML : PRISM.FileProcessor.ProcessFilesBase
     {
-
         // Ignore Spelling: mzIdentML, Wiff
 
         public clsPeptideListToXML()
@@ -39,9 +38,9 @@ namespace PeptideListToXML
         // End Enum
 
         /// <summary>
-    /// Error codes specialized for this class
-    /// </summary>
-    /// <remarks></remarks>
+        /// Error codes specialized for this class
+        /// </summary>
+        /// <remarks></remarks>
         public enum PeptideListToXMLErrorCodes
         {
             NoError = 0,
@@ -121,11 +120,11 @@ namespace PeptideListToXML
 
         // ReSharper disable once UnusedMember.Global
         /// <summary>
-    /// Dataset name; auto-determined by the PHRP Reader class
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Dataset name; auto-determined by the PHRP Reader class
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public string DatasetName
         {
             get
@@ -135,12 +134,12 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Fasta file path to store in the pepXML file
-    /// Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for SEQUEST and X!Tandem)
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Fasta file path to store in the pepXML file
+        /// Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for SEQUEST and X!Tandem)
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public string FastaFilePath
         {
             get
@@ -155,11 +154,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public int HitsPerSpectrum
         {
             get
@@ -214,11 +213,11 @@ namespace PeptideListToXML
 
         // ReSharper disable once UnusedMember.Global
         /// <summary>
-    /// Local error code
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Local error code
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public PeptideListToXMLErrorCodes LocalErrorCode
         {
             get
@@ -241,11 +240,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// If true, then displays the names of the files that are required to create the PepXML file for the specified dataset
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public bool PreviewMode
         {
             get
@@ -260,11 +259,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Name of the parameter file used by the search engine that produced the results file that we are parsing
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Name of the parameter file used by the search engine that produced the results file that we are parsing
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public string SearchEngineParamFileName
         {
             get
@@ -279,11 +278,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// If True, then skip peptides with X residues
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// If True, then skip peptides with X residues
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public bool SkipXPeptides
         {
             get
@@ -298,11 +297,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// If True, then only keeps the top-scoring peptide for each scan number
-    /// </summary>
-    /// <value></value>
-    /// <returns></returns>
-    /// <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
+        /// If True, then only keeps the top-scoring peptide for each scan number
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
         public bool TopHitOnly
         {
             get
@@ -349,12 +348,12 @@ namespace PeptideListToXML
         #endregion
 
         /// <summary>
-       /// Create a PepXML file using the peptides in file inputFilePath
-       /// </summary>
-       /// <param name="inputFilePath"></param>
-       /// <param name="outputFolderPath"></param>
-       /// <returns></returns>
-       /// <remarks></remarks>
+        /// Create a PepXML file using the peptides in file inputFilePath
+        /// </summary>
+        /// <param name="inputFilePath"></param>
+        /// <param name="outputFolderPath"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public bool ConvertPHRPDataToXML(string inputFilePath, string outputFolderPath)
         {
             string outputFilePath;
@@ -448,11 +447,11 @@ namespace PeptideListToXML
                         searchEngineParams = new PHRPReader.Data.SearchEngineParameters(string.Empty);
                         return false;
                     }
-                } else
+                }
+                else
                 {
                     peptidesToFilterOn = new SortedSet<string>();
                 }
-
 
                 if (mPreviewMode)
                 {
@@ -660,12 +659,12 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Constructs a Thermo-style nativeID string for the given spectrum
-    /// This allows for linking up with data in .mzML files
-    /// </summary>
-    /// <param name="scanNumber"></param>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Constructs a Thermo-style nativeID string for the given spectrum
+        /// This allows for linking up with data in .mzML files
+        /// </summary>
+        /// <param name="scanNumber"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         protected string ConstructNativeID(int scanNumber)
         {
             // Examples:
@@ -681,10 +680,10 @@ namespace PeptideListToXML
 
         // ReSharper disable once UnusedMember.Global
         /// <summary>
-    /// Returns the default file extensions that this class knows how to parse
-    /// </summary>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Returns the default file extensions that this class knows how to parse
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public override IList<string> GetDefaultExtensionsToParse()
         {
             var extensionsToParse = new List<string>() { PHRPReader.Reader.SequestSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.XTandemSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MSGFPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.InspectSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MODaSynFileReader.GetPHRPSynopsisFileName(string.Empty), PHRPReader.Reader.MODPlusSynFileReader.GetPHRPSynopsisFileName(string.Empty) };
@@ -692,10 +691,10 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Returns the error message; empty string if no error
-    /// </summary>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Returns the error message; empty string if no error
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public override string GetErrorMessage()
         {
             string errorMessage;
@@ -791,11 +790,11 @@ namespace PeptideListToXML
         }
 
         /// <summary>
-    /// Loads the settings from the parameter file
-    /// </summary>
-    /// <param name="parameterFilePath"></param>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Loads the settings from the parameter file
+        /// </summary>
+        /// <param name="parameterFilePath"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public bool LoadParameterFileSettings(string parameterFilePath)
         {
             var settingsFile = new XmlSettingsFileAccessor();
@@ -939,7 +938,6 @@ namespace PeptideListToXML
                             {
                                 foreach (PHRPReader.Data.AminoAcidModInfo residue in psmEntry.ModifiedResidues)
                                 {
-
                                     // Check whether residue.ModDefinition is present in searchEngineParams.ModInfo
                                     matchFound = false;
                                     foreach (PHRPReader.Data.ModificationDefinition knownMod in searchEngineParams.ModList)
@@ -1024,14 +1022,14 @@ namespace PeptideListToXML
 
         // ReSharper disable once UnusedMember.Global
         /// <summary>
-    /// Main processing function; calls ConvertPHRPDataToXML
-    /// </summary>
-    /// <param name="inputFilePath">PHRP Input file path</param>
-    /// <param name="outputFolderPath">Output folder path (if empty, then output file will be created in the same folder as the input file)</param>
-    /// <param name="parameterFilePath">Parameter file path</param>
-    /// <param name="resetErrorCode">True to reset the error code prior to processing</param>
-    /// <returns></returns>
-    /// <remarks></remarks>
+        /// Main processing function; calls ConvertPHRPDataToXML
+        /// </summary>
+        /// <param name="inputFilePath">PHRP Input file path</param>
+        /// <param name="outputFolderPath">Output folder path (if empty, then output file will be created in the same folder as the input file)</param>
+        /// <param name="parameterFilePath">Parameter file path</param>
+        /// <param name="resetErrorCode">True to reset the error code prior to processing</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public override bool ProcessFile(string inputFilePath, string outputFolderPath, string parameterFilePath, bool resetErrorCode)
         {
             // Returns True if success, False if failure

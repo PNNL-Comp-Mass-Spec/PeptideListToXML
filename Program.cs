@@ -9,7 +9,6 @@ using PRISM.Logging;
 
 namespace PeptideListToXML
 {
-
     // This program reads a tab-delimited text file of peptide sequence and
     // creates a PepXML or mzIdentML file with the appropriate information
 
@@ -20,14 +19,13 @@ namespace PeptideListToXML
     // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
     // Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
     // -------------------------------------------------------------------------------
-    // 
+    //
     // Licensed under the Apache License, Version 2.0; you may not use this file except
     // in compliance with the License.  You may obtain a copy of the License at
     // http://www.apache.org/licenses/LICENSE-2.0
 
     static class modMain
     {
-
         // Ignore Spelling: mzIdentML
 
         public const string PROGRAM_DATE = "June 17, 2021";
@@ -63,10 +61,10 @@ namespace PeptideListToXML
         private static DateTime mLastPercentDisplayed;
 
         /// <summary>
-    /// Program entry point
-    /// </summary>
-    /// <returns>0 if no error, error code if an error</returns>
-    /// <remarks></remarks>
+        /// Program entry point
+        /// </summary>
+        /// <returns>0 if no error, error code if an error</returns>
+        /// <remarks></remarks>
         public static int Main()
         {
             var commandLineParser = new clsParseCommandLine();
