@@ -1,5 +1,4 @@
-﻿
-namespace PeptideListToXML
+﻿namespace PeptideListToXML
 {
     /// <summary>
     /// PSM Info

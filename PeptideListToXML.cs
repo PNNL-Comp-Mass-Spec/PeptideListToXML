@@ -822,7 +822,7 @@ namespace PeptideListToXML
         /// Main processing function; calls ConvertPHRPDataToXML
         /// </summary>
         /// <param name="inputFilePath">PHRP Input file path</param>
-        /// <param name="outputFolderPath">Output folder path (if empty, then output file will be created in the same folder as the input file)</param>
+        /// <param name="outputFolderPath">Output folder path (if empty, the output file will be created in the same folder as the input file)</param>
         /// <param name="parameterFilePath">Parameter file path</param>
         /// <param name="resetErrorCode">True to reset the error code prior to processing</param>
         /// <returns>True if successful, false if an error</returns>

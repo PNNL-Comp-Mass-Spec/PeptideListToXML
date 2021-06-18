@@ -11,17 +11,17 @@ namespace PeptideListToXML
 {
     // This program reads a tab-delimited text file of peptide sequence and
     // creates a PepXML or mzIdentML file with the appropriate information
-
+    //
     // -------------------------------------------------------------------------------
     // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
     // Program started April 13, 2012
-
+    //
     // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
     // Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
     // -------------------------------------------------------------------------------
     //
     // Licensed under the Apache License, Version 2.0; you may not use this file except
-    // in compliance with the License.  You may obtain a copy of the License at
+    // in compliance with the License. You may obtain a copy of the License at
     // http://www.apache.org/licenses/LICENSE-2.0
 
     /// <summary>
@@ -133,6 +133,7 @@ namespace PeptideListToXML
                 mPeptideListConverter.ChargeFilterList.AddRange(mChargeFilterList);
 
                 RegisterEvents(mPeptideListConverter);
+
                 mLastProgressReportTime = DateTime.UtcNow;
                 mLastPercentDisplayed = DateTime.UtcNow;
                 if (mRecurseFolders)
@@ -226,9 +227,9 @@ namespace PeptideListToXML
                     mOutputFolderPath = outputFolderPath;
 
                 // Future enum; mzIdentML is not yet supported
-                // If .RetrieveValueForParameter("M", value) Then
-                // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
-                // End If
+                // if (.RetrieveValueForParameter("M", value)) {
+                //     mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
+                // }
 
                 if (commandLineParser.RetrieveValueForParameter("F", out var fastaFilePath))
                     mFastaFilePath = fastaFilePath;
@@ -347,7 +348,12 @@ namespace PeptideListToXML
         {
             try
             {
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) and " + "creates a PepXML with the appropriate information.  The various _SeqInfo files created by PHRP must be present in the same folder as the text file. " + "If the MASIC Scan Stats file is also present, then elution time information will be extracted and included in the PepXML file. " + "You should ideally also include the name of the parameter file used for the MS/MS search engine."));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) " +
+                    "and creates a PepXML with the appropriate information. The various _SeqInfo files created by PHRP " +
+                    "must be present in the same folder as the text file. " +
+                    "If the MASIC Scan Stats file is also present, elution time information will be extracted and included in the PepXML file. " +
+                    "You should ideally also include the name of the parameter file used for the MS/MS search engine."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:");
                 Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputFolderPath]");
@@ -357,27 +363,58 @@ namespace PeptideListToXML
                 Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]");
                 Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]");
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP (for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_inspect_syn.txt) " + "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. "));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP " +
+                    "(for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_inspect_syn.txt) " +
+                    "The output folder switch is optional. If omitted, the output file will be created in the same folder as the input file"));
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /E to specify the name of the parameter file used by the MS/MS search engine (must be in the same folder as the PHRP results file).  For X!Tandem results, the default_input.xml and taxonomy.xml files must also be present in the input folder."));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /F to specify the path to the fasta file to store in the PepXML file; ignored if /E is provided and the search engine parameter file defines the fasta file to search (this is the case for SEQUEST and X!Tandem but not Inspect or MSGF+)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /H to specify the number of matches per spectrum to store (default is " + PeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use 0 to keep all hits)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /X to specify that peptides with X residues should be skipped"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /ChargeFilter:ChargeList to specify one or more charges to filter on for inclusion in the output file. Examples:"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /E to specify the name of the parameter file used by the MS/MS search engine " +
+                    "(must be in the same folder as the PHRP results file). For X!Tandem results, " +
+                    "the default_input.xml and taxonomy.xml files must also be present in the input folder."));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /F to specify the path to the fasta file to store in the PepXML file; " +
+                    "ignored if /E is provided and the search engine parameter file defines the fasta file to search " +
+                    "(this is the case for SEQUEST and X!Tandem but not Inspect or MS-GF+)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /H to specify the number of matches per spectrum to store " +
+                    "(default is " + PeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use 0 to keep all hits)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /X to specify that peptides with X residues should be skipped"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /ChargeFilter:ChargeList to specify one or more charges to filter on for inclusion in the output file. Examples:"));
                 Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2");
                 Console.WriteLine("  2+ and 3+ peptides:  /ChargeFilter:2,3");
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; use /NoMods to skip these files"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; use /NoMSGF to skip this file"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded to determine elution times for scan numbers; use /NoScanStats to skip these files"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /Preview to preview the files that would be required for the specified dataset (taking into account the other command line switches used)"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph
+                    ("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; " +
+                     "use /NoMods to skip these files"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; " +
+                    "use /NoMSGF to skip this file"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded " +
+                    "to determine elution times for scan numbers; use /NoScanStats to skip these files"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /Preview to preview the files that would be required for the specified dataset " +
+                    "(taking into account the other command line switches used)"));
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /P to specific a parameter file to use.  Options in this file will override options specified for /E, /F, /H, and /X"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /S to process all valid files in the input directory and subdirectories. Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " + "When using /S, you can redirect the output of the results using /A. " + "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)."));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /L to log messages to a file.  If /Q is used, then no messages will be displayed at the console."));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /P to specify a parameter file to use. " +
+                    "Options in this file will override options specified for /E, /F, /H, and /X"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /S to process all valid files in the input directory and subdirectories. " +
+                    "Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " +
+                    "When using /S, you can redirect the output of the results using /A. " +
+                    "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)."));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "Use /L to log messages to a file. If /Q is used, no messages will be displayed at the console."));
                 Console.WriteLine();
                 Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012");
                 Console.WriteLine("Version: " + GetAppVersion());
