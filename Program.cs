@@ -116,7 +116,7 @@ namespace PeptideListToXML
                 }
 
                 // Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-                mPeptideListConverter = new PeptideListToXML()
+                mPeptideListConverter = new PeptideListToXML
                 {
                     LogMessagesToFile = mLogMessagesToFile,
                     FastaFilePath = mFastaFilePath,
