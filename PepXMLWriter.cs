@@ -4,6 +4,8 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using PHRPReader;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 using PRISM;
 
 namespace PeptideListToXML
@@ -37,7 +39,7 @@ namespace PeptideListToXML
         /// <summary>
         /// Search engine parameters, read by PHRPReader
         /// </summary>
-        public PHRPReader.Data.SearchEngineParameters SearchEngineParams { get; }
+        public SearchEngineParameters SearchEngineParams { get; }
 
         /// <summary>
         /// Input file path
@@ -52,7 +54,7 @@ namespace PeptideListToXML
         /// <param name="searchEngineParams">Search engine parameters</param>
         /// <param name="inputFilePath">Input file path</param>
         /// <param name="outputFilePath">Path to the PepXML file to create</param>
-        public PepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string inputFilePath, string outputFilePath)
+        public PepXMLWriter(string datasetName, string fastaFilePath, SearchEngineParameters searchEngineParams, string inputFilePath, string outputFilePath)
         {
             SearchEngineParams = searchEngineParams;
 
@@ -206,7 +208,7 @@ namespace PeptideListToXML
 
         private void WriteAttributePlusMinus(string attributeName, double value, int digitsOfPrecision)
         {
-            mXMLWriter.WriteAttributeString(attributeName, PHRPReader.Reader.SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
+            mXMLWriter.WriteAttributeString(attributeName, SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
         }
 
         private void WriteAttribute(string attributeName, double value, int digitsOfPrecision = 4)
@@ -295,7 +297,7 @@ namespace PeptideListToXML
 
         private void WriteSearchSummary(string fastaFilePath)
         {
-            var terminalSymbols = PHRPReader.Data.ModificationDefinition.GetTerminalSymbols();
+            var terminalSymbols = ModificationDefinition.GetTerminalSymbols();
             string targetResidues;
             double aminoAcidMass;
 
@@ -367,7 +369,7 @@ namespace PeptideListToXML
                         aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
                         WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
 
-                        if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
+                        if (modDef.ModificationType == ModificationDefinition.ResidueModificationType.DynamicMod)
                         {
                             WriteAttribute("variable", "Y");
                         }
@@ -396,8 +398,8 @@ namespace PeptideListToXML
                     // Target residues should not be empty for terminal mods
                     // But, we'll list them anyway
                     targetResidues = string.Format("{0}{1}",
-                        PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS,
-                        PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS);
+                        AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS,
+                        AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS);
                 }
                 else
                 {
@@ -412,7 +414,7 @@ namespace PeptideListToXML
                     }
 
                     mXMLWriter.WriteStartElement("terminal_modification");
-                    if (residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                    if (residue == AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || residue == AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
                     {
                         WriteAttribute("terminus", "c");
                         aminoAcidMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE;
@@ -426,7 +428,7 @@ namespace PeptideListToXML
                     WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
                     WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
 
-                    if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
+                    if (modDef.ModificationType == ModificationDefinition.ResidueModificationType.DynamicMod)
                     {
                         WriteAttribute("variable", "Y");
                     }
@@ -436,7 +438,7 @@ namespace PeptideListToXML
                     }
 
                     WriteAttribute("symbol", modDef.ModificationSymbol.ToString()); // Symbol used by search-engine to denote this mod
-                    if (residue == PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                    if (residue == AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || residue == AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
                     {
                         // Modification can only occur at the protein terminus
                         WriteAttribute("protein_terminus", "Y");
@@ -479,7 +481,7 @@ namespace PeptideListToXML
         /// <param name="spectrum"></param>
         /// <param name="psms"></param>
         /// <param name="seqToProteinMap"></param>
-        public void WriteSpectrum(SpectrumInfo spectrum, List<PHRPReader.Data.PSM> psms, SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
+        public void WriteSpectrum(SpectrumInfo spectrum, List<PSM> psms, SortedList<int, List<ProteinInfo>> seqToProteinMap)
         {
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
             var modifiedResidues = new Dictionary<int, double>();
@@ -556,7 +558,7 @@ namespace PeptideListToXML
 
                 // Initially all peptides will have "is_rejected" = 0
                 WriteAttribute("is_rejected", 0);
-                List<PHRPReader.Data.ProteinInfo> proteins;
+                List<ProteinInfo> proteins;
                 bool proteinInfoAvailable;
 
                 if (seqToProteinMap.Count > 0)
@@ -565,7 +567,7 @@ namespace PeptideListToXML
                 }
                 else
                 {
-                    proteins = new List<PHRPReader.Data.ProteinInfo>();
+                    proteins = new List<ProteinInfo>();
                     proteinInfoAvailable = false;
                 }
 
@@ -616,18 +618,18 @@ namespace PeptideListToXML
                     // Look for N and C terminal mods in psmEntry.ModifiedResidues
                     foreach (var residue in psmEntry.ModifiedResidues)
                     {
-                        if (residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
+                        if (residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
                         {
                             switch (residue.TerminusState)
                             {
-                                case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
-                                case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
-                                case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
+                                case AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
+                                case AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
+                                case AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
                                     nTermAddon += residue.ModDefinition.ModificationMass;
                                     break;
 
-                                case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
-                                case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
+                                case AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
+                                case AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
                                     cTermAddon += residue.ModDefinition.ModificationMass;
                                     break;
 
@@ -656,8 +658,8 @@ namespace PeptideListToXML
                     foreach (var residue in psmEntry.ModifiedResidues)
                     {
                         if (residue.ModDefinition.ModificationType is
-                            PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod or
-                            PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
+                            ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod or
+                            ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
                         {
                             continue;
                         }
