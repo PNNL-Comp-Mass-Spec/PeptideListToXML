@@ -735,17 +735,15 @@ namespace PeptideListToXML
         private void PreviewRequiredFiles(string inputFilePath, string datasetName, PHRPReader.PeptideHitResultTypes PeptideHitResultTypes, bool loadModsAndSeqInfo, bool loadMSGFResults, bool loadScanStats, string searchEngineParamFileName)
         {
             var inputFile = new FileInfo(inputFilePath);
+
+            if (inputFile.DirectoryName == null)
+            {
+                ShowWarning("Unable to determine the parent directory of the input file");
+                return;
+            }
+
             Console.WriteLine();
-            if (inputFile.DirectoryName.Length > 40)
-            {
-                ShowMessage("Data file directory: ");
-                ShowMessage(inputFile.DirectoryName);
-                Console.WriteLine();
-            }
-            else
-            {
-                ShowMessage("Data file directory: " + inputFile.DirectoryName);
-            }
+            ShowMessage("Data file directory: " + PathUtils.CompactPathString(inputFile.DirectoryName, 110));
 
             ShowMessage("Data file: ".PadRight(PREVIEW_PAD_WIDTH) + Path.GetFileName(inputFilePath));
             if (loadModsAndSeqInfo)
