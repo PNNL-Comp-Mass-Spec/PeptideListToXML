@@ -374,7 +374,7 @@ namespace PeptideListToXML
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)"));
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /ChargeFilter:ChargeList to specify one or more charges to filter on. Examples:"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /ChargeFilter:ChargeList to specify one or more charges to filter on for inclusion in the output file. Examples:"));
                 Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2");
                 Console.WriteLine("  2+ and 3+ peptides:  /ChargeFilter:2,3");
                 Console.WriteLine();
