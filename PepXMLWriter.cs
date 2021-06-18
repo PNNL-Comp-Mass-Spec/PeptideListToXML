@@ -17,8 +17,6 @@ namespace PeptideListToXML
         // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
         // Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
 
-        #region Structures
-
         /// <summary>
         /// Spectrum Info
         /// </summary>
@@ -35,17 +33,12 @@ namespace PeptideListToXML
             public string NativeID;
         }
 
-        #endregion
-
-        #region Module-wide variables
         private readonly PeptideMassCalculator mPeptideMassCalculator;
+
         private XmlWriter mXMLWriter;
 
         // This dictionary maps PNNL-based score names to pep-xml standard score names
         private Dictionary<string, string> mPNNLScoreNameMap;
-        #endregion
-
-        #region Properties
 
         /// <summary>
         /// Dataset name
@@ -66,8 +59,6 @@ namespace PeptideListToXML
         /// Input file path
         /// </summary>
         public string InputFilePath { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

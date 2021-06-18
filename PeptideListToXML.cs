@@ -18,8 +18,6 @@ namespace PeptideListToXML
     {
         // Ignore Spelling: mzIdentML, Wiff
 
-        #region Constants and Enums
-
         /// <summary>
         /// PeptideListToXML section name in the parameter file
         /// </summary>
@@ -59,17 +57,6 @@ namespace PeptideListToXML
             UnspecifiedError = -1
         }
 
-        #endregion
-
-        #region Structures
-
-        #endregion
-
-        #region Class wide Variables
-
-        // Future enum; mzIdentML is not yet supported
-        // private mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
-
         private PHRPReader.ReaderFactory mPHRPReader;
         private PepXMLWriter mXMLWriter;
 
@@ -85,10 +72,6 @@ namespace PeptideListToXML
         // This dictionary tracks the spectrum info
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
         private Dictionary<string, PepXMLWriter.SpectrumInfoType> mSpectrumInfo;
-
-        #endregion
-
-        #region Processing Options Interface Functions
 
         /// <summary>
         /// Charge filter list: list of charges to include in the output file
@@ -182,17 +165,8 @@ namespace PeptideListToXML
             }
         }
 
-        // Future enum; mzIdentML is not yet supported
-        // Public Property OutputFormat() As PeptideListOutputFormat
-        // Get
-        // Return mOutputFormat
-        // End Get
-        // Set(value As PeptideListOutputFormat)
-        // mOutputFormat = value
-        // End Set
-        // End Property
-
-        #endregion
+        // Possible future property if support for mzIdentML is added
+        // public PeptideListOutputFormat OutputFormat { get; set; }
 
         /// <summary>
         /// Create a PepXML file using the peptides in file inputFilePath
