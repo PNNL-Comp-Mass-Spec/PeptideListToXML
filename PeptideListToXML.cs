@@ -52,7 +52,7 @@ namespace PeptideListToXML
             ErrorWritingOutputFile = 2,
             ModSummaryFileNotFound = 3,
             SeqInfoFileNotFound = 4,
-            MSGFStatsFileNotFound = 5,
+            MSGFFileNotFound = 5,
             ScanStatsFileNotFound = 6,
             UnspecifiedError = -1
         }
@@ -512,7 +512,7 @@ namespace PeptideListToXML
                         "ModSummary file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)",
                     PeptideListToXMLErrorCodes.SeqInfoFileNotFound =>
                         "SeqInfo file not found; use the /NoMods switch to avoid this error (though modified peptides will not be stored properly)",
-                    PeptideListToXMLErrorCodes.MSGFStatsFileNotFound =>
+                    PeptideListToXMLErrorCodes.MSGFFileNotFound =>
                         "MSGF file not found; use the /NoMSGF switch to silence this error",
                     PeptideListToXMLErrorCodes.ScanStatsFileNotFound =>
                         "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error",
