@@ -293,16 +293,15 @@ namespace PeptideListToXML
         private void WriteHeaderElements(FileSystemInfo outputFile)
         {
             {
-                var withBlock = mXMLWriter;
-                withBlock.WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML");
-                withBlock.WriteAttributeString("date", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-                withBlock.WriteAttributeString("summary_xml", outputFile.Name);
-                withBlock.WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML");
-                withBlock.WriteAttributeString("xmlns", "xsi", null, "http://www.w3.org/2001/XMLSchema-instance");
+                mXMLWriter.WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML");
+                mXMLWriter.WriteAttributeString("date", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
+                mXMLWriter.WriteAttributeString("summary_xml", outputFile.Name);
+                mXMLWriter.WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML");
+                mXMLWriter.WriteAttributeString("xmlns", "xsi", null, "http://www.w3.org/2001/XMLSchema-instance");
 
                 // Old:               ("xsi", "schemaLocation", Nothing, "http://regis-web.systemsbiology.net/pepXML c:\Inetpub\wwwrootpepXML_v113.xsd")
-                withBlock.WriteAttributeString("xsi", "schemaLocation", null, "http://sashimi.sourceforge.net/schema_revision/pepXML/pepXML_v117.xsd");
-                withBlock.WriteStartElement("analysis_summary");
+                mXMLWriter.WriteAttributeString("xsi", "schemaLocation", null, "http://sashimi.sourceforge.net/schema_revision/pepXML/pepXML_v117.xsd");
+                mXMLWriter.WriteStartElement("analysis_summary");
                 var searchDate = SearchEngineParams.SearchDate;
                 if (searchDate < new DateTime(1980, 1, 2))
                 {
@@ -314,37 +313,37 @@ namespace PeptideListToXML
                     }
                 }
 
-                withBlock.WriteAttributeString("time", searchDate.ToString("yyyy-MM-ddTHH:mm:ss"));
-                withBlock.WriteAttributeString("analysis", SearchEngineParams.SearchEngineName);
-                withBlock.WriteAttributeString("version", SearchEngineParams.SearchEngineVersion);
-                withBlock.WriteEndElement();
-                withBlock.WriteStartElement("msms_run_summary");
-                withBlock.WriteAttributeString("base_name", DatasetName);
-                withBlock.WriteAttributeString("raw_data_type", "raw");
-                withBlock.WriteAttributeString("raw_data", ".mzXML");
-                withBlock.WriteStartElement("sample_enzyme");
-                withBlock.WriteAttributeString("name", SearchEngineParams.Enzyme);
+                mXMLWriter.WriteAttributeString("time", searchDate.ToString("yyyy-MM-ddTHH:mm:ss"));
+                mXMLWriter.WriteAttributeString("analysis", SearchEngineParams.SearchEngineName);
+                mXMLWriter.WriteAttributeString("version", SearchEngineParams.SearchEngineVersion);
+                mXMLWriter.WriteEndElement();
+                mXMLWriter.WriteStartElement("msms_run_summary");
+                mXMLWriter.WriteAttributeString("base_name", DatasetName);
+                mXMLWriter.WriteAttributeString("raw_data_type", "raw");
+                mXMLWriter.WriteAttributeString("raw_data", ".mzXML");
+                mXMLWriter.WriteStartElement("sample_enzyme");
+                mXMLWriter.WriteAttributeString("name", SearchEngineParams.Enzyme);
 
                 // ToDo: get the specificity info from mSearchEngineParams
 
                 if (SearchEngineParams.Enzyme.ToLower().Contains("trypsin"))
                 {
-                    withBlock.WriteStartElement("specificity");
-                    withBlock.WriteAttributeString("cut", "KR");
-                    withBlock.WriteAttributeString("no_cut", "P");
-                    withBlock.WriteAttributeString("sense", "C");
-                    withBlock.WriteEndElement();
+                    mXMLWriter.WriteStartElement("specificity");
+                    mXMLWriter.WriteAttributeString("cut", "KR");
+                    mXMLWriter.WriteAttributeString("no_cut", "P");
+                    mXMLWriter.WriteAttributeString("sense", "C");
+                    mXMLWriter.WriteEndElement();
                 }
                 else
                 {
-                    withBlock.WriteStartElement("specificity");
-                    withBlock.WriteAttributeString("cut", "KR");
-                    withBlock.WriteAttributeString("no_cut", "P");
-                    withBlock.WriteAttributeString("sense", "C");
-                    withBlock.WriteEndElement();
+                    mXMLWriter.WriteStartElement("specificity");
+                    mXMLWriter.WriteAttributeString("cut", "KR");
+                    mXMLWriter.WriteAttributeString("no_cut", "P");
+                    mXMLWriter.WriteAttributeString("sense", "C");
+                    mXMLWriter.WriteEndElement();
                 }
 
-                withBlock.WriteEndElement();                  // sample_enzyme
+                mXMLWriter.WriteEndElement();                  // sample_enzyme
             }
         }
 
@@ -355,16 +354,17 @@ namespace PeptideListToXML
             double aminoAcidMass;
 
             {
-                var withBlock = mXMLWriter;
-                withBlock.WriteStartElement("search_summary");
-                withBlock.WriteAttributeString("base_name", DatasetName);
-                withBlock.WriteAttributeString("source_file", Path.GetFileName(InputFilePath));
-                withBlock.WriteAttributeString("search_engine", SearchEngineParams.SearchEngineName);
-                withBlock.WriteAttributeString("search_engine_version", SearchEngineParams.SearchEngineVersion);
-                withBlock.WriteAttributeString("precursor_mass_type", SearchEngineParams.PrecursorMassType);
-                withBlock.WriteAttributeString("fragment_mass_type", SearchEngineParams.FragmentMassType);
-                withBlock.WriteAttributeString("search_id", "1");
-                withBlock.WriteStartElement("search_database");
+                mXMLWriter.WriteStartElement("search_summary");
+                mXMLWriter.WriteAttributeString("base_name", DatasetName);
+                mXMLWriter.WriteAttributeString("source_file", Path.GetFileName(InputFilePath));
+                mXMLWriter.WriteAttributeString("search_engine", SearchEngineParams.SearchEngineName);
+                mXMLWriter.WriteAttributeString("search_engine_version", SearchEngineParams.SearchEngineVersion);
+                mXMLWriter.WriteAttributeString("precursor_mass_type", SearchEngineParams.PrecursorMassType);
+                mXMLWriter.WriteAttributeString("fragment_mass_type", SearchEngineParams.FragmentMassType);
+                mXMLWriter.WriteAttributeString("search_id", "1");
+                mXMLWriter.WriteStartElement("search_database");
+
+                string fastaFilePathToUse;
                 if (!string.IsNullOrEmpty(SearchEngineParams.FastaFilePath))
                 {
                     try
@@ -382,9 +382,9 @@ namespace PeptideListToXML
                     fastaFilePathToUse = string.Copy(fastaFilePath);
                 }
 
-                withBlock.WriteAttributeString("local_path", fastaFilePathToUse);
-                withBlock.WriteAttributeString("type", "AA");
-                withBlock.WriteEndElement();      // search_database
+                mXMLWriter.WriteAttributeString("local_path", fastaFilePathToUse);
+                mXMLWriter.WriteAttributeString("type", "AA");
+                mXMLWriter.WriteEndElement();      // search_database
             }
 
             mXMLWriter.WriteStartElement("enzymatic_search_constraint");
@@ -533,9 +533,8 @@ namespace PeptideListToXML
             if (psms is null || psms.Count == 0)
                 return;
             {
-                var withBlock = mXMLWriter;
-                withBlock.WriteStartElement("spectrum_query");
-                withBlock.WriteAttributeString("spectrum", spectrum.SpectrumName);         // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
+                mXMLWriter.WriteStartElement("spectrum_query");
+                mXMLWriter.WriteAttributeString("spectrum", spectrum.SpectrumName);         // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
                 WriteAttribute("start_scan", spectrum.StartScan);
                 WriteAttribute("end_scan", spectrum.EndScan);
                 WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
@@ -549,7 +548,7 @@ namespace PeptideListToXML
                 WriteAttribute("assumed_charge", spectrum.AssumedCharge);
                 WriteAttribute("index", spectrum.Index);
                 WriteAttribute("spectrumNativeID", spectrum.NativeID);            // Example: controllerType=0 controllerNumber=1 scan=20554
-                withBlock.WriteStartElement("search_result");
+                mXMLWriter.WriteStartElement("search_result");
             }
 
             foreach (var psmEntry in psms)
