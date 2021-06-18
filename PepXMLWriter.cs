@@ -331,7 +331,7 @@ namespace PeptideListToXML
                 {
                     try
                     {
-                        // Update the folder to be the start with C:\Database
+                        // Update the directory to start with C:\Database
                         fastaFilePathToUse = Path.Combine(@"C:\Database", Path.GetFileName(SearchEngineParams.FastaFilePath));
                     }
                     catch (Exception)

@@ -172,9 +172,9 @@ namespace PeptideListToXML
         /// Create a PepXML file using the peptides in file inputFilePath
         /// </summary>
         /// <param name="inputFilePath"></param>
-        /// <param name="outputFolderPath"></param>
+        /// <param name="outputDirectoryPath"></param>
         /// <returns>True if successful, false if an error</returns>
-        public bool ConvertPHRPDataToXML(string inputFilePath, string outputFolderPath)
+        public bool ConvertPHRPDataToXML(string inputFilePath, string outputDirectoryPath)
         {
           // Note that CachePHRPData() will update these variables
             DatasetName = "Unknown";
@@ -190,7 +190,7 @@ namespace PeptideListToXML
                 return true;
             }
 
-            var outputFilePath = Path.Combine(outputFolderPath, DatasetName + ".pepXML");
+            var outputFilePath = Path.Combine(outputDirectoryPath, DatasetName + ".pepXML");
             return WriteCachedData(inputFilePath, outputFilePath, searchEngineParams);
         }
 
@@ -739,13 +739,13 @@ namespace PeptideListToXML
             Console.WriteLine();
             if (inputFile.DirectoryName.Length > 40)
             {
-                ShowMessage("Data file folder: ");
+                ShowMessage("Data file directory: ");
                 ShowMessage(inputFile.DirectoryName);
                 Console.WriteLine();
             }
             else
             {
-                ShowMessage("Data file folder: " + inputFile.DirectoryName);
+                ShowMessage("Data file directory: " + inputFile.DirectoryName);
             }
 
             ShowMessage("Data file: ".PadRight(PREVIEW_PAD_WIDTH) + Path.GetFileName(inputFilePath));
@@ -796,11 +796,11 @@ namespace PeptideListToXML
         /// Main processing function; calls ConvertPHRPDataToXML
         /// </summary>
         /// <param name="inputFilePath">PHRP Input file path</param>
-        /// <param name="outputFolderPath">Output folder path (if empty, the output file will be created in the same folder as the input file)</param>
+        /// <param name="outputDirectoryPath">Output directory path (if empty, the output file will be created in the same directory as the input file)</param>
         /// <param name="parameterFilePath">Parameter file path</param>
         /// <param name="resetErrorCode">True to reset the error code prior to processing</param>
         /// <returns>True if successful, false if an error</returns>
-        public override bool ProcessFile(string inputFilePath, string outputFolderPath, string parameterFilePath, bool resetErrorCode)
+        public override bool ProcessFile(string inputFilePath, string outputDirectoryPath, string parameterFilePath, bool resetErrorCode)
         {
             if (resetErrorCode)
             {
@@ -833,8 +833,8 @@ namespace PeptideListToXML
                     ShowMessage("Parsing " + Path.GetFileName(inputFilePath));
                 }
 
-                // Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
-                if (!CleanupFilePaths(ref inputFilePath, ref outputFolderPath))
+                // Note that CleanupFilePaths() will update mOutputDirectoryPath, which is used by LogMessage()
+                if (!CleanupFilePaths(ref inputFilePath, ref outputDirectoryPath))
                 {
                     SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError);
                 }
@@ -850,7 +850,7 @@ namespace PeptideListToXML
                         // Obtain the full path to the input file
                         var inputFile = new FileInfo(inputFilePath);
                         var inputFilePathFull = inputFile.FullName;
-                        return ConvertPHRPDataToXML(inputFilePathFull, outputFolderPath);
+                        return ConvertPHRPDataToXML(inputFilePathFull, outputDirectoryPath);
                     }
                     catch (Exception ex)
                     {

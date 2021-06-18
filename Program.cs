@@ -34,7 +34,7 @@ namespace PeptideListToXML
         private const string PROGRAM_DATE = "June 17, 2021";
 
         private static string mInputFilePath;
-        private static string mOutputFolderPath;             // Optional
+        private static string mOutputDirectoryPath;             // Optional
         private static string mParameterFilePath;            // Optional
         private static string mFastaFilePath;
         private static string mSearchEngineParamFileName;
@@ -52,13 +52,14 @@ namespace PeptideListToXML
         // Future enum; mzIdentML is not yet supported
         // Private mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
 
-        private static string mOutputFolderAlternatePath;                // Optional
-        private static bool mRecreateFolderHierarchyInAlternatePath;  // Optional
-        private static bool mRecurseFolders;
-        private static int mRecurseFoldersMaxLevels;
+        private static string mOutputDirectoryAlternatePath;                // Optional
+        private static bool mRecreateDirectoryHierarchyInAlternatePath;     // Optional
+        private static bool mRecurseDirectories;
+        private static int mRecurseDirectoriesMaxLevels;
         private static bool mLogMessagesToFile;
-        // Unused: Private mLogFilePath As String = String.Empty
-        // Unused: Private mLogFolderPath As String = String.Empty
+
+        // Unused: private string mLogFilePath;
+        // Unused: private string mLogDirectoryPath;
 
         private static PeptideListToXML mPeptideListConverter;
         private static DateTime mLastProgressReportTime;
@@ -74,7 +75,7 @@ namespace PeptideListToXML
 
             // Initialize the options
             mInputFilePath = string.Empty;
-            mOutputFolderPath = string.Empty;
+            mOutputDirectoryPath = string.Empty;
             mParameterFilePath = string.Empty;
             mFastaFilePath = string.Empty;
             mSearchEngineParamFileName = string.Empty;
@@ -92,11 +93,12 @@ namespace PeptideListToXML
             // Future enum; mzIdentML is not yet supported
             // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.PepXML
 
-            mRecurseFolders = false;
-            mRecurseFoldersMaxLevels = 0;
+            mRecurseDirectories = false;
+            mRecurseDirectoriesMaxLevels = 0;
             mLogMessagesToFile = false;
+
             // Unused: mLogFilePath = String.Empty
-            // Unused: mLogFolderPath = String.Empty
+            // Unused: mLogDirectoryPath = String.Empty
 
             try
             {
@@ -136,9 +138,9 @@ namespace PeptideListToXML
 
                 mLastProgressReportTime = DateTime.UtcNow;
                 mLastPercentDisplayed = DateTime.UtcNow;
-                if (mRecurseFolders)
+                if (mRecurseDirectories)
                 {
-                    if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels))
+                    if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath, mOutputDirectoryAlternatePath, mRecreateDirectoryHierarchyInAlternatePath, mParameterFilePath, mRecurseDirectoriesMaxLevels))
                     {
                         return 0;
                     }
@@ -146,7 +148,7 @@ namespace PeptideListToXML
                     return (int)mPeptideListConverter.ErrorCode;
                 }
 
-                if (mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath))
+                if (mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputDirectoryPath, mParameterFilePath))
                 {
                     return 0;
                 }
@@ -223,8 +225,8 @@ namespace PeptideListToXML
                     mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
                 }
 
-                if (commandLineParser.RetrieveValueForParameter("O", out var outputFolderPath))
-                    mOutputFolderPath = outputFolderPath;
+                if (commandLineParser.RetrieveValueForParameter("O", out var outputDirectoryPath))
+                    mOutputDirectoryPath = outputDirectoryPath;
 
                 // Future enum; mzIdentML is not yet supported
                 // if (.RetrieveValueForParameter("M", value)) {
@@ -306,20 +308,20 @@ namespace PeptideListToXML
                 if (commandLineParser.IsParameterPresent("Preview"))
                     mPreview = true;
 
-                if (commandLineParser.RetrieveValueForParameter("S", out var recurseFolders))
+                if (commandLineParser.RetrieveValueForParameter("S", out var recurseDirectories))
                 {
-                    mRecurseFolders = true;
-                    if (!int.TryParse(recurseFolders, out mRecurseFoldersMaxLevels))
+                    mRecurseDirectories = true;
+                    if (!int.TryParse(recurseDirectories, out mRecurseDirectoriesMaxLevels))
                     {
-                        mRecurseFoldersMaxLevels = 0;
+                        mRecurseDirectoriesMaxLevels = 0;
                     }
                 }
 
-                if (commandLineParser.RetrieveValueForParameter("A", out var outputFolderAlternatePath))
-                    mOutputFolderAlternatePath = outputFolderAlternatePath;
+                if (commandLineParser.RetrieveValueForParameter("A", out var outputDirectoryAlternatePath))
+                    mOutputDirectoryAlternatePath = outputDirectoryAlternatePath;
 
                 if (commandLineParser.IsParameterPresent("R"))
-                    mRecreateFolderHierarchyInAlternatePath = true;
+                    mRecreateDirectoryHierarchyInAlternatePath = true;
 
                 if (commandLineParser.IsParameterPresent("L"))
                     mLogMessagesToFile = true;
@@ -351,27 +353,27 @@ namespace PeptideListToXML
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "This program reads a tab-delimited text file created by the Peptide Hit Results Processor (PHRP) " +
                     "and creates a PepXML with the appropriate information. The various _SeqInfo files created by PHRP " +
-                    "must be present in the same folder as the text file. " +
+                    "must be present in the same directory as the text file. " +
                     "If the MASIC Scan Stats file is also present, elution time information will be extracted and included in the PepXML file. " +
                     "You should ideally also include the name of the parameter file used for the MS/MS search engine."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:");
-                Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputFolderPath]");
+                Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputDirectoryPath]");
                 Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]");
                 Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + "]");
                 Console.WriteLine(" [/PepFilter:PeptideFilterFilePath] [/ChargeFilter:ChargeList]");
                 Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]");
-                Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/L] [/Q]");
+                Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputDirectoryPath] [/R] [/L] [/Q]");
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP " +
                     "(for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_inspect_syn.txt) " +
-                    "The output folder switch is optional. If omitted, the output file will be created in the same folder as the input file"));
+                    "The output directory switch is optional. If omitted, the output file will be created in the same directory as the input file"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /E to specify the name of the parameter file used by the MS/MS search engine " +
-                    "(must be in the same folder as the PHRP results file). For X!Tandem results, " +
-                    "the default_input.xml and taxonomy.xml files must also be present in the input folder."));
+                    "(must be in the same directory as the PHRP results file). For X!Tandem results, " +
+                    "the default_input.xml and taxonomy.xml files must also be present in the input directory."));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /F to specify the path to the fasta file to store in the PepXML file; " +
                     "ignored if /E is provided and the search engine parameter file defines the fasta file to search " +
@@ -412,7 +414,7 @@ namespace PeptideListToXML
                     "Use /S to process all valid files in the input directory and subdirectories. " +
                     "Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " +
                     "When using /S, you can redirect the output of the results using /A. " +
-                    "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)."));
+                    "When using /S, you can use /R to re-create the input directory hierarchy in the alternate output directory (if defined)."));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /L to log messages to a file. If /Q is used, no messages will be displayed at the console."));
                 Console.WriteLine();
