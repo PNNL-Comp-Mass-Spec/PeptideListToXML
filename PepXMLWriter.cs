@@ -116,7 +116,7 @@ namespace PeptideListToXML
             mXMLWriter.Close();
         }
 
-        private bool GetPepXMLCollisionMode(string psmCollisionMode, ref string pepXMLCollisionMode)
+        private bool GetPepXMLCollisionMode(string psmCollisionMode, out string pepXMLCollisionMode)
         {
             var collisionModeUCase = psmCollisionMode.ToUpper();
             switch (collisionModeUCase ?? string.Empty)
@@ -514,7 +514,7 @@ namespace PeptideListToXML
         /// <param name="spectrum"></param>
         /// <param name="psms"></param>
         /// <param name="seqToProteinMap"></param>
-        public void WriteSpectrum(ref SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, ref SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
+        public void WriteSpectrum(SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
         {
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
             var modifiedResidues = new Dictionary<int, double>();
