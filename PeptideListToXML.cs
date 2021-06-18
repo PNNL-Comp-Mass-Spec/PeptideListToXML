@@ -47,13 +47,44 @@ namespace PeptideListToXML
         /// </summary>
         public enum PeptideListToXMLErrorCodes
         {
+            /// <summary>
+            /// No error
+            /// </summary>
             NoError = 0,
+
+            /// <summary>
+            /// Error reading the input file
+            /// </summary>
             ErrorReadingInputFile = 1,
+
+            /// <summary>
+            /// Error writing the output file
+            /// </summary>
             ErrorWritingOutputFile = 2,
+
+            /// <summary>
+            /// Mod summary file not found
+            /// </summary>
             ModSummaryFileNotFound = 3,
+
+            /// <summary>
+            /// Sequence info file not found
+            /// </summary>
             SeqInfoFileNotFound = 4,
+
+            /// <summary>
+            /// MSGF file not found
+            /// </summary>
             MSGFFileNotFound = 5,
+
+            /// <summary>
+            /// Scan stats file not found
+            /// </summary>
             ScanStatsFileNotFound = 6,
+
+            /// <summary>
+            /// Unspecified error
+            /// </summary>
             UnspecifiedError = -1
         }
 
