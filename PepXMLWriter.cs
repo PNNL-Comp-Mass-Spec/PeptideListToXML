@@ -236,13 +236,7 @@ namespace PeptideListToXML
             mXMLWriter.WriteAttributeString(attributeName, value.ToString());
         }
 
-        // ReSharper disable once UnusedMember.Local
-        private void WriteAttribute(string attributeName, float value)
-        {
-            WriteAttribute(attributeName, value, digitsOfPrecision: 4);
-        }
-
-        private void WriteAttribute(string attributeName, float value, int digitsOfPrecision)
+        private void WriteAttribute(string attributeName, float value, int digitsOfPrecision = 4)
         {
             var formatString = "0";
             if (digitsOfPrecision > 0)
@@ -258,12 +252,7 @@ namespace PeptideListToXML
             mXMLWriter.WriteAttributeString(attributeName, PHRPReader.Reader.SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
         }
 
-        private void WriteAttribute(string attributeName, double value)
-        {
-            WriteAttribute(attributeName, value, digitsOfPrecision: 4);
-        }
-
-        private void WriteAttribute(string attributeName, double value, int digitsOfPrecision)
+        private void WriteAttribute(string attributeName, double value, int digitsOfPrecision = 4)
         {
             var formatString = "0";
             if (digitsOfPrecision > 0)
@@ -586,8 +575,9 @@ namespace PeptideListToXML
                 WriteAttribute("num_tot_proteins", psmEntry.Proteins.Count);
                 WriteAttribute("num_matched_ions", 0);
                 WriteAttribute("tot_num_ions", 0);
-                WriteAttribute("calc_neutral_pep_mass", psmEntry.PeptideMonoisotopicMass, 4);
-                if (!double.TryParse(psmEntry.MassErrorDa, out massErrorDa))
+                WriteAttribute("calc_neutral_pep_mass", psmEntry.PeptideMonoisotopicMass);
+
+                if (!double.TryParse(psmEntry.MassErrorDa, out var massErrorDa))
                 {
                     massErrorDa = 0.0;
                 }
