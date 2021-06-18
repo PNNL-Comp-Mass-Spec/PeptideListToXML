@@ -181,7 +181,7 @@ namespace PeptideListToXML
             if (string.IsNullOrEmpty(taskDescription))
                 taskDescription = "Processing";
 
-            Console.Write(taskDescription + ": " + percentComplete.ToString() + "% ");
+            Console.Write("{0}: {1}% ", taskDescription, percentComplete);
             if (addCarriageReturn)
             {
                 Console.WriteLine();
