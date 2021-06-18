@@ -223,6 +223,7 @@ namespace PeptideListToXML
             mXMLWriter.WriteAttributeString(attributeName, value.ToString());
         }
 
+        // ReSharper disable once UnusedMember.Local
         private void WriteAttribute(string attributeName, float value, int digitsOfPrecision = 4)
         {
             var formatString = "0";
