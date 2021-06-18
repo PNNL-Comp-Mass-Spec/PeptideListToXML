@@ -29,7 +29,7 @@ namespace PeptideListToXML
         public const string XML_SECTION_OPTIONS = "PeptideListToXMLOptions";
         public const int DEFAULT_HITS_PER_SPECTRUM = 3;
         public const int DEFAULT_MAX_PROTEINS_PER_PSM = 100;
-        protected const int PREVIEW_PAD_WIDTH = 22;
+        private const int PREVIEW_PAD_WIDTH = 22;
 
         // Future enum; mzIdentML is not yet supported
         // Public Enum PeptideListOutputFormat
@@ -62,37 +62,37 @@ namespace PeptideListToXML
         #region Class wide Variables
 
         // Future enum; mzIdentML is not yet supported
-        // Protected mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
+        // private mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
 
-        protected PHRPReader.ReaderFactory mPHRPReader;
-        protected PepXMLWriter mXMLWriter;
+        private PHRPReader.ReaderFactory mPHRPReader;
+        private PepXMLWriter mXMLWriter;
 
         // Note that DatasetName is auto-determined via ConvertPHRPDataToXML()
-        protected string mDatasetName;
-        protected PHRPReader.PeptideHitResultTypes mPeptideHitResultType;
-        protected SortedList<int, List<PHRPReader.Data.ProteinInfo>> mSeqToProteinMapCached;
+        private string mDatasetName;
+        private PHRPReader.PeptideHitResultTypes mPeptideHitResultType;
+        private SortedList<int, List<PHRPReader.Data.ProteinInfo>> mSeqToProteinMapCached;
 
         // Note that FastaFilePath will be ignored if the Search Engine Param File exists and it contains a fasta file name
-        protected string mFastaFilePath;
-        protected string mSearchEngineParamFileName;
-        protected int mHitsPerSpectrum;                // Number of hits per spectrum to store; 0 means to store all hits
-        protected bool mPreviewMode;
-        protected bool mSkipXPeptides;
-        protected bool mTopHitOnly;
-        protected int mMaxProteinsPerPSM;
-        protected string mPeptideFilterFilePath;
-        protected List<int> mChargeFilterList;
-        protected bool mLoadModsAndSeqInfo;
-        protected bool mLoadMSGFResults;
-        protected bool mLoadScanStats;
+        private string mFastaFilePath;
+        private string mSearchEngineParamFileName;
+        private int mHitsPerSpectrum;                // Number of hits per spectrum to store; 0 means to store all hits
+        private bool mPreviewMode;
+        private bool mSkipXPeptides;
+        private bool mTopHitOnly;
+        private int mMaxProteinsPerPSM;
+        private string mPeptideFilterFilePath;
+        private List<int> mChargeFilterList;
+        private bool mLoadModsAndSeqInfo;
+        private bool mLoadMSGFResults;
+        private bool mLoadScanStats;
 
         // This dictionary tracks the PSMs (hits) for each spectrum
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-        protected Dictionary<string, List<PHRPReader.Data.PSM>> mPSMsBySpectrumKey;
+        private Dictionary<string, List<PHRPReader.Data.PSM>> mPSMsBySpectrumKey;
 
         // This dictionary tracks the spectrum info
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
-        protected Dictionary<string, PepXMLWriter.SpectrumInfoType> mSpectrumInfo;
+        private Dictionary<string, PepXMLWriter.SpectrumInfoType> mSpectrumInfo;
         private PeptideListToXMLErrorCodes mLocalErrorCode;
         #endregion
 
@@ -380,7 +380,7 @@ namespace PeptideListToXML
             return success;
         }
 
-        protected bool CachePHRPData(string inputFilePath, out PHRPReader.Data.SearchEngineParameters searchEngineParams)
+        private bool CachePHRPData(string inputFilePath, out PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
             bool success;
             PepXMLWriter.SpectrumInfoType spectrumInfo;
@@ -665,7 +665,7 @@ namespace PeptideListToXML
         /// <param name="scanNumber"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected string ConstructNativeID(int scanNumber)
+        private string ConstructNativeID(int scanNumber)
         {
             // Examples:
             // Most Thermo raw files: "controllerType=0 controllerNumber=1 scan=6"
@@ -766,7 +766,7 @@ namespace PeptideListToXML
             return errorMessage;
         }
 
-        protected string GetSpectrumKey(PHRPReader.Data.PSM CurrentPSM)
+        private string GetSpectrumKey(PHRPReader.Data.PSM CurrentPSM)
         {
             return mDatasetName + "." + CurrentPSM.ScanNumberStart + "." + CurrentPSM.ScanNumberEnd + "." + CurrentPSM.Charge;
         }
@@ -848,7 +848,7 @@ namespace PeptideListToXML
             return true;
         }
 
-        protected bool LoadPeptideFilterFile(string inputFilePath, out SortedSet<string> peptides)
+        private bool LoadPeptideFilterFile(string inputFilePath, out SortedSet<string> peptides)
         {
             peptides = new SortedSet<string>();
 
@@ -899,7 +899,7 @@ namespace PeptideListToXML
             return true;
         }
 
-        protected PHRPReader.Data.SearchEngineParameters LoadSearchEngineParameters(PHRPReader.ReaderFactory reader, string searchEngineParamFileName)
+        private PHRPReader.Data.SearchEngineParameters LoadSearchEngineParameters(PHRPReader.ReaderFactory reader, string searchEngineParamFileName)
         {
             PHRPReader.Data.SearchEngineParameters searchEngineParams = null;
 
@@ -967,7 +967,9 @@ namespace PeptideListToXML
             return searchEngineParams;
         }
 
-        protected void PreviewRequiredFiles(string inputFilePath, string datasetName, PHRPReader.PeptideHitResultTypes PeptideHitResultTypes, bool loadModsAndSeqInfo, bool loadMSGFResults, bool loadScanStats, string searchEngineParamFileName)
+        }
+
+        private void PreviewRequiredFiles(string inputFilePath, string datasetName, PHRPReader.PeptideHitResultTypes PeptideHitResultTypes, bool loadModsAndSeqInfo, bool loadMSGFResults, bool loadScanStats, string searchEngineParamFileName)
         {
             var inputFile = new FileInfo(inputFilePath);
             Console.WriteLine();
@@ -1101,7 +1103,7 @@ namespace PeptideListToXML
             return success;
         }
 
-        protected void ShowWarningMessage(string warningMessage)
+        private void ShowWarningMessage(string warningMessage)
         {
             ShowMessage("Warning: " + warningMessage);
         }
@@ -1134,7 +1136,7 @@ namespace PeptideListToXML
             }
         }
 
-        protected bool WriteCachedData(string inputFilePath, string outputFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams)
+        private bool WriteCachedData(string inputFilePath, string outputFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams)
         {
             int spectra;
             int peptides;

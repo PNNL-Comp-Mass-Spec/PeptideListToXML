@@ -4,9 +4,9 @@ namespace PeptideListToXML
     public class PSMInfo
     {
         public const double MSGF_SPEC_NOT_DEFINED = 100.0;
-        protected PHRPReader.Data.PSM mPSM;
-        protected string mSpectrumKey;
-        protected double mMSGFSpecProb;
+        private readonly PHRPReader.Data.PSM mPSM;
+        private readonly string mSpectrumKey;
+        private readonly double mMSGFSpecProb;
 
         public PHRPReader.Data.PSM PSM
         {
