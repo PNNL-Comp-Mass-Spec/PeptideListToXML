@@ -396,7 +396,7 @@ namespace PeptideListToXML
                         WriteAttribute("aminoacid", residue.ToString());                 // Amino acid symbol, e.g. A
                         WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
                         aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
-                        WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+                        WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
 
                         if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
                         {
@@ -455,7 +455,7 @@ namespace PeptideListToXML
                     }
 
                     WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
-                    WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+                    WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
 
                     if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
                     {
