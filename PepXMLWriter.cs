@@ -17,7 +17,7 @@ namespace PeptideListToXML
 
         #region Structures
 
-        public struct udtSpectrumInfoType
+        public struct SpectrumInfoType
         {
             public string SpectrumName;           // Spectrum Title: could be "QC_05_2_05Dec05_Doc_0508-08.9427.9427.1" or just "scan=16134 cs=2"
             public int StartScan;
@@ -66,27 +66,27 @@ namespace PeptideListToXML
         /// <summary>
     /// Instantiate a new PepXML writer
     /// </summary>
-    /// <param name="strDatasetName">Name of the Dataset</param>
-    /// <param name="strFastaFilePath">Fasta file path to use if objSearchEngineParams.FastaFilePath is empty</param>
-    /// <param name="objSearchEngineParams">Search engine parameters</param>
-    /// <param name="strSourceFilePath">Source file path</param>
-    /// <param name="strOutputFilePath">Path to the PepXML file to create</param>
+    /// <param name="datasetName">Name of the Dataset</param>
+    /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
+    /// <param name="searchEngineParams">Search engine parameters</param>
+    /// <param name="sourceFilePath">Source file path</param>
+    /// <param name="outputFilePath">Path to the PepXML file to create</param>
     /// <remarks></remarks>
-        public clsPepXMLWriter(string strDatasetName, string strFastaFilePath, PHRPReader.Data.SearchEngineParameters objSearchEngineParams, string strSourceFilePath, string strOutputFilePath)
+        public clsPepXMLWriter(string datasetName, string fastaFilePath, PHRPReader.Data.SearchEngineParameters searchEngineParams, string sourceFilePath, string outputFilePath)
         {
-            SearchEngineParams = objSearchEngineParams;
-            DatasetName = strDatasetName;
+            SearchEngineParams = searchEngineParams;
+            DatasetName = datasetName;
             if (DatasetName is null)
                 DatasetName = "Unknown";
-            if (string.IsNullOrEmpty(strSourceFilePath))
-                strSourceFilePath = string.Empty;
-            SourceFilePath = strSourceFilePath;
+            if (string.IsNullOrEmpty(sourceFilePath))
+                sourceFilePath = string.Empty;
+            SourceFilePath = sourceFilePath;
             mPeptideMassCalculator = new PeptideMassCalculator();
             InitializePNNLScoreNameMap();
             MaxProteinsPerPSM = 0;
             try
             {
-                if (!InitializePepXMLFile(strOutputFilePath, strFastaFilePath))
+                if (!InitializePepXMLFile(outputFilePath, fastaFilePath))
                 {
                     throw new Exception("Error initializing PepXML file");
                 }
@@ -112,50 +112,50 @@ namespace PeptideListToXML
             return true;
         }
 
-        private bool GetPepXMLCollisionMode(string strPSMCollisionMode, ref string strPepXMLCollisionMode)
+        private bool GetPepXMLCollisionMode(string psmCollisionMode, ref string pepXMLCollisionMode)
         {
-            string strCollisionModeUCase = strPSMCollisionMode.ToUpper();
-            switch (strCollisionModeUCase ?? "")
+            string collisionModeUCase = psmCollisionMode.ToUpper();
+            switch (collisionModeUCase ?? string.Empty)
             {
                 case "CID":
                 case "ETD":
                 case "HCD":
                     {
-                        strPepXMLCollisionMode = strCollisionModeUCase;
+                        pepXMLCollisionMode = collisionModeUCase;
                         break;
                     }
 
                 case "ETD/CID":
                 case "ETD-CID":
                     {
-                        strPepXMLCollisionMode = "ETD/CID";
+                        pepXMLCollisionMode = "ETD/CID";
                         break;
                     }
 
                 default:
                     {
-                        if (strCollisionModeUCase.StartsWith("CID"))
+                        if (collisionModeUCase.StartsWith("CID"))
                         {
-                            strPepXMLCollisionMode = "CID";
+                            pepXMLCollisionMode = "CID";
                         }
-                        else if (strCollisionModeUCase.StartsWith("HCD"))
+                        else if (collisionModeUCase.StartsWith("HCD"))
                         {
-                            strPepXMLCollisionMode = "HCD";
+                            pepXMLCollisionMode = "HCD";
                         }
-                        else if (strCollisionModeUCase.StartsWith("ETD"))
+                        else if (collisionModeUCase.StartsWith("ETD"))
                         {
-                            strPepXMLCollisionMode = "ETD";
+                            pepXMLCollisionMode = "ETD";
                         }
                         else
                         {
-                            strPepXMLCollisionMode = string.Empty;
+                            pepXMLCollisionMode = string.Empty;
                         }
 
                         break;
                     }
             }
 
-            if (string.IsNullOrEmpty(strPepXMLCollisionMode))
+            if (string.IsNullOrEmpty(pepXMLCollisionMode))
             {
                 return false;
             }
@@ -168,30 +168,32 @@ namespace PeptideListToXML
         /// <summary>
     /// Initialize a Pep.XML file for writing
     /// </summary>
-    /// <param name="strOutputFilePath"></param>
-    /// <param name="strFastaFilePath"></param>
+    /// <param name="outputFilePath"></param>
+    /// <param name="fastaFilePath"></param>
     /// <returns></returns>
     /// <remarks></remarks>
-        private bool InitializePepXMLFile(string strOutputFilePath, string strFastaFilePath)
+        private bool InitializePepXMLFile(string outputFilePath, string fastaFilePath)
         {
-            FileInfo fiOutputFile;
-            if (string.IsNullOrWhiteSpace(strFastaFilePath))
+            FileInfo outputFile;
+            if (string.IsNullOrWhiteSpace(fastaFilePath))
             {
-                strFastaFilePath = @"C:\Database\Unknown_Database.fasta";
+                fastaFilePath = @"C:\Database\Unknown_Database.fasta";
             }
 
-            fiOutputFile = new FileInfo(strOutputFilePath);
-            var oSettings = new XmlWriterSettings();
-            oSettings.Indent = true;
-            oSettings.OmitXmlDeclaration = false;
-            oSettings.NewLineOnAttributes = false;
-            oSettings.Encoding = Encoding.ASCII;
-            mXMLWriter = XmlWriter.Create(strOutputFilePath, oSettings);
+            outputFile = new FileInfo(outputFilePath);
+            var writerSettings = new XmlWriterSettings();
+            writerSettings.Indent = true;
+            writerSettings.OmitXmlDeclaration = false;
+            writerSettings.NewLineOnAttributes = false;
+            writerSettings.Encoding = Encoding.ASCII;
+
+            mXMLWriter = XmlWriter.Create(outputFilePath, writerSettings);
+
             mFileOpen = true;
             mXMLWriter.WriteStartDocument();
             mXMLWriter.WriteProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"pepXML_std.xsl\"");
-            WriteHeaderElements(fiOutputFile);
-            WriteSearchSummary(strFastaFilePath);
+            WriteHeaderElements(outputFile);
+            WriteSearchSummary(fastaFilePath);
             return true;
         }
 
@@ -213,103 +215,102 @@ namespace PeptideListToXML
             mPNNLScoreNameMap.Add("b_score", "bscore");
         }
 
-        private void WriteAttribute(string strAttributeName, string Value)
+        private void WriteAttribute(string attributeName, string value)
         {
-            if (string.IsNullOrEmpty(Value))
+            if (string.IsNullOrEmpty(value))
             {
-                mXMLWriter.WriteAttributeString(strAttributeName, string.Empty);
+                mXMLWriter.WriteAttributeString(attributeName, string.Empty);
             }
             else
             {
-                mXMLWriter.WriteAttributeString(strAttributeName, Value);
+                mXMLWriter.WriteAttributeString(attributeName, value);
             }
         }
 
-        private void WriteAttribute(string strAttributeName, int Value)
+        private void WriteAttribute(string attributeName, int value)
         {
-            mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString());
+            mXMLWriter.WriteAttributeString(attributeName, value.ToString());
         }
 
         // ReSharper disable once UnusedMember.Local
-        private void WriteAttribute(string strAttributeName, float Value)
+        private void WriteAttribute(string attributeName, float value)
         {
-            WriteAttribute(strAttributeName, Value, DigitsOfPrecision: 4);
+            WriteAttribute(attributeName, value, digitsOfPrecision: 4);
         }
 
-        private void WriteAttribute(string strAttributeName, float Value, int DigitsOfPrecision)
+        private void WriteAttribute(string attributeName, float value, int digitsOfPrecision)
         {
-            string strFormatString = "0";
-            if (DigitsOfPrecision > 0)
+            var formatString = "0";
+            if (digitsOfPrecision > 0)
             {
-                strFormatString += "." + new string('0', DigitsOfPrecision);
+                formatString += "." + new string('0', digitsOfPrecision);
             }
 
-            mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString));
+            mXMLWriter.WriteAttributeString(attributeName, value.ToString(formatString));
         }
 
-        private void WriteAttributePlusMinus(string strAttributeName, double Value, int DigitsOfPrecision)
+        private void WriteAttributePlusMinus(string attributeName, double value, int digitsOfPrecision)
         {
-            mXMLWriter.WriteAttributeString(strAttributeName, PHRPReader.Reader.SynFileReaderBaseClass.NumToStringPlusMinus(Value, DigitsOfPrecision));
+            mXMLWriter.WriteAttributeString(attributeName, PHRPReader.Reader.SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
         }
 
-        private void WriteAttribute(string strAttributeName, double Value)
+        private void WriteAttribute(string attributeName, double value)
         {
-            WriteAttribute(strAttributeName, Value, DigitsOfPrecision: 4);
+            WriteAttribute(attributeName, value, digitsOfPrecision: 4);
         }
 
-        private void WriteAttribute(string strAttributeName, double Value, int DigitsOfPrecision)
+        private void WriteAttribute(string attributeName, double value, int digitsOfPrecision)
         {
-            string strFormatString = "0";
-            if (DigitsOfPrecision > 0)
+            var formatString = "0";
+            if (digitsOfPrecision > 0)
             {
-                strFormatString += "." + new string('0', DigitsOfPrecision);
+                formatString += "." + new string('0', digitsOfPrecision);
             }
 
-            mXMLWriter.WriteAttributeString(strAttributeName, Value.ToString(strFormatString));
+            mXMLWriter.WriteAttributeString(attributeName, value.ToString(formatString));
         }
 
-        private void WriteNameValueElement(string strElementName, string strName, string Value)
+        private void WriteNameValueElement(string elementName, string name, string value)
         {
-            mXMLWriter.WriteStartElement(strElementName);
-            WriteAttribute("name", strName);
-            WriteAttribute("value", Value);
+            mXMLWriter.WriteStartElement(elementName);
+            WriteAttribute("name", name);
+            WriteAttribute("value", value);
             mXMLWriter.WriteEndElement();
         }
 
-        private void WriteNameValueElement(string strElementName, string strName, double Value, int DigitsOfPrecision)
+        private void WriteNameValueElement(string elementName, string name, double value, int digitsOfPrecision)
         {
-            mXMLWriter.WriteStartElement(strElementName);
-            WriteAttribute("name", strName);
-            WriteAttribute("value", Value, DigitsOfPrecision);
+            mXMLWriter.WriteStartElement(elementName);
+            WriteAttribute("name", name);
+            WriteAttribute("value", value, digitsOfPrecision);
             mXMLWriter.WriteEndElement();
         }
 
-        private void WriteHeaderElements(FileSystemInfo fiOutputFile)
+        private void WriteHeaderElements(FileSystemInfo outputFile)
         {
-            DateTime dtSearchDate;
             {
                 var withBlock = mXMLWriter;
                 withBlock.WriteStartElement("msms_pipeline_analysis", "http://regis-web.systemsbiology.net/pepXML");
                 withBlock.WriteAttributeString("date", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-                withBlock.WriteAttributeString("summary_xml", fiOutputFile.Name);
+                withBlock.WriteAttributeString("summary_xml", outputFile.Name);
                 withBlock.WriteAttributeString("xmlns", "http://regis-web.systemsbiology.net/pepXML");
                 withBlock.WriteAttributeString("xmlns", "xsi", null, "http://www.w3.org/2001/XMLSchema-instance");
 
                 // Old:               ("xsi", "schemaLocation", Nothing, "http://regis-web.systemsbiology.net/pepXML c:\Inetpub\wwwrootpepXML_v113.xsd")
                 withBlock.WriteAttributeString("xsi", "schemaLocation", null, "http://sashimi.sourceforge.net/schema_revision/pepXML/pepXML_v117.xsd");
                 withBlock.WriteStartElement("analysis_summary");
-                dtSearchDate = SearchEngineParams.SearchDate;
-                if (dtSearchDate < new DateTime(1980, 1, 2))
+                var searchDate = SearchEngineParams.SearchDate;
+                if (searchDate < new DateTime(1980, 1, 2))
                 {
                     // Use the date of the input file since the reported SearchDate is invalid
-                    var fiSourceFile = new FileInfo(SourceFilePath);
-                    if (fiSourceFile.Exists)
+                    var sourceFile = new FileInfo(SourceFilePath);
+                    if (sourceFile.Exists)
                     {
-                        dtSearchDate = fiSourceFile.LastWriteTime;
+                        searchDate = sourceFile.LastWriteTime;
                     }
                 }
 
-                withBlock.WriteAttributeString("time", dtSearchDate.ToString("yyyy-MM-ddTHH:mm:ss"));
+                withBlock.WriteAttributeString("time", searchDate.ToString("yyyy-MM-ddTHH:mm:ss"));
                 withBlock.WriteAttributeString("analysis", SearchEngineParams.SearchEngineName);
                 withBlock.WriteAttributeString("version", SearchEngineParams.SearchEngineVersion);
                 withBlock.WriteEndElement();
@@ -343,13 +344,14 @@ namespace PeptideListToXML
             }
         }
 
-        private void WriteSearchSummary(string strFastaFilePath)
+        private void WriteSearchSummary(string fastaFilePath)
         {
-            SortedSet<char> lstTerminalSymbols;
-            lstTerminalSymbols = PHRPReader.Data.ModificationDefinition.GetTerminalSymbols();
-            string strFastaFilePathToUse;
-            string strTargetResidues;
-            double dblAAMass;
+            SortedSet<char> terminalSymbols;
+            terminalSymbols = PHRPReader.Data.ModificationDefinition.GetTerminalSymbols();
+            string fastaFilePathToUse;
+            string targetResidues;
+            double aminoAcidMass;
+
             {
                 var withBlock = mXMLWriter;
                 withBlock.WriteStartElement("search_summary");
@@ -366,19 +368,19 @@ namespace PeptideListToXML
                     try
                     {
                         // Update the folder to be the start with C:\Database
-                        strFastaFilePathToUse = Path.Combine(@"C:\Database", Path.GetFileName(SearchEngineParams.FastaFilePath));
+                        fastaFilePathToUse = Path.Combine(@"C:\Database", Path.GetFileName(SearchEngineParams.FastaFilePath));
                     }
                     catch (Exception ex)
                     {
-                        strFastaFilePathToUse = SearchEngineParams.FastaFilePath;
+                        fastaFilePathToUse = SearchEngineParams.FastaFilePath;
                     }
                 }
                 else
                 {
-                    strFastaFilePathToUse = string.Copy(strFastaFilePath);
+                    fastaFilePathToUse = string.Copy(fastaFilePath);
                 }
 
-                withBlock.WriteAttributeString("local_path", strFastaFilePathToUse);
+                withBlock.WriteAttributeString("local_path", fastaFilePathToUse);
                 withBlock.WriteAttributeString("type", "AA");
                 withBlock.WriteEndElement();      // search_database
             }
@@ -390,30 +392,30 @@ namespace PeptideListToXML
             mXMLWriter.WriteEndElement();        // enzymatic_search_constraint
 
             // Amino acid mod details
-            foreach (PHRPReader.Data.ModificationDefinition objModDef in SearchEngineParams.ModList)
+            foreach (PHRPReader.Data.ModificationDefinition modDef in SearchEngineParams.ModList)
             {
-                if (objModDef.CanAffectPeptideResidues())
+                if (modDef.CanAffectPeptideResidues())
                 {
-                    if (string.IsNullOrEmpty(objModDef.TargetResidues))
+                    if (string.IsNullOrEmpty(modDef.TargetResidues))
                     {
                         // This modification can affect any amino acid (skip BJOUXZ)
-                        strTargetResidues = "ACDEFGHIKLMNPQRSTVWY";
+                        targetResidues = "ACDEFGHIKLMNPQRSTVWY";
                     }
                     else
                     {
-                        strTargetResidues = objModDef.TargetResidues;
+                        targetResidues = modDef.TargetResidues;
                     }
 
-                    foreach (var chChar in strTargetResidues)
+                    foreach (var residue in targetResidues)
                     {
-                        if (!lstTerminalSymbols.Contains(chChar))
+                        if (!terminalSymbols.Contains(residue))
                         {
                             mXMLWriter.WriteStartElement("aminoacid_modification");
-                            WriteAttribute("aminoacid", chChar.ToString());                         // Amino acid symbol, e.g. A
-                            WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5);          // Mass difference, must begin with + or -
-                            dblAAMass = mPeptideMassCalculator.GetAminoAcidMass(chChar);
-                            WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4);
-                            if (objModDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
+                            WriteAttribute("aminoacid", residue.ToString());                         // Amino acid symbol, e.g. A
+                            WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5);          // Mass difference, must begin with + or -
+                            aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
+                            WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+                            if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
                             {
                                 WriteAttribute("variable", "Y");
                             }
@@ -422,8 +424,8 @@ namespace PeptideListToXML
                                 WriteAttribute("variable", "N");
                             }
 
-                            WriteAttribute("symbol", objModDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
-                            WriteAttribute("description", objModDef.MassCorrectionTag);
+                            WriteAttribute("symbol", modDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
+                            WriteAttribute("description", modDef.MassCorrectionTag);
                             mXMLWriter.WriteEndElement();        // aminoacid_modification
                         }
                     }
@@ -431,42 +433,42 @@ namespace PeptideListToXML
             }
 
             // Protein/Peptide terminal mods
-            foreach (PHRPReader.Data.ModificationDefinition objModDef in SearchEngineParams.ModList)
+            foreach (PHRPReader.Data.ModificationDefinition modDef in SearchEngineParams.ModList)
             {
-                if (objModDef.CanAffectPeptideOrProteinTerminus())
+                if (modDef.CanAffectPeptideOrProteinTerminus())
                 {
-                    if (string.IsNullOrEmpty(objModDef.TargetResidues))
+                    if (string.IsNullOrEmpty(modDef.TargetResidues))
                     {
                         // Target residues should not be empty for terminal mods
                         // But, we'll list them anyway
-                        strTargetResidues = string.Format("{0}{1}",
+                        targetResidues = string.Format("{0}{1}",
                             PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PEPTIDE_SYMBOL_DMS,
                             PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS);
                     }
                     else
                     {
-                        strTargetResidues = objModDef.TargetResidues;
+                        targetResidues = modDef.TargetResidues;
                     }
 
-                    foreach (var chChar in strTargetResidues)
+                    foreach (var residue in targetResidues)
                     {
-                        if (lstTerminalSymbols.Contains(chChar))
+                        if (terminalSymbols.Contains(residue))
                         {
                             mXMLWriter.WriteStartElement("terminal_modification");
-                            if (chChar == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || chChar == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                            if (residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PEPTIDE_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
                             {
                                 WriteAttribute("terminus", "c");
-                                dblAAMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE;
+                                aminoAcidMass = PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE;
                             }
                             else
                             {
                                 WriteAttribute("terminus", "n");
-                                dblAAMass = PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE;
+                                aminoAcidMass = PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE;
                             }
 
-                            WriteAttributePlusMinus("massdiff", objModDef.ModificationMass, 5);          // Mass difference, must begin with + or -
-                            WriteAttribute("mass", dblAAMass + objModDef.ModificationMass, 4);
-                            if (objModDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
+                            WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5);          // Mass difference, must begin with + or -
+                            WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass, 4);
+                            if (modDef.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod)
                             {
                                 WriteAttribute("variable", "Y");
                             }
@@ -475,8 +477,8 @@ namespace PeptideListToXML
                                 WriteAttribute("variable", "N");
                             }
 
-                            WriteAttribute("symbol", objModDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
-                            if (chChar == PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || chChar == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
+                            WriteAttribute("symbol", modDef.ModificationSymbol.ToString());              // Symbol used by search-engine to denote this mod
+                            if (residue == PHRPReader.Data.AminoAcidModInfo.N_TERMINAL_PROTEIN_SYMBOL_DMS || residue == PHRPReader.Data.AminoAcidModInfo.C_TERMINAL_PROTEIN_SYMBOL_DMS)
                             {
                                 // Modification can only occur at the protein terminus
                                 WriteAttribute("protein_terminus", "Y");
@@ -486,7 +488,7 @@ namespace PeptideListToXML
                                 WriteAttribute("protein_terminus", "N");
                             }
 
-                            WriteAttribute("description", objModDef.MassCorrectionTag);
+                            WriteAttribute("description", modDef.MassCorrectionTag);
                             mXMLWriter.WriteEndElement();        // terminal_modification
                         }
                     }
@@ -506,177 +508,177 @@ namespace PeptideListToXML
                 mXMLWriter.WriteComment("Search-engine parameters");
 
                 // Write out the search-engine parameters
-                foreach (KeyValuePair<string, string> objItem in SearchEngineParams.Parameters)
-                    WriteNameValueElement("parameter", objItem.Key, objItem.Value);
+                foreach (KeyValuePair<string, string> item in SearchEngineParams.Parameters)
+                    WriteNameValueElement("parameter", item.Key, item.Value);
             }
 
             mXMLWriter.WriteEndElement();                    // search_summary
         }
 
-        public void WriteSpectrum(ref udtSpectrumInfoType objSpectrum, List<PHRPReader.Data.PSM> lstHits, ref SortedList<int, List<PHRPReader.Data.ProteinInfo>> lstSeqToProteinMap)
+        public void WriteSpectrum(ref SpectrumInfoType spectrum, List<PHRPReader.Data.PSM> psms, ref SortedList<int, List<PHRPReader.Data.ProteinInfo>> seqToProteinMap)
         {
-            double dblMassErrorDa;
-            double dblMassErrorPPM;
-            double dblTotalMass;
-            string strAlternateScoreName = string.Empty;
-            string strCollisionMode = string.Empty;
+            double massErrorDa;
+            double massErrorPPM;
+            double totalMass;
+            string alternateScoreName = string.Empty;
+            string collisionMode = string.Empty;
 
             // The keys in this dictionary are the residue position in the peptide; the values are the total mass (including all mods)
-            Dictionary<int, double> lstModifiedResidues;
-            lstModifiedResidues = new Dictionary<int, double>();
-            if (lstHits is null || lstHits.Count == 0)
+            Dictionary<int, double> modifiedResidues;
+            modifiedResidues = new Dictionary<int, double>();
+            if (psms is null || psms.Count == 0)
                 return;
             {
                 var withBlock = mXMLWriter;
                 withBlock.WriteStartElement("spectrum_query");
-                withBlock.WriteAttributeString("spectrum", objSpectrum.SpectrumName);         // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
-                WriteAttribute("start_scan", objSpectrum.StartScan);
-                WriteAttribute("end_scan", objSpectrum.EndScan);
-                WriteAttribute("retention_time_sec", objSpectrum.ElutionTimeMinutes * 60.0d, 2);
-                if (GetPepXMLCollisionMode(objSpectrum.CollisionMode, ref strCollisionMode))
+                withBlock.WriteAttributeString("spectrum", spectrum.SpectrumName);         // Example: QC_05_2_05Dec05_Doc_0508-08.9427.9427.1
+                WriteAttribute("start_scan", spectrum.StartScan);
+                WriteAttribute("end_scan", spectrum.EndScan);
+                WriteAttribute("retention_time_sec", spectrum.ElutionTimeMinutes * 60.0, 2);
+                if (GetPepXMLCollisionMode(spectrum.CollisionMode, ref collisionMode))
                 {
-                    WriteAttribute("activation_method", strCollisionMode);
+                    WriteAttribute("activation_method", collisionMode);
                 }
 
-                WriteAttribute("precursor_neutral_mass", objSpectrum.PrecursorNeutralMass);
-                WriteAttribute("assumed_charge", objSpectrum.AssumedCharge);
-                WriteAttribute("index", objSpectrum.Index);
-                WriteAttribute("spectrumNativeID", objSpectrum.NativeID);            // Example: controllerType=0 controllerNumber=1 scan=20554
+                WriteAttribute("precursor_neutral_mass", spectrum.PrecursorNeutralMass);
+                WriteAttribute("assumed_charge", spectrum.AssumedCharge);
+                WriteAttribute("index", spectrum.Index);
+                WriteAttribute("spectrumNativeID", spectrum.NativeID);            // Example: controllerType=0 controllerNumber=1 scan=20554
                 withBlock.WriteStartElement("search_result");
             }
 
-            foreach (PHRPReader.Data.PSM oPSMEntry in lstHits)
+            foreach (PHRPReader.Data.PSM psmEntry in psms)
             {
                 mXMLWriter.WriteStartElement("search_hit");
-                WriteAttribute("hit_rank", oPSMEntry.ScoreRank);
-                string strPeptide = string.Empty;
-                string strCleanSequence;
-                string strPrefix = string.Empty;
-                string strSuffix = string.Empty;
-                if (PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(oPSMEntry.Peptide, out strPeptide, out strPrefix, out strSuffix))
+                WriteAttribute("hit_rank", psmEntry.ScoreRank);
+                string peptide = string.Empty;
+                string cleanSequence;
+                string prefix = string.Empty;
+                string suffix = string.Empty;
+                if (PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(psmEntry.Peptide, out peptide, out prefix, out suffix))
                 {
                     // The peptide sequence needs to be just the amino acids; no mod symbols
-                    strCleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(strPeptide, false);
-                    mXMLWriter.WriteAttributeString("peptide", strCleanSequence);
-                    mXMLWriter.WriteAttributeString("peptide_prev_aa", strPrefix);
-                    mXMLWriter.WriteAttributeString("peptide_next_aa", strSuffix);
+                    cleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(peptide, false);
+                    mXMLWriter.WriteAttributeString("peptide", cleanSequence);
+                    mXMLWriter.WriteAttributeString("peptide_prev_aa", prefix);
+                    mXMLWriter.WriteAttributeString("peptide_next_aa", suffix);
                 }
                 else
                 {
-                    strCleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(oPSMEntry.Peptide, false);
-                    mXMLWriter.WriteAttributeString("peptide", strCleanSequence);
+                    cleanSequence = PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(psmEntry.Peptide, false);
+                    mXMLWriter.WriteAttributeString("peptide", cleanSequence);
                     mXMLWriter.WriteAttributeString("peptide_prev_aa", string.Empty);
                     mXMLWriter.WriteAttributeString("peptide_next_aa", string.Empty);
                 }
 
-                if ((strCleanSequence ?? "") != (strPeptide ?? ""))
+                if (!cleanSequence.Equals(peptide))
                 {
-                    mXMLWriter.WriteAttributeString("peptide_with_mods", oPSMEntry.PeptideWithNumericMods);
+                    mXMLWriter.WriteAttributeString("peptide_with_mods", psmEntry.PeptideWithNumericMods);
                 }
 
-                mXMLWriter.WriteAttributeString("protein", oPSMEntry.ProteinFirst);
+                mXMLWriter.WriteAttributeString("protein", psmEntry.ProteinFirst);
 
                 // Could optionally write out protein description
-                // .WriteAttributeString("protein_descr", objSearchHit.StrProteinDescription)
+                // .WriteAttributeString("protein_descr", searchHit.StrProteinDescription)
 
-                WriteAttribute("num_tot_proteins", oPSMEntry.Proteins.Count);
+                WriteAttribute("num_tot_proteins", psmEntry.Proteins.Count);
                 WriteAttribute("num_matched_ions", 0);
                 WriteAttribute("tot_num_ions", 0);
-                WriteAttribute("calc_neutral_pep_mass", oPSMEntry.PeptideMonoisotopicMass, 4);
-                if (!double.TryParse(oPSMEntry.MassErrorDa, out dblMassErrorDa))
+                WriteAttribute("calc_neutral_pep_mass", psmEntry.PeptideMonoisotopicMass, 4);
+                if (!double.TryParse(psmEntry.MassErrorDa, out massErrorDa))
                 {
-                    dblMassErrorDa = 0d;
+                    massErrorDa = 0.0;
                 }
 
-                WriteAttributePlusMinus("massdiff", dblMassErrorDa, 5);
+                WriteAttributePlusMinus("massdiff", massErrorDa, 5);
 
                 // Write the number of tryptic ends (0 for non-tryptic, 1 for partially tryptic, 2 for fully tryptic)
-                WriteAttribute("num_tol_term", oPSMEntry.NumTrypticTermini);
-                WriteAttribute("num_missed_cleavages", oPSMEntry.NumMissedCleavages);
+                WriteAttribute("num_tol_term", psmEntry.NumTrypticTermini);
+                WriteAttribute("num_missed_cleavages", psmEntry.NumMissedCleavages);
 
                 // Initially all peptides will have "is_rejected" = 0
                 WriteAttribute("is_rejected", 0);
-                List<PHRPReader.Data.ProteinInfo> lstProteins = null;
-                bool blnProteinInfoAvailable;
-                int intNumTrypticTermini;
-                if (lstSeqToProteinMap is object && lstSeqToProteinMap.Count > 0)
+                List<PHRPReader.Data.ProteinInfo> proteins = null;
+                bool proteinInfoAvailable;
+                int numTrypticTermini;
+                if (seqToProteinMap is object && seqToProteinMap.Count > 0)
                 {
-                    blnProteinInfoAvailable = lstSeqToProteinMap.TryGetValue(oPSMEntry.SeqID, out lstProteins);
+                    proteinInfoAvailable = seqToProteinMap.TryGetValue(psmEntry.SeqID, out proteins);
                 }
                 else
                 {
-                    blnProteinInfoAvailable = false;
+                    proteinInfoAvailable = false;
                 }
 
-                int intProteinsWritten = 0;
+                int proteinsWritten = 0;
 
                 // Write out the additional proteins
-                foreach (string strProteinAddnl in oPSMEntry.Proteins)
+                foreach (string proteinAddnl in psmEntry.Proteins)
                 {
-                    if ((strProteinAddnl ?? "") != (oPSMEntry.ProteinFirst ?? ""))
+                    if (!proteinAddnl.Equals(psmEntry.ProteinFirst))
                     {
                         mXMLWriter.WriteStartElement("alternative_protein");
-                        mXMLWriter.WriteAttributeString("protein", strProteinAddnl);
-                        // .WriteAttributeString("protein_descr", strProteinAddnlDescription)
+                        mXMLWriter.WriteAttributeString("protein", proteinAddnl);
+                        // .WriteAttributeString("protein_descr", proteinAddnlDescription)
 
                         // Initially use .NumTrypticTermini
-                        // We'll update this using lstProteins if possible
-                        intNumTrypticTermini = oPSMEntry.NumTrypticTermini;
-                        if (blnProteinInfoAvailable)
+                        // We'll update this using proteins if possible
+                        numTrypticTermini = psmEntry.NumTrypticTermini;
+                        if (proteinInfoAvailable)
                         {
-                            foreach (var objProtein in lstProteins)
+                            foreach (var protein in proteins)
                             {
-                                if ((objProtein.ProteinName ?? "") == (strProteinAddnl ?? ""))
+                                if (protein.ProteinName.Equals(proteinAddnl))
                                 {
-                                    intNumTrypticTermini = (int)objProtein.CleavageState;
+                                    numTrypticTermini = (int)protein.CleavageState;
                                     break;
                                 }
                             }
                         }
 
-                        WriteAttribute("num_tol_term", intNumTrypticTermini);
+                        WriteAttribute("num_tol_term", numTrypticTermini);
                         mXMLWriter.WriteEndElement();      // alternative_protein
                     }
 
-                    intProteinsWritten += 1;
-                    if (MaxProteinsPerPSM > 0 && intProteinsWritten >= MaxProteinsPerPSM)
+                    proteinsWritten += 1;
+                    if (MaxProteinsPerPSM > 0 && proteinsWritten >= MaxProteinsPerPSM)
                     {
                         break;
                     }
                 }
 
-                if (oPSMEntry.ModifiedResidues.Count > 0)
+                if (psmEntry.ModifiedResidues.Count > 0)
                 {
                     mXMLWriter.WriteStartElement("modification_info");
-                    double dblNTermAddon = 0d;
-                    double dblCTermAddon = 0d;
+                    double nTermAddon = 0.0;
+                    double cTermAddon = 0.0;
 
-                    // Look for N and C terminal mods in oPSMEntry.ModifiedResidues
-                    foreach (var objResidue in oPSMEntry.ModifiedResidues)
+                    // Look for N and C terminal mods in psmEntry.ModifiedResidues
+                    foreach (var residue in psmEntry.ModifiedResidues)
                     {
-                        if (objResidue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || objResidue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
+                        if (residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
                         {
-                            switch (objResidue.TerminusState)
+                            switch (residue.TerminusState)
                             {
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
                                     {
-                                        dblNTermAddon += objResidue.ModDefinition.ModificationMass;
+                                        nTermAddon += residue.ModDefinition.ModificationMass;
                                         break;
                                     }
 
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
                                 case PHRPReader.Data.AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
                                     {
-                                        dblCTermAddon += objResidue.ModDefinition.ModificationMass;
+                                        cTermAddon += residue.ModDefinition.ModificationMass;
                                         break;
                                     }
 
                                 default:
                                     {
                                         // This is unexpected
-                                        OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + objResidue.Residue + " at position " + objResidue.ResidueLocInPeptide + " in peptide " + oPSMEntry.Peptide + ", scan " + oPSMEntry.ScanNumber);
+                                        OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + residue.Residue + " at position " + residue.ResidueLocInPeptide + " in peptide " + psmEntry.Peptide + ", scan " + psmEntry.ScanNumber);
                                         break;
                                     }
                             }
@@ -684,43 +686,43 @@ namespace PeptideListToXML
                     }
 
                     // If a peptide-terminal mod, add either of these attributes:
-                    if (Math.Abs(dblNTermAddon) > float.Epsilon)
+                    if (Math.Abs(nTermAddon) > float.Epsilon)
                     {
-                        WriteAttributePlusMinus("mod_nterm_mass", PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + dblNTermAddon, 5);
+                        WriteAttributePlusMinus("mod_nterm_mass", PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + nTermAddon, 5);
                     }
 
-                    if (Math.Abs(dblCTermAddon) > float.Epsilon)
+                    if (Math.Abs(cTermAddon) > float.Epsilon)
                     {
-                        WriteAttributePlusMinus("mod_cterm_mass", PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + dblCTermAddon, 5);
+                        WriteAttributePlusMinus("mod_cterm_mass", PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + cTermAddon, 5);
                     }
 
 
                     // Write out an entry for each modified amino acid
                     // We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
-                    lstModifiedResidues.Clear();
-                    foreach (var objResidue in oPSMEntry.ModifiedResidues)
+                    modifiedResidues.Clear();
+                    foreach (var residue in psmEntry.ModifiedResidues)
                     {
-                        if (!(objResidue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || objResidue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
+                        if (!(residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod))
                         {
-                            if (lstModifiedResidues.TryGetValue(objResidue.ResidueLocInPeptide, out dblTotalMass))
+                            if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out totalMass))
                             {
                                 // This residue has more than one modification applied to it
-                                dblTotalMass += objResidue.ModDefinition.ModificationMass;
-                                lstModifiedResidues[objResidue.ResidueLocInPeptide] = dblTotalMass;
+                                totalMass += residue.ModDefinition.ModificationMass;
+                                modifiedResidues[residue.ResidueLocInPeptide] = totalMass;
                             }
                             else
                             {
-                                dblTotalMass = mPeptideMassCalculator.GetAminoAcidMass(objResidue.Residue) + objResidue.ModDefinition.ModificationMass;
-                                lstModifiedResidues.Add(objResidue.ResidueLocInPeptide, dblTotalMass);
+                                totalMass = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
+                                modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass);
                             }
                         }
                     }
 
-                    foreach (var objItem in lstModifiedResidues)
+                    foreach (var item in modifiedResidues)
                     {
                         mXMLWriter.WriteStartElement("mod_aminoacid_mass");
-                        WriteAttribute("position", objItem.Key);     // Position of residue in peptide
-                        WriteAttribute("mass", objItem.Value, 5);    // Total amino acid mass, including all mods (but excluding N or C terminal mods)
+                        WriteAttribute("position", item.Key);     // Position of residue in peptide
+                        WriteAttribute("mass", item.Value, 5);    // Total amino acid mass, including all mods (but excluding N or C terminal mods)
                         mXMLWriter.WriteEndElement();      // mod_aminoacid_mass
                     }
 
@@ -728,31 +730,31 @@ namespace PeptideListToXML
                 }
 
                 // Write out the search scores
-                foreach (var objItem in oPSMEntry.AdditionalScores)
+                foreach (var item in psmEntry.AdditionalScores)
                 {
-                    if (mPNNLScoreNameMap.TryGetValue(objItem.Key, out strAlternateScoreName))
+                    if (mPNNLScoreNameMap.TryGetValue(item.Key, out alternateScoreName))
                     {
-                        WriteNameValueElement("search_score", strAlternateScoreName, objItem.Value);
+                        WriteNameValueElement("search_score", alternateScoreName, item.Value);
                     }
                     else
                     {
-                        WriteNameValueElement("search_score", objItem.Key, objItem.Value);
+                        WriteNameValueElement("search_score", item.Key, item.Value);
                     }
                 }
 
-                WriteNameValueElement("search_score", "msgfspecprob", oPSMEntry.MSGFSpecEValue);
+                WriteNameValueElement("search_score", "msgfspecprob", psmEntry.MSGFSpecEValue);
 
                 // Write out the mass error ppm value as a custom search score
-                WriteNameValueElement("search_score", "MassErrorPPM", oPSMEntry.MassErrorPPM);
-                if (!double.TryParse(oPSMEntry.MassErrorPPM, out dblMassErrorPPM))
+                WriteNameValueElement("search_score", "MassErrorPPM", psmEntry.MassErrorPPM);
+                if (!double.TryParse(psmEntry.MassErrorPPM, out massErrorPPM))
                 {
-                    dblMassErrorPPM = 0d;
+                    massErrorPPM = 0.0;
                 }
 
-                WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(dblMassErrorPPM), 4);
+                WriteNameValueElement("search_score", "AbsMassErrorPPM", Math.Abs(massErrorPPM), 4);
 
                 // ' Old, unused
-                // WritePeptideProphetUsingMSGF(mXMLWriter, objSearchHit, iNumTrypticTermini, iNumMissedCleavages)
+                // WritePeptideProphetUsingMSGF(mXMLWriter, searchHit, iNumTrypticTermini, iNumMissedCleavages)
 
                 mXMLWriter.WriteEndElement();              // search_hit
             }
@@ -762,10 +764,10 @@ namespace PeptideListToXML
         }
 
         // Old, unused
-        // Private Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef objSearchHit As clsSearchHit, ByVal iNumTrypticTermini As Integer, ByVal iNumMissedCleavages As Integer)
+        // Private Sub WritePeptideProphetUsingMSGF(ByRef mXMLWriter As System.Xml.XmlWriter, ByRef searchHit As clsSearchHit, ByVal iNumTrypticTermini As Integer, ByVal iNumMissedCleavages As Integer)
 
-        // Dim strMSGF As String
-        // Dim strFVal As String
+        // Dim msgf As String
+        // Dim fval As String
 
         // With mXMLWriter
         // .WriteStartElement("analysis_result")
@@ -773,17 +775,17 @@ namespace PeptideListToXML
 
 
         // .WriteStartElement("peptideprophet_result")
-        // strMSGF = clsMSGFConversion.MSGFToProbability(objSearchHit.dMSGFSpecProb).ToString("0.0000")
-        // strFVal = clsMSGFConversion.MSGFToFValue(objSearchHit.dMSGFSpecProb).ToString("0.0000")
+        // msgf = clsMSGFConversion.MSGFToProbability(searchHit.dMSGFSpecProb).ToString("0.0000")
+        // fval = clsMSGFConversion.MSGFToFValue(searchHit.dMSGFSpecProb).ToString("0.0000")
 
-        // .WriteAttributeString("probability", strMSGF)
-        // .WriteAttributeString("all_ntt_prob", "(" & strMSGF & "," & strMSGF & "," & strMSGF & ")")
+        // .WriteAttributeString("probability", msgf)
+        // .WriteAttributeString("all_ntt_prob", "(" & msgf & "," & msgf & "," & msgf & ")")
 
         // .WriteStartElement("search_score_summary")
 
         // .WriteStartElement("parameter")
         // .WriteAttributeString("name", "fval")
-        // .WriteAttributeString("value", strFVal)
+        // .WriteAttributeString("value", fval)
         // .WriteEndElement()
 
         // .WriteStartElement("parameter")
@@ -798,7 +800,7 @@ namespace PeptideListToXML
 
         // .WriteStartElement("parameter")
         // .WriteAttributeString("name", "massd")
-        // .WriteAttributeString("value", objSearchHit.dMassdiff.ToString("0.000"))
+        // .WriteAttributeString("value", searchHit.dMassdiff.ToString("0.000"))
         // .WriteEndElement()
 
         // .WriteEndElement()			  ' search_score_summary
@@ -820,32 +822,32 @@ namespace PeptideListToXML
         // ''' For example, if MSGF SpecProb = 1E-13, then the adjusted value is 1E-07
         // ''' Computes Probability as 1 - AdjustedMSGFSpecProb
         // ''' </summary>
-        // ''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
+        // ''' <param name="msgfSpecProb">MSGF SpecProb to convert</param>
         // ''' <returns>Probability</returns>
-        // Public Shared Function MSGFToProbability(dblMSGFScore As Double) As Double
+        // Public Shared Function MSGFToProbability(msgfSpecProb As Double) As Double
         // Constant LOG_MSGF_ADJUST As Integer = 6
 
-        // Dim dLogMSGF As Double
-        // Dim dblProbability As Double
+        // Dim logMSGF As Double
+        // Dim probability As Double
 
-        // If dblMSGFScore >= 1 Then
-        // dblProbability = 0
-        // ElseIf dblMSGFScore <= 0 Then
-        // dblProbability = 1
+        // If msgfSpecProb >= 1 Then
+        //     probability = 0
+        // ElseIf msgfSpecProb <= 0 Then
+        //     probability = 1
         // Else
-        // dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
-        // dblProbability = 1 - Math.Pow(10, dLogMSGF)
+        //     logMSGF = Math.Log(msgfSpecProb, 10) + LOG_MSGF_ADJUST
+        //     probability = 1 - Math.Pow(10, logMSGF)
 
-        // If dblProbability < 0 Then
-        // dblProbability = 0
+        //     If probability < 0 Then
+        //         probability = 0
+        //     End If
+
+        //     If probability > 1 Then
+        //         probability = 1
+        //     End If
         // End If
 
-        // If dblProbability > 1 Then
-        // dblProbability = 1
-        // End If
-        // End If
-
-        // Return dblProbability
+        // Return probability
 
         // End Function
 
@@ -854,22 +856,22 @@ namespace PeptideListToXML
         // ''' Converts the MSGF score to base-10 log, adds 6, then takes the negative of this result
         // ''' For example, if MSGF SpecProb = 1E-13, then computes: -13 + 6 = -7, then returns 7
         // ''' </summary>
-        // ''' <param name="dblMSGFScore">MSGF SpecProb to convert</param>
+        // ''' <param name="msgfSpecProb">MSGF SpecProb to convert</param>
         // ''' <returns>FValue</returns>
-        // Public Shared Function MSGFToFValue(dblMSGFScore As Double) As Double
+        // Public Shared Function MSGFToFValue(msgfSpecProb As Double) As Double
         // Constant LOG_MSGF_ADJUST As Integer = 6
 
-        // Dim dLogMSGF As Double
-        // Dim dblFValue As Double
+        // Dim logMSGF As Double
+        // Dim fvalue As Double
 
-        // If dblMSGFScore >= 1 Then
-        // dblFValue = 0
+        // If msgfSpecProb >= 1 Then
+        //     fvalue = 0
         // Else
-        // dLogMSGF = Math.Log(dblMSGFScore, 10) + LOG_MSGF_ADJUST
-        // dblFValue = -dLogMSGF
+        //     logMSGF = Math.Log(msgfSpecProb, 10) + LOG_MSGF_ADJUST
+        //     fvalue = -logMSGF
         // End If
 
-        // Return dblFValue
+        // Return fvalue
 
         // End Function
 

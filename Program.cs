@@ -69,9 +69,7 @@ namespace PeptideListToXML
     /// <remarks></remarks>
         public static int Main()
         {
-            int intReturnCode;
             var commandLineParser = new clsParseCommandLine();
-            bool blnProceed;
 
             // Initialize the options
             mInputFilePath = string.Empty;
@@ -101,88 +99,84 @@ namespace PeptideListToXML
 
             try
             {
-                blnProceed = false;
+                var proceed = false;
                 if (commandLineParser.ParseCommandLine())
                 {
                     if (SetOptionsUsingCommandLineParameters(commandLineParser))
-                        blnProceed = true;
+                        proceed = true;
                 }
 
-                if (!blnProceed || commandLineParser.NeedToShowHelp || commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 || mInputFilePath.Length == 0)
+                if (!proceed || commandLineParser.NeedToShowHelp || commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 || mInputFilePath.Length == 0)
                 {
                     ShowProgramHelp();
-                    intReturnCode = -1;
+                    return -1;
                 }
-                else
-                {
-                    // Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
 
-                    mPeptideListConverter = new clsPeptideListToXML()
+                // Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
+                mPeptideListConverter = new clsPeptideListToXML()
+                {
+                    LogMessagesToFile = mLogMessagesToFile,
+                    FastaFilePath = mFastaFilePath,
+                    SearchEngineParamFileName = mSearchEngineParamFileName,
+                    HitsPerSpectrum = mHitsPerSpectrum,
+                    PreviewMode = mPreview,
+                    SkipXPeptides = mSkipXPeptides,
+                    TopHitOnly = mTopHitOnly,
+                    MaxProteinsPerPSM = mMaxProteinsPerPSM,
+                    PeptideFilterFilePath = mPeptideFilterFilePath,
+                    ChargeFilterList = mChargeFilterList,
+                    LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
+                    LoadMSGFResults = mLoadMSGFResults,
+                    LoadScanStats = mLoadScanStats
+                };
+                RegisterEvents(mPeptideListConverter);
+                mLastProgressReportTime = DateTime.UtcNow;
+                mLastPercentDisplayed = DateTime.UtcNow;
+                if (mRecurseFolders)
+                {
+                    if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels))
                     {
-                        LogMessagesToFile = mLogMessagesToFile,
-                        FastaFilePath = mFastaFilePath,
-                        SearchEngineParamFileName = mSearchEngineParamFileName,
-                        HitsPerSpectrum = mHitsPerSpectrum,
-                        PreviewMode = mPreview,
-                        SkipXPeptides = mSkipXPeptides,
-                        TopHitOnly = mTopHitOnly,
-                        MaxProteinsPerPSM = mMaxProteinsPerPSM,
-                        PeptideFilterFilePath = mPeptideFilterFilePath,
-                        ChargeFilterList = mChargeFilterList,
-                        LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
-                        LoadMSGFResults = mLoadMSGFResults,
-                        LoadScanStats = mLoadScanStats
-                    };
-                    RegisterEvents(mPeptideListConverter);
-                    mLastProgressReportTime = DateTime.UtcNow;
-                    mLastPercentDisplayed = DateTime.UtcNow;
-                    if (mRecurseFolders)
-                    {
-                        if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels))
-                        {
-                            intReturnCode = 0;
-                        }
-                        else
-                        {
-                            intReturnCode = (int)mPeptideListConverter.ErrorCode;
-                        }
+                        return 0;
                     }
-                    else if (mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath))
-                    {
-                        intReturnCode = 0;
-                    }
-                    else
-                    {
-                        intReturnCode = (int)mPeptideListConverter.ErrorCode;
-                        if (intReturnCode != 0)
-                        {
-                            ShowErrorMessage("Error while processing: " + mPeptideListConverter.GetErrorMessage());
-                        }
-                    }
+
+                    return (int)mPeptideListConverter.ErrorCode;
                 }
+
+                if (mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath))
+                {
+                    return 0;
+                }
+
+                var returnCode = (int)mPeptideListConverter.ErrorCode;
+                if (returnCode != 0)
+                {
+                    ShowErrorMessage("Error while processing: " + mPeptideListConverter.GetErrorMessage());
+                }
+
+                return returnCode;
             }
             catch (Exception ex)
             {
                 ShowErrorMessage("Error occurred in modMain->Main", ex);
-                intReturnCode = -1;
+                return -1;
             }
-
-            return intReturnCode;
         }
 
-        private static void DisplayProgressPercent(string taskDescription, int intPercentComplete, bool blnAddCarriageReturn)
+        private static void DisplayProgressPercent(string taskDescription, int percentComplete, bool addCarriageReturn)
         {
-            if (blnAddCarriageReturn)
+            if (addCarriageReturn)
             {
                 Console.WriteLine();
             }
 
-            if (intPercentComplete > 100)
-                intPercentComplete = 100;
+            if (percentComplete > 100)
+                percentComplete = 100;
+
             if (string.IsNullOrEmpty(taskDescription))
                 taskDescription = "Processing";
-            Console.Write(taskDescription + ": " + intPercentComplete.ToString() + "% ");
-            if (blnAddCarriageReturn)
+
+            Console.Write(taskDescription + ": " + percentComplete.ToString() + "% ");
+            if (addCarriageReturn)
             {
                 Console.WriteLine();
             }
@@ -190,93 +184,102 @@ namespace PeptideListToXML
 
         private static string GetAppVersion()
         {
-            return Assembly.GetExecutingAssembly().GetName().Version.ToString() + " (" + PROGRAM_DATE + ")";
+            return Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
-            string strValue = string.Empty;
-            var lstValidParameters = new List<string>() { "I", "O", "F", "E", "H", "X", "PepFilter", "ChargeFilter", "TopHitOnly", "MaxProteins", "NoMods", "NoMSGF", "NoScanStats", "Preview", "P", "S", "A", "R", "L" };
-            int intValue;
+            var validParameters = new List<string>
+            {
+                "I", "O", "F", "E", "H", "X",
+                "PepFilter", "ChargeFilter", "TopHitOnly", "MaxProteins",
+                "NoMods", "NoMSGF", "NoScanStats",
+                "Preview", "P", "S", "A", "R", "L"
+            };
+
             try
             {
                 // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
-                    ShowErrorMessage("Invalid command line parameters", (from item in commandLineParser.InvalidParameters(lstValidParameters)
+                    ShowErrorMessage("Invalid command line parameters", (from item in commandLineParser.InvalidParameters(validParameters)
                                                                          select ("/" + item)).ToList());
                     return false;
                 }
                 else
                 {
                     // Query commandLineParser to see if various parameters are present
-                    if (commandLineParser.RetrieveValueForParameter("I", out strValue))
+                    if (commandLineParser.RetrieveValueForParameter("I", out var inputFilePath))
                     {
-                        mInputFilePath = strValue;
+                        mInputFilePath = inputFilePath;
                     }
                     else if (commandLineParser.NonSwitchParameterCount > 0)
                     {
                         mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
                     }
 
-                    if (commandLineParser.RetrieveValueForParameter("O", out strValue))
-                        mOutputFolderPath = strValue;
+                    if (commandLineParser.RetrieveValueForParameter("O", out var outputFolderPath))
+                        mOutputFolderPath = outputFolderPath;
 
                     // Future enum; mzIdentML is not yet supported
-                    // If .RetrieveValueForParameter("M", strValue) Then
+                    // If .RetrieveValueForParameter("M", value) Then
                     // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.mzIdentML
                     // End If
 
-                    if (commandLineParser.RetrieveValueForParameter("F", out strValue))
-                        mFastaFilePath = strValue;
-                    if (commandLineParser.RetrieveValueForParameter("E", out strValue))
-                        mSearchEngineParamFileName = strValue;
-                    if (commandLineParser.RetrieveValueForParameter("H", out strValue))
+                    if (commandLineParser.RetrieveValueForParameter("F", out var fastaFilePath))
+                        mFastaFilePath = fastaFilePath;
+
+                    if (commandLineParser.RetrieveValueForParameter("E", out var searchEngineParamFileName))
+                        mSearchEngineParamFileName = searchEngineParamFileName;
+
+                    if (commandLineParser.RetrieveValueForParameter("H", out var hitsPerSpectrum))
                     {
-                        if (int.TryParse(strValue, out intValue))
+                        if (int.TryParse(hitsPerSpectrum, out var hitsPerSpectrumValue))
                         {
-                            mHitsPerSpectrum = intValue;
+                            mHitsPerSpectrum = hitsPerSpectrumValue;
                         }
                     }
 
                     if (commandLineParser.IsParameterPresent("X"))
                         mSkipXPeptides = true;
+
                     if (commandLineParser.IsParameterPresent("TopHitOnly"))
                         mTopHitOnly = true;
-                    if (commandLineParser.RetrieveValueForParameter("MaxProteins", out strValue))
+
+                    if (commandLineParser.RetrieveValueForParameter("MaxProteins", out var maxProteins))
                     {
-                        if (int.TryParse(strValue, out intValue))
+                        if (int.TryParse(maxProteins, out var maxProteinsValue))
                         {
-                            mMaxProteinsPerPSM = intValue;
+                            mMaxProteinsPerPSM = maxProteinsValue;
                         }
                     }
 
-                    if (commandLineParser.RetrieveValueForParameter("PepFilter", out strValue))
-                        mPeptideFilterFilePath = strValue;
-                    if (commandLineParser.RetrieveValueForParameter("ChargeFilter", out strValue))
+                    if (commandLineParser.RetrieveValueForParameter("PepFilter", out var peptideFilterFilePath))
+                        mPeptideFilterFilePath = peptideFilterFilePath;
+
+                    if (commandLineParser.RetrieveValueForParameter("ChargeFilter", out var chargeFilter))
                     {
                         try
                         {
-                            if (string.IsNullOrEmpty(strValue))
+                            if (string.IsNullOrEmpty(chargeFilter))
                             {
-                                ShowErrorMessage("ChargeFilter switch must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3");
+                                ShowErrorMessage("ChargeFilter argument must have one or more charges, for example /ChargeFilter:2  or /ChargeFilter:2,3");
                                 Console.WriteLine();
                                 return false;
                             }
                             else
                             {
-                                foreach (string strCharge in strValue.Split(',').ToList())
+                                foreach (var charge in chargeFilter.Split(',').ToList())
                                 {
-                                    int intCharge;
-                                    if (int.TryParse(strCharge, out intCharge))
+                                    if (int.TryParse(charge, out var chargeValue))
                                     {
-                                        mChargeFilterList.Add(intCharge);
+                                        mChargeFilterList.Add(chargeValue);
                                     }
                                     else
                                     {
-                                        ShowErrorMessage("Invalid charge specified: " + strCharge);
+                                        ShowErrorMessage("Invalid charge specified: " + charge);
                                         Console.WriteLine();
                                         return false;
                                     }
@@ -285,37 +288,45 @@ namespace PeptideListToXML
                         }
                         catch (Exception ex)
                         {
-                            ShowErrorMessage("Error parsing the list of charges \"" + strValue + "\"; should be a command separated list");
+                            ShowErrorMessage("Error parsing the list of charges \"" + chargeFilter + "\"; should be a command separated list", ex);
                             Console.WriteLine();
                             return false;
                         }
                     }
 
-                    if (commandLineParser.RetrieveValueForParameter("P", out strValue))
-                        mParameterFilePath = strValue;
+                    if (commandLineParser.RetrieveValueForParameter("P", out var parameterFilePath))
+                        mParameterFilePath = parameterFilePath;
+
                     if (commandLineParser.IsParameterPresent("NoMods"))
                         mLoadModsAndSeqInfo = false;
+
                     if (commandLineParser.IsParameterPresent("NoMSGF"))
                         mLoadMSGFResults = false;
+
                     if (commandLineParser.IsParameterPresent("NoScanStats"))
                         mLoadScanStats = false;
+
                     if (commandLineParser.IsParameterPresent("Preview"))
                         mPreview = true;
-                    if (commandLineParser.RetrieveValueForParameter("S", out strValue))
+
+                    if (commandLineParser.RetrieveValueForParameter("S", out var recurseFolders))
                     {
                         mRecurseFolders = true;
-                        if (!int.TryParse(strValue, out mRecurseFoldersMaxLevels))
+                        if (!int.TryParse(recurseFolders, out mRecurseFoldersMaxLevels))
                         {
                             mRecurseFoldersMaxLevels = 0;
                         }
                     }
 
-                    if (commandLineParser.RetrieveValueForParameter("A", out strValue))
-                        mOutputFolderAlternatePath = strValue;
+                    if (commandLineParser.RetrieveValueForParameter("A", out var outputFolderAlternatePath))
+                        mOutputFolderAlternatePath = outputFolderAlternatePath;
+
                     if (commandLineParser.IsParameterPresent("R"))
                         mRecreateFolderHierarchyInAlternatePath = true;
+
                     if (commandLineParser.IsParameterPresent("L"))
                         mLogMessagesToFile = true;
+
                     return true;
                 }
             }

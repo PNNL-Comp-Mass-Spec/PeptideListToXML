@@ -32,11 +32,12 @@ namespace PeptideListToXML
             }
         }
 
-        public clsPSMInfo(string strSpectrumKey, PHRPReader.Data.PSM objPSM)
+        public clsPSMInfo(string spectrumKey, PHRPReader.Data.PSM psm)
         {
-            mSpectrumKey = strSpectrumKey;
+            mSpectrumKey = spectrumKey;
             mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
-            mPSM = objPSM;
+            mPSM = psm;
+
             if (mPSM is null)
             {
                 mMSGFSpecProb = MSGF_SPEC_NOT_DEFINED;
