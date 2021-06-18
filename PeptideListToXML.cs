@@ -276,7 +276,7 @@ namespace PeptideListToXML
                 foreach (var message in mPHRPReader.WarningMessages.Distinct())
                 {
                     Console.WriteLine();
-                    ShowWarningMessage(message);
+                    ShowWarning(message);
                     if (message.Contains("SeqInfo file not found"))
                     {
                         if (mPHRPReader.ModSummaryFileLoaded)
@@ -315,7 +315,7 @@ namespace PeptideListToXML
                 if (string.IsNullOrEmpty(DatasetName))
                 {
                     DatasetName = "Unknown";
-                    ShowWarningMessage("Unable to determine the dataset name from the input file path; database will be named " + DatasetName + " in the PepXML file");
+                    ShowWarning("Unable to determine the dataset name from the input file path; database will be named " + DatasetName + " in the PepXML file");
                 }
 
                 while (mPHRPReader.MoveNext())
@@ -663,7 +663,7 @@ namespace PeptideListToXML
                 Console.WriteLine();
                 if (string.IsNullOrEmpty(searchEngineParamFileName))
                 {
-                    ShowWarningMessage("Search engine parameter file not defined; use /E to specify the filename");
+                    ShowWarning("Search engine parameter file not defined; use /E to specify the filename");
                     searchEngineParams = new PHRPReader.Data.SearchEngineParameters(mPeptideHitResultType.ToString());
                 }
                 else
@@ -865,11 +865,6 @@ namespace PeptideListToXML
                 HandleException("Error in ProcessFile", ex);
                 return false;
             }
-        }
-
-        private void ShowWarningMessage(string warningMessage)
-        {
-            ShowMessage("Warning: " + warningMessage);
         }
 
         private void SetLocalErrorCode(PeptideListToXMLErrorCodes newErrorCode, bool leaveExistingErrorCodeUnchanged = false)
