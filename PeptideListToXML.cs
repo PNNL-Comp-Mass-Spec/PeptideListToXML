@@ -650,25 +650,24 @@ namespace PeptideListToXML
                     return true;
                 }
 
-                using (var reader = new StreamReader(new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        // Remove any text present after a tab character
+                        var tabIndex = dataLine.IndexOf('\t');
+                        if (tabIndex > 0)
+                        {
+                            dataLine = dataLine.Substring(0, tabIndex);
+                        }
+
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            // Remove any text present after a tab character
-                            var tabIndex = dataLine.IndexOf('\t');
-                            if (tabIndex > 0)
-                            {
-                                dataLine = dataLine.Substring(0, tabIndex);
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(dataLine))
-                            {
-                                dataLine = PHRPReader.PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(dataLine, true);
-                                peptides.Add(dataLine);
-                            }
+                            dataLine = PHRPReader.PeptideCleavageStateCalculator.ExtractCleanSequenceFromSequenceWithMods(dataLine, true);
+                            peptides.Add(dataLine);
                         }
                     }
                 }
