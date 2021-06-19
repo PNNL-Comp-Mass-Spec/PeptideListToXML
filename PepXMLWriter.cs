@@ -19,6 +19,8 @@ namespace PeptideListToXML
         // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
         // Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
 
+        private readonly Options mOptions;
+
         private readonly PeptideMassCalculator mPeptideMassCalculator;
 
         private XmlWriter mXMLWriter;
@@ -27,50 +29,27 @@ namespace PeptideListToXML
         private Dictionary<string, string> mPNNLScoreNameMap;
 
         /// <summary>
-        /// Dataset name
-        /// </summary>
-        public string DatasetName { get; }
-
-        /// <summary>
-        /// Maximum number of proteins per PSM to store
-        /// </summary>
-        public int MaxProteinsPerPSM { get; set; }
-
-        /// <summary>
         /// Search engine parameters, read by PHRPReader
         /// </summary>
         public SearchEngineParameters SearchEngineParams { get; }
 
         /// <summary>
-        /// Input file path
-        /// </summary>
-        public string InputFilePath { get; }
-
-        /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="datasetName">Name of the Dataset</param>
-        /// <param name="fastaFilePath">Fasta file path to use if searchEngineParams.FastaFilePath is empty</param>
-        /// <param name="searchEngineParams">Search engine parameters</param>
-        /// <param name="inputFilePath">Input file path</param>
         /// <param name="outputFilePath">Path to the PepXML file to create</param>
-        public PepXMLWriter(string datasetName, string fastaFilePath, SearchEngineParameters searchEngineParams, string inputFilePath, string outputFilePath)
+        /// <param name="searchEngineParams">Search engine parameters</param>
+        /// <param name="options"></param>
+        public PepXMLWriter(string outputFilePath, SearchEngineParameters searchEngineParams, Options options)
         {
+            mOptions = options;
             SearchEngineParams = searchEngineParams;
-
-            DatasetName = datasetName ?? "Unknown";
-
-            if (string.IsNullOrEmpty(inputFilePath))
-                inputFilePath = string.Empty;
-
-            InputFilePath = inputFilePath;
 
             mPeptideMassCalculator = new PeptideMassCalculator();
             InitializePNNLScoreNameMap();
-            MaxProteinsPerPSM = 0;
+
             try
             {
-                InitializePepXMLFile(outputFilePath, fastaFilePath);
+                InitializePepXMLFile(outputFilePath, options.FastaFilePath);
             }
             catch (Exception ex)
             {
@@ -254,7 +233,7 @@ namespace PeptideListToXML
                 if (searchDate < new DateTime(1980, 1, 2))
                 {
                     // Use the date of the input file since the reported SearchDate is invalid
-                    var sourceFile = new FileInfo(InputFilePath);
+                    var sourceFile = new FileInfo(mOptions.InputFilePath);
                     if (sourceFile.Exists)
                     {
                         searchDate = sourceFile.LastWriteTime;
@@ -266,7 +245,7 @@ namespace PeptideListToXML
                 mXMLWriter.WriteAttributeString("version", SearchEngineParams.SearchEngineVersion);
                 mXMLWriter.WriteEndElement();
                 mXMLWriter.WriteStartElement("msms_run_summary");
-                mXMLWriter.WriteAttributeString("base_name", DatasetName);
+                mXMLWriter.WriteAttributeString("base_name", mOptions.DatasetName);
                 mXMLWriter.WriteAttributeString("raw_data_type", "raw");
                 mXMLWriter.WriteAttributeString("raw_data", ".mzXML");
                 mXMLWriter.WriteStartElement("sample_enzyme");
@@ -303,8 +282,8 @@ namespace PeptideListToXML
 
             {
                 mXMLWriter.WriteStartElement("search_summary");
-                mXMLWriter.WriteAttributeString("base_name", DatasetName);
-                mXMLWriter.WriteAttributeString("source_file", Path.GetFileName(InputFilePath));
+                mXMLWriter.WriteAttributeString("base_name", mOptions.DatasetName);
+                mXMLWriter.WriteAttributeString("source_file", Path.GetFileName(mOptions.InputFilePath));
                 mXMLWriter.WriteAttributeString("search_engine", SearchEngineParams.SearchEngineName);
                 mXMLWriter.WriteAttributeString("search_engine_version", SearchEngineParams.SearchEngineVersion);
                 mXMLWriter.WriteAttributeString("precursor_mass_type", SearchEngineParams.PrecursorMassType);
@@ -603,7 +582,7 @@ namespace PeptideListToXML
                     }
 
                     proteinsWritten++;
-                    if (MaxProteinsPerPSM > 0 && proteinsWritten >= MaxProteinsPerPSM)
+                    if (mOptions.MaxProteinsPerPSM > 0 && proteinsWritten >= mOptions.MaxProteinsPerPSM)
                     {
                         break;
                     }

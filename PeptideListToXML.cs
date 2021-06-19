@@ -39,13 +39,6 @@ namespace PeptideListToXML
 
         private const int PREVIEW_PAD_WIDTH = 22;
 
-        // Possible future enum if support for mzIdentML is added
-        // public enum PeptideListOutputFormat
-        // {
-        //     PepXML = 0,
-        //     mzIdentML = 1
-        // }
-
         /// <summary>
         /// Error codes specialized for this class
         /// </summary>
@@ -92,13 +85,12 @@ namespace PeptideListToXML
             UnspecifiedError = -1
         }
 
+        private readonly Options mOptions;
+
         private ReaderFactory mPHRPReader;
         private PepXMLWriter mXMLWriter;
 
-        private PeptideHitResultTypes mPeptideHitResultType;
         private SortedList<int, List<ProteinInfo>> mSeqToProteinMapCached;
-
-        private string mPeptideFilterFilePath;
 
         // This dictionary tracks the PSMs (hits) for each spectrum
         // The key is the Spectrum Key string (dataset, start scan, end scan, charge)
@@ -109,96 +101,9 @@ namespace PeptideListToXML
         private Dictionary<string, SpectrumInfo> mSpectrumInfo;
 
         /// <summary>
-        /// Charge filter list: list of charges to include in the output file
-        /// </summary>
-        /// <remarks>If an empty list, return all charges</remarks>
-        public List<int> ChargeFilterList { get; } = new();
-
-        /// <summary>
-        /// Dataset name; auto-determined by the PHRP Reader class in ConvertPHRPDataToXML()
-        /// </summary>
-        public string DatasetName { get; private set; }
-
-        /// <summary>
-        /// Fasta file path to store in the pepXML file
-        /// Ignored if the Search Engine Param File exists and it contains a fasta file name (typically the case for SEQUEST and X!Tandem)
-        /// </summary>
-        public string FastaFilePath { get; set; }
-
-        /// <summary>
-        /// Number of peptides per spectrum to store in the PepXML file; 0 means store all hits
-        /// </summary>
-        public int HitsPerSpectrum { get; set; }
-
-        /// <summary>
-        /// When true, load addition PHRP files
-        /// </summary>
-        public bool LoadModsAndSeqInfo { get; set; }
-
-        /// <summary>
-        /// When true, load MSGF results
-        /// </summary>
-        public bool LoadMSGFResults { get; set; }
-
-        /// <summary>
-        /// When true, load Scan Stats files
-        /// </summary>
-        public bool LoadScanStats { get; set; }
-
-        /// <summary>
         /// Local error code
         /// </summary>
         public PeptideListToXMLErrorCodes LocalErrorCode { get; private set; }
-
-        /// <summary>
-        /// Maximum number of proteins to store for each PSM
-        /// </summary>
-        public int MaxProteinsPerPSM { get; set; }
-
-        /// <summary>
-        /// If true, displays the names of the files that are required to create the PepXML file for the specified dataset
-        /// </summary>
-        public bool PreviewMode { get; set; }
-
-        /// <summary>
-        /// Name of the parameter file used by the search engine that produced the results file that we are parsing
-        /// </summary>
-        public string SearchEngineParamFileName { get; set; }
-
-        /// <summary>
-        /// If True, skip peptides with X residues
-        /// </summary>
-        public bool SkipXPeptides { get; set; }
-
-        /// <summary>
-        /// If True, only keep the top-scoring peptide for each scan number
-        /// </summary>
-        /// <remarks>If the scan has multiple charges, the output file will still only have one peptide listed for that scan number</remarks>
-        public bool TopHitOnly { get; set; }
-
-        /// <summary>
-        /// Peptide filter file path
-        /// </summary>
-        /// <remarks>
-        /// File with a list of peptides to filter on (for inclusion in the output file)
-        /// One peptide per line
-        /// </remarks>
-        public string PeptideFilterFilePath
-        {
-            get => mPeptideFilterFilePath;
-
-            set
-            {
-                if (string.IsNullOrEmpty(value))
-                {
-                    mPeptideFilterFilePath = string.Empty;
-                }
-                else
-                {
-                    mPeptideFilterFilePath = value;
-                }
-            }
-        }
 
         // Possible future property if support for mzIdentML is added
         // public PeptideListOutputFormat OutputFormat { get; set; }
@@ -211,29 +116,27 @@ namespace PeptideListToXML
         /// <returns>True if successful, false if an error</returns>
         public bool ConvertPHRPDataToXML(string inputFilePath, string outputDirectoryPath)
         {
-          // Note that CachePHRPData() will update these variables
-            DatasetName = "Unknown";
-            mPeptideHitResultType = PeptideHitResultTypes.Unknown;
             var success = CachePHRPData(inputFilePath, out var searchEngineParams);
 
             if (!success)
                 return false;
 
-            if (PreviewMode)
+            if (mOptions.PreviewMode)
             {
-                PreviewRequiredFiles(inputFilePath, DatasetName, mPeptideHitResultType, LoadModsAndSeqInfo, LoadMSGFResults, LoadScanStats, SearchEngineParamFileName);
+                PreviewRequiredFiles(inputFilePath, mOptions);
                 return true;
             }
 
-            var outputFilePath = Path.Combine(outputDirectoryPath, DatasetName + ".pepXML");
-            return WriteCachedData(inputFilePath, outputFilePath, searchEngineParams);
+            var outputFilePath = Path.Combine(outputDirectoryPath, mOptions.DatasetName + ".pepXML");
+
+            return WriteCachedData(outputFilePath, searchEngineParams);
         }
 
         private bool CachePHRPData(string inputFilePath, out SearchEngineParameters searchEngineParams)
         {
             try
             {
-                if (PreviewMode)
+                if (mOptions.PreviewMode)
                 {
                     ResetProgress("Finding required files");
                 }
@@ -266,23 +169,23 @@ namespace PeptideListToXML
                 var peptidesStored = 0;
                 var startupOptions = new StartupOptions
                 {
-                    LoadModsAndSeqInfo = LoadModsAndSeqInfo,
-                    LoadMSGFResults = LoadMSGFResults,
-                    LoadScanStatsData = LoadScanStats,
-                    MaxProteinsPerPSM = MaxProteinsPerPSM
+                    LoadModsAndSeqInfo = mOptions.LoadModsAndSeqInfo,
+                    LoadMSGFResults = mOptions.LoadMSGFResults,
+                    LoadScanStatsData = mOptions.LoadScanStats,
+                    MaxProteinsPerPSM = mOptions.MaxProteinsPerPSM
                 };
 
                 mPHRPReader = new ReaderFactory(inputFilePath, startupOptions);
                 RegisterEvents(mPHRPReader);
 
-                DatasetName = mPHRPReader.DatasetName;
-                mPeptideHitResultType = mPHRPReader.PeptideHitResultType;
+                mOptions.DatasetName = mPHRPReader.DatasetName;
+                mOptions.PeptideHitResultType = mPHRPReader.PeptideHitResultType;
                 mSeqToProteinMapCached = mPHRPReader.SeqToProteinMap;
 
                 SortedSet<string> peptidesToFilterOn;
-                if (!string.IsNullOrWhiteSpace(mPeptideFilterFilePath))
+                if (!string.IsNullOrWhiteSpace(mOptions.PeptideFilterFilePath))
                 {
-                    var success = LoadPeptideFilterFile(mPeptideFilterFilePath, out peptidesToFilterOn);
+                    var success = LoadPeptideFilterFile(mOptions.PeptideFilterFilePath, out peptidesToFilterOn);
                     if (!success)
                     {
                         searchEngineParams = new SearchEngineParameters(string.Empty);
@@ -294,7 +197,7 @@ namespace PeptideListToXML
                     peptidesToFilterOn = new SortedSet<string>();
                 }
 
-                if (PreviewMode)
+                if (mOptions.PreviewMode)
                 {
                     // We can exit this function now since we have determined the dataset name and peptide hit result type
                     searchEngineParams = new SearchEngineParameters(string.Empty);
@@ -347,19 +250,19 @@ namespace PeptideListToXML
                 mPHRPReader.ClearErrors();
                 mPHRPReader.ClearWarnings();
 
-                if (string.IsNullOrEmpty(DatasetName))
+                if (string.IsNullOrEmpty(mOptions.DatasetName))
                 {
-                    DatasetName = "Unknown";
-                    ShowWarning("Unable to determine the dataset name from the input file path; database will be named " + DatasetName + " in the PepXML file");
+                    mOptions.DatasetName = "Unknown";
+                    ShowWarning("Unable to determine the dataset name from the input file path; database will be named " + mOptions.DatasetName + " in the PepXML file");
                 }
 
                 while (mPHRPReader.MoveNext())
                 {
                     var currentPSM = mPHRPReader.CurrentPSM;
 
-                    var skipPeptide = SkipXPeptides && currentPSM.PeptideCleanSequence.Contains("X");
+                    var skipPeptide = mOptions.SkipXPeptides && currentPSM.PeptideCleanSequence.Contains("X");
 
-                    if (!skipPeptide && HitsPerSpectrum > 0 && currentPSM.ScoreRank > HitsPerSpectrum)
+                    if (!skipPeptide && mOptions.PSMsPerSpectrumToStore > 0 && currentPSM.ScoreRank > mOptions.PSMsPerSpectrumToStore)
                     {
                         skipPeptide = true;
                     }
@@ -369,7 +272,7 @@ namespace PeptideListToXML
                         skipPeptide = true;
                     }
 
-                    if (!skipPeptide && ChargeFilterList.Count > 0 && !ChargeFilterList.Contains(currentPSM.Charge))
+                    if (!skipPeptide && mOptions.ChargeFilterList.Count > 0 && !mOptions.ChargeFilterList.Contains(currentPSM.Charge))
                     {
                         skipPeptide = true;
                     }
@@ -412,7 +315,7 @@ namespace PeptideListToXML
                         mPSMsBySpectrumKey.Add(spectrumKey, psms);
                     }
 
-                    if (TopHitOnly)
+                    if (mOptions.TopHitOnly)
                     {
                         var comparisonPSMInfo = new PSMInfo(spectrumKey, currentPSM);
 
@@ -440,10 +343,10 @@ namespace PeptideListToXML
                 var filterMessage = string.Empty;
                 if (peptidesToFilterOn.Count > 0)
                 {
-                    filterMessage = " (filtered using " + peptidesToFilterOn.Count + " peptides in " + Path.GetFileName(mPeptideFilterFilePath) + ")";
+                    filterMessage = " (filtered using " + peptidesToFilterOn.Count + " peptides in " + Path.GetFileName(mOptions.PeptideFilterFilePath) + ")";
                 }
 
-                if (TopHitOnly)
+                if (mOptions.TopHitOnly)
                 {
                     // Update mPSMsBySpectrumKey to contain the best hit for each scan number (regardless of charge)
 
@@ -465,12 +368,12 @@ namespace PeptideListToXML
                 }
 
                 // Load the search engine parameters
-                searchEngineParams = LoadSearchEngineParameters(mPHRPReader, SearchEngineParamFileName);
+                searchEngineParams = LoadSearchEngineParameters(mPHRPReader, mOptions.SearchEngineParamFileName);
                 return true;
             }
             catch (Exception ex)
             {
-                if (PreviewMode)
+                if (mOptions.PreviewMode)
                 {
                     Console.WriteLine();
                     ShowMessage("Unable to preview the required files since not able to determine the dataset name: " + ex.Message);
@@ -562,25 +465,7 @@ namespace PeptideListToXML
 
         private string GetSpectrumKey(PSM CurrentPSM)
         {
-            return DatasetName + "." + CurrentPSM.ScanNumberStart + "." + CurrentPSM.ScanNumberEnd + "." + CurrentPSM.Charge;
-        }
-
-        private void InitializeLocalVariables()
-        {
-            LocalErrorCode = PeptideListToXMLErrorCodes.NoError;
-            DatasetName = "Unknown";
-            mPeptideHitResultType = PeptideHitResultTypes.Unknown;
-            FastaFilePath = string.Empty;
-            SearchEngineParamFileName = string.Empty;
-            HitsPerSpectrum = DEFAULT_HITS_PER_SPECTRUM;
-            SkipXPeptides = false;
-            TopHitOnly = false;
-            MaxProteinsPerPSM = DEFAULT_MAX_PROTEINS_PER_PSM;
-            mPeptideFilterFilePath = string.Empty;
-            ChargeFilterList.Clear();
-            LoadModsAndSeqInfo = true;
-            LoadMSGFResults = true;
-            LoadScanStats = true;
+            return mOptions.DatasetName + "." + CurrentPSM.ScanNumberStart + "." + CurrentPSM.ScanNumberEnd + "." + CurrentPSM.Charge;
         }
 
         /// <summary>
@@ -619,15 +504,15 @@ namespace PeptideListToXML
                         return false;
                     }
 
-                    FastaFilePath = settingsFile.GetParam(XML_SECTION_OPTIONS, "FastaFilePath", FastaFilePath);
-                    SearchEngineParamFileName = settingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", SearchEngineParamFileName);
-                    HitsPerSpectrum = settingsFile.GetParam(XML_SECTION_OPTIONS, "HitsPerSpectrum", HitsPerSpectrum);
-                    SkipXPeptides = settingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", SkipXPeptides);
-                    TopHitOnly = settingsFile.GetParam(XML_SECTION_OPTIONS, "TopHitOnly", TopHitOnly);
-                    MaxProteinsPerPSM = settingsFile.GetParam(XML_SECTION_OPTIONS, "MaxProteinsPerPSM", MaxProteinsPerPSM);
-                    LoadModsAndSeqInfo = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadModsAndSeqInfo", LoadModsAndSeqInfo);
-                    LoadMSGFResults = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadMSGFResults", LoadMSGFResults);
-                    LoadScanStats = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadScanStats", LoadScanStats);
+                    mOptions.FastaFilePath = settingsFile.GetParam(XML_SECTION_OPTIONS, "FastaFilePath", mOptions.FastaFilePath);
+                    mOptions.SearchEngineParamFileName = settingsFile.GetParam(XML_SECTION_OPTIONS, "SearchEngineParamFileName", mOptions.SearchEngineParamFileName);
+                    mOptions.PSMsPerSpectrumToStore = settingsFile.GetParam(XML_SECTION_OPTIONS, "PSMsPerSpectrumToStore", mOptions.PSMsPerSpectrumToStore);
+                    mOptions.SkipXPeptides = settingsFile.GetParam(XML_SECTION_OPTIONS, "SkipXPeptides", mOptions.SkipXPeptides);
+                    mOptions.TopHitOnly = settingsFile.GetParam(XML_SECTION_OPTIONS, "TopHitOnly", mOptions.TopHitOnly);
+                    mOptions.MaxProteinsPerPSM = settingsFile.GetParam(XML_SECTION_OPTIONS, "MaxProteinsPerPSM", mOptions.MaxProteinsPerPSM);
+                    mOptions.LoadModsAndSeqInfo = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadModsAndSeqInfo", mOptions.LoadModsAndSeqInfo);
+                    mOptions.LoadMSGFResults = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadMSGFResults", mOptions.LoadMSGFResults);
+                    mOptions.LoadScanStats = settingsFile.GetParam(XML_SECTION_OPTIONS, "LoadScanStats", mOptions.LoadScanStats);
                 }
             }
             catch (Exception ex)
@@ -652,7 +537,7 @@ namespace PeptideListToXML
                     return false;
                 }
 
-                if (PreviewMode)
+                if (mOptions.PreviewMode)
                 {
                     ShowMessage("Peptide Filter file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetMSGFFileName(inputFilePath));
                     return true;
@@ -699,7 +584,7 @@ namespace PeptideListToXML
                 if (string.IsNullOrEmpty(searchEngineParamFileName))
                 {
                     ShowWarning("Search engine parameter file not defined; use /E to specify the filename");
-                    searchEngineParams = new SearchEngineParameters(mPeptideHitResultType.ToString());
+                    searchEngineParams = new SearchEngineParameters(mOptions.PeptideHitResultType.ToString());
                 }
                 else
                 {
@@ -708,7 +593,7 @@ namespace PeptideListToXML
 
                     if (!success)
                     {
-                        searchEngineParams = new SearchEngineParameters(mPeptideHitResultType.ToString());
+                        searchEngineParams = new SearchEngineParameters(mOptions.PeptideHitResultType.ToString());
                     }
                 }
 
@@ -761,13 +646,16 @@ namespace PeptideListToXML
         /// <summary>
         /// Constructor
         /// </summary>
-        public PeptideListToXML()
+        /// <param name="options"></param>
+        public PeptideListToXML(Options options)
         {
             mFileDate = "June 17, 2021";
-            InitializeLocalVariables();
+            mOptions = options;
+
+            LocalErrorCode = PeptideListToXMLErrorCodes.NoError;
         }
 
-        private void PreviewRequiredFiles(string inputFilePath, string datasetName, PeptideHitResultTypes PeptideHitResultTypes, bool loadModsAndSeqInfo, bool loadMSGFResults, bool loadScanStats, string searchEngineParamFileName)
+        private void PreviewRequiredFiles(string inputFilePath, Options options)
         {
             var inputFile = new FileInfo(inputFilePath);
 
@@ -781,44 +669,44 @@ namespace PeptideListToXML
             ShowMessage("Data file directory: " + PathUtils.CompactPathString(inputFile.DirectoryName, 110));
 
             ShowMessage("Data file: ".PadRight(PREVIEW_PAD_WIDTH) + Path.GetFileName(inputFilePath));
-            if (loadModsAndSeqInfo)
+            if (mOptions.LoadModsAndSeqInfo)
             {
-                ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, datasetName));
-                if (inputFile.Name.Equals(ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, datasetName), StringComparison.OrdinalIgnoreCase))
+                ShowMessage("ModSummary file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPModSummaryFileName(mOptions.PeptideHitResultType, mOptions.DatasetName));
+                if (inputFile.Name.Equals(ReaderFactory.GetPHRPSynopsisFileName(mOptions.PeptideHitResultType, mOptions.DatasetName), StringComparison.OrdinalIgnoreCase))
                 {
-                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, datasetName));
-                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, datasetName));
-                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, datasetName));
+                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPResultToSeqMapFileName(mOptions.PeptideHitResultType, mOptions.DatasetName));
+                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPSeqInfoFileName(mOptions.PeptideHitResultType, mOptions.DatasetName));
+                    ShowMessage("SeqInfo file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetPHRPSeqToProteinMapFileName(mOptions.PeptideHitResultType, mOptions.DatasetName));
                 }
             }
 
-            if (loadMSGFResults)
+            if (options.LoadMSGFResults)
             {
                 ShowMessage("MSGF Results file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetMSGFFileName(inputFilePath));
             }
 
-            if (loadScanStats)
+            if (options.LoadScanStats)
             {
-                ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetScanStatsFilename(DatasetName));
-                ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetExtendedScanStatsFilename(DatasetName));
+                ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetScanStatsFilename(options.DatasetName));
+                ShowMessage("ScanStats file: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetExtendedScanStatsFilename(options.DatasetName));
             }
 
-            if (string.IsNullOrEmpty(searchEngineParamFileName))
+            if (string.IsNullOrEmpty(options.SearchEngineParamFileName))
             {
                 return;
             }
 
-            ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + searchEngineParamFileName);
-            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetToolVersionInfoFilenames(PeptideHitResultTypes).FirstOrDefault());
+            ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + options.SearchEngineParamFileName);
+            ShowMessage("Tool Version File: ".PadRight(PREVIEW_PAD_WIDTH) + ReaderFactory.GetToolVersionInfoFilenames(options.PeptideHitResultType).FirstOrDefault());
 
-            if (mPeptideHitResultType != PeptideHitResultTypes.XTandem)
+            if (options.PeptideHitResultType != PeptideHitResultTypes.XTandem)
             {
                 return;
             }
 
             // Determine the additional files that will be required for X!Tandem
             foreach (var fileName in XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(
-                Path.Combine(inputFile.DirectoryName, searchEngineParamFileName)))
+                Path.Combine(inputFile.DirectoryName, options.SearchEngineParamFileName)))
             {
                 ShowMessage("Search Engine Params: ".PadRight(PREVIEW_PAD_WIDTH) + fileName);
             }
@@ -860,7 +748,7 @@ namespace PeptideListToXML
                 }
 
                 Console.WriteLine();
-                if (!PreviewMode)
+                if (!mOptions.PreviewMode)
                 {
                     ShowMessage("Parsing " + Path.GetFileName(inputFilePath));
                 }
@@ -872,7 +760,7 @@ namespace PeptideListToXML
                 }
                 else
                 {
-                    if (!PreviewMode)
+                    if (!mOptions.PreviewMode)
                     {
                         ResetProgress();
                     }
@@ -922,17 +810,16 @@ namespace PeptideListToXML
             }
         }
 
-        private bool WriteCachedData(string inputFilePath, string outputFilePath, SearchEngineParameters searchEngineParams)
+        private bool WriteCachedData(string outputFilePath, SearchEngineParameters searchEngineParams)
         {
             ResetProgress("Creating the .pepXML file");
             try
             {
                 Console.WriteLine();
                 ShowMessage("Creating PepXML file at " + Path.GetFileName(outputFilePath));
-                mXMLWriter = new PepXMLWriter(DatasetName, FastaFilePath, searchEngineParams, inputFilePath, outputFilePath);
+                mXMLWriter = new PepXMLWriter(outputFilePath, searchEngineParams, mOptions);
                 RegisterEvents(mXMLWriter);
 
-                mXMLWriter.MaxProteinsPerPSM = MaxProteinsPerPSM;
                 var spectra = 0;
                 var peptides = 0;
 

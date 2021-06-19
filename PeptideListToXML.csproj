@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="PeptideListToXML.cs" />
     <Compile Include="PepXMLWriter.cs" />
     <Compile Include="PSMInfo.cs" />

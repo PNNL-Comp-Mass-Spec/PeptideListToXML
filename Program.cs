@@ -31,35 +31,12 @@ namespace PeptideListToXML
     {
         // Ignore Spelling: mzIdentML
 
-        private const string PROGRAM_DATE = "June 17, 2021";
+        private const string PROGRAM_DATE = "June 18, 2021";
 
-        private static string mInputFilePath;
-        private static string mOutputDirectoryPath;             // Optional
-        private static string mParameterFilePath;            // Optional
-        private static string mFastaFilePath;
-        private static string mSearchEngineParamFileName;
-        private static int mHitsPerSpectrum;              // Number of hits per spectrum to store; 0 means to store all hits
-        private static bool mPreview;
-        private static bool mSkipXPeptides;
-        private static bool mTopHitOnly;
-        private static int mMaxProteinsPerPSM;
-        private static string mPeptideFilterFilePath;
-        private static List<int> mChargeFilterList;
-        private static bool mLoadModsAndSeqInfo;
-        private static bool mLoadMSGFResults;
-        private static bool mLoadScanStats;
-
-        // Future enum; mzIdentML is not yet supported
-        // Private mOutputFormat As clsPeptideListToXML.PeptideListOutputFormat
-
-        private static string mOutputDirectoryAlternatePath;                // Optional
-        private static bool mRecreateDirectoryHierarchyInAlternatePath;     // Optional
+        private static string mOutputDirectoryAlternatePath;             // Optional
+        private static bool mRecreateDirectoryHierarchyInAlternatePath; // Optional
         private static bool mRecurseDirectories;
         private static int mRecurseDirectoriesMaxLevels;
-        private static bool mLogMessagesToFile;
-
-        // Unused: private string mLogFilePath;
-        // Unused: private string mLogDirectoryPath;
 
         private static PeptideListToXML mPeptideListConverter;
         private static DateTime mLastProgressReportTime;
@@ -73,29 +50,10 @@ namespace PeptideListToXML
         {
             var commandLineParser = new clsParseCommandLine();
 
-            // Initialize the options
-            mInputFilePath = string.Empty;
-            mOutputDirectoryPath = string.Empty;
-            mParameterFilePath = string.Empty;
-            mFastaFilePath = string.Empty;
-            mSearchEngineParamFileName = string.Empty;
-            mHitsPerSpectrum = 3;
-            mPreview = false;
-            mSkipXPeptides = false;
-            mTopHitOnly = false;
-            mMaxProteinsPerPSM = 100;
-            mPeptideFilterFilePath = string.Empty;
-            mChargeFilterList = new List<int>();
-            mLoadModsAndSeqInfo = true;
-            mLoadMSGFResults = true;
-            mLoadScanStats = true;
-
-            // Future enum; mzIdentML is not yet supported
-            // mOutputFormat = clsPeptideListToXML.PeptideListOutputFormat.PepXML
+            var options = new Options();
 
             mRecurseDirectories = false;
             mRecurseDirectoriesMaxLevels = 0;
-            mLogMessagesToFile = false;
 
             // Unused: mLogFilePath = String.Empty
             // Unused: mLogDirectoryPath = String.Empty
@@ -105,34 +63,29 @@ namespace PeptideListToXML
                 var proceed = false;
                 if (commandLineParser.ParseCommandLine())
                 {
-                    if (SetOptionsUsingCommandLineParameters(commandLineParser))
+                    if (SetOptionsUsingCommandLineParameters(commandLineParser, options, out var invalidParameters))
+                    {
                         proceed = true;
+                    }
+
+                    if (invalidParameters)
+                        return -1;
                 }
 
-                if (!proceed || commandLineParser.NeedToShowHelp || commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 || mInputFilePath.Length == 0)
+                if (!proceed ||
+                    commandLineParser.NeedToShowHelp ||
+                    commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 ||
+                    options.InputFilePath.Length == 0)
                 {
                     ShowProgramHelp();
                     return -1;
                 }
 
                 // Note: the following settings will be overridden if mParameterFilePath points to a valid parameter file that has these settings defined
-                mPeptideListConverter = new PeptideListToXML
+                mPeptideListConverter = new PeptideListToXML(options)
                 {
-                    LogMessagesToFile = mLogMessagesToFile,
-                    FastaFilePath = mFastaFilePath,
-                    SearchEngineParamFileName = mSearchEngineParamFileName,
-                    HitsPerSpectrum = mHitsPerSpectrum,
-                    PreviewMode = mPreview,
-                    SkipXPeptides = mSkipXPeptides,
-                    TopHitOnly = mTopHitOnly,
-                    MaxProteinsPerPSM = mMaxProteinsPerPSM,
-                    PeptideFilterFilePath = mPeptideFilterFilePath,
-                    LoadModsAndSeqInfo = mLoadModsAndSeqInfo,
-                    LoadMSGFResults = mLoadMSGFResults,
-                    LoadScanStats = mLoadScanStats
+                    LogMessagesToFile = options.LogMessagesToFile,
                 };
-
-                mPeptideListConverter.ChargeFilterList.AddRange(mChargeFilterList);
 
                 RegisterEvents(mPeptideListConverter);
 
@@ -140,7 +93,13 @@ namespace PeptideListToXML
                 mLastPercentDisplayed = DateTime.UtcNow;
                 if (mRecurseDirectories)
                 {
-                    if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath, mOutputDirectoryAlternatePath, mRecreateDirectoryHierarchyInAlternatePath, mParameterFilePath, mRecurseDirectoriesMaxLevels))
+                    if (mPeptideListConverter.ProcessFilesAndRecurseDirectories(
+                        options.InputFilePath,
+                        options.OutputDirectoryPath,
+                        mOutputDirectoryAlternatePath,
+                        mRecreateDirectoryHierarchyInAlternatePath,
+                        options.ParameterFilePath,
+                        mRecurseDirectoriesMaxLevels))
                     {
                         return 0;
                     }
@@ -148,7 +107,7 @@ namespace PeptideListToXML
                     return (int)mPeptideListConverter.ErrorCode;
                 }
 
-                if (mPeptideListConverter.ProcessFilesWildcard(mInputFilePath, mOutputDirectoryPath, mParameterFilePath))
+                if (mPeptideListConverter.ProcessFilesWildcard(options.InputFilePath, options.OutputDirectoryPath, options.ParameterFilePath))
                 {
                     return 0;
                 }
@@ -193,10 +152,15 @@ namespace PeptideListToXML
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
+        /// <summary>
+        /// Set options using the command line
+        /// </summary>
+        /// <param name="commandLineParser"></param>
+        /// <param name="options"></param>
+        /// <param name="invalidParameters">True if an unrecognized parameter is found</param>
+        /// <returns>True if no problems; false if an issue</returns>
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser, Options options, out bool invalidParameters)
         {
-            // Returns True if no problems; otherwise, returns false
-
             var validParameters = new List<string>
             {
                 "I", "O", "F", "E", "H", "X",
@@ -205,28 +169,30 @@ namespace PeptideListToXML
                 "Preview", "P", "S", "A", "R", "L"
             };
 
+            invalidParameters = false;
+
             try
             {
                 // Make sure no invalid parameters are present
                 if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
-                    ShowErrorMessage("Invalid command line parameters", (from item in commandLineParser.InvalidParameters(validParameters)
-                                                                         select ("/" + item)).ToList());
+                    ShowErrorMessage("Invalid command line parameters",
+                        (from item in commandLineParser.InvalidParameters(validParameters) select ("/" + item)).ToList());
                     return false;
                 }
 
                 // Query commandLineParser to see if various parameters are present
                 if (commandLineParser.RetrieveValueForParameter("I", out var inputFilePath))
                 {
-                    mInputFilePath = inputFilePath;
+                    options.InputFilePath = inputFilePath;
                 }
                 else if (commandLineParser.NonSwitchParameterCount > 0)
                 {
-                    mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
+                    options.InputFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("O", out var outputDirectoryPath))
-                    mOutputDirectoryPath = outputDirectoryPath;
+                    options.OutputDirectoryPath = outputDirectoryPath;
 
                 // Future enum; mzIdentML is not yet supported
                 // if (.RetrieveValueForParameter("M", value)) {
@@ -234,31 +200,31 @@ namespace PeptideListToXML
                 // }
 
                 if (commandLineParser.RetrieveValueForParameter("F", out var fastaFilePath))
-                    mFastaFilePath = fastaFilePath;
+                    options.FastaFilePath = fastaFilePath;
 
                 if (commandLineParser.RetrieveValueForParameter("E", out var searchEngineParamFileName))
-                    mSearchEngineParamFileName = searchEngineParamFileName;
+                    options.SearchEngineParamFileName = searchEngineParamFileName;
 
-                if (commandLineParser.RetrieveValueForParameter("H", out var hitsPerSpectrum) &&
-                    int.TryParse(hitsPerSpectrum, out var hitsPerSpectrumValue))
+                if (commandLineParser.RetrieveValueForParameter("H", out var PSMsPerSpectrumToStore) &&
+                    int.TryParse(PSMsPerSpectrumToStore, out var hitsPerSpectrumValue))
                 {
-                    mHitsPerSpectrum = hitsPerSpectrumValue;
+                    options.PSMsPerSpectrumToStore = hitsPerSpectrumValue;
                 }
 
                 if (commandLineParser.IsParameterPresent("X"))
-                    mSkipXPeptides = true;
+                    options.SkipXPeptides = true;
 
                 if (commandLineParser.IsParameterPresent("TopHitOnly"))
-                    mTopHitOnly = true;
+                    options.TopHitOnly = true;
 
                 if (commandLineParser.RetrieveValueForParameter("MaxProteins", out var maxProteins) &&
                     int.TryParse(maxProteins, out var maxProteinsValue))
                 {
-                    mMaxProteinsPerPSM = maxProteinsValue;
+                    options.MaxProteinsPerPSM = maxProteinsValue;
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("PepFilter", out var peptideFilterFilePath))
-                    mPeptideFilterFilePath = peptideFilterFilePath;
+                    options.PeptideFilterFilePath = peptideFilterFilePath;
 
                 if (commandLineParser.RetrieveValueForParameter("ChargeFilter", out var chargeFilter))
                 {
@@ -271,11 +237,13 @@ namespace PeptideListToXML
                             return false;
                         }
 
+                        options.ChargeFilterList.Clear();
+
                         foreach (var charge in chargeFilter.Split(',').ToList())
                         {
                             if (int.TryParse(charge, out var chargeValue))
                             {
-                                mChargeFilterList.Add(chargeValue);
+                                options.ChargeFilterList.Add(chargeValue);
                             }
                             else
                             {
@@ -294,19 +262,19 @@ namespace PeptideListToXML
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("P", out var parameterFilePath))
-                    mParameterFilePath = parameterFilePath;
+                    options.ParameterFilePath = parameterFilePath;
 
                 if (commandLineParser.IsParameterPresent("NoMods"))
-                    mLoadModsAndSeqInfo = false;
+                    options.LoadModsAndSeqInfo = false;
 
                 if (commandLineParser.IsParameterPresent("NoMSGF"))
-                    mLoadMSGFResults = false;
+                    options.LoadMSGFResults = false;
 
                 if (commandLineParser.IsParameterPresent("NoScanStats"))
-                    mLoadScanStats = false;
+                    options.LoadScanStats = false;
 
                 if (commandLineParser.IsParameterPresent("Preview"))
-                    mPreview = true;
+                    options.PreviewMode = true;
 
                 if (commandLineParser.RetrieveValueForParameter("S", out var recurseDirectories))
                 {
@@ -324,7 +292,7 @@ namespace PeptideListToXML
                     mRecreateDirectoryHierarchyInAlternatePath = true;
 
                 if (commandLineParser.IsParameterPresent("L"))
-                    mLogMessagesToFile = true;
+                    options.LogMessagesToFile = true;
 
                 return true;
             }
@@ -360,7 +328,7 @@ namespace PeptideListToXML
                 Console.WriteLine("Program syntax:");
                 Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputDirectoryPath]");
                 Console.WriteLine(" [/E:SearchEngineParamFileName] [/F:FastaFilePath] [/P:ParameterFilePath]");
-                Console.WriteLine(" [/H:HitsPerSpectrum] [/X] [/TopHitOnly] [/MaxProteins:" + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + "]");
+                Console.WriteLine(" [/H:PSMsPerSpectrumToStore] [/X] [/TopHitOnly] [/MaxProteins:" + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + "]");
                 Console.WriteLine(" [/PepFilter:PeptideFilterFilePath] [/ChargeFilter:ChargeList]");
                 Console.WriteLine(" [/NoMods] [/NoMSGF] [/NoScanStats] [/Preview]");
                 Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputDirectoryPath] [/R] [/L] [/Q]");
