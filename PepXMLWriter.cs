@@ -173,18 +173,6 @@ namespace PeptideListToXML
             mXMLWriter.WriteAttributeString(attributeName, value.ToString());
         }
 
-        // ReSharper disable once UnusedMember.Local
-        private void WriteAttribute(string attributeName, float value, int digitsOfPrecision = 4)
-        {
-            var formatString = "0";
-            if (digitsOfPrecision > 0)
-            {
-                formatString += "." + new string('0', digitsOfPrecision);
-            }
-
-            mXMLWriter.WriteAttributeString(attributeName, value.ToString(formatString));
-        }
-        private void WriteAttributePlusMinus(string attributeName, double value, int digitsOfPrecision)
         /// <summary>
         /// Append the value to the XML file, formatting the number so that it begins with a + sign if positive or a - sign if negative
         /// Rounds the number to the specified number of digits, trimming off trailing zeros
