@@ -16,7 +16,7 @@ namespace PeptideListToXML
     public class PepXMLWriter : EventNotifier
     {
         // Ignore Spelling: href, stylesheet, xmlns, xsi, xsl, yyyy-MM-ddTHH:mm:ss
-        // Ignore Spelling: aminoacid, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
+        // Ignore Spelling: aminoacid, Da, fval, Inetpub, massd, massdiff, nmc, ntt, peptideprophet, tryptic
         // Ignore Spelling: bscore, deltacn, deltacnstar, hyperscore, msgfspecprob, sprank, spscore, xcorr, yscore
 
         private readonly Options mOptions;
@@ -429,10 +429,27 @@ namespace PeptideListToXML
             // Parameters specific to the search engine
             if (SearchEngineParams.Parameters is null || SearchEngineParams.Parameters.Count == 0)
             {
-                // Write out two dummy-parameters
-                mXMLWriter.WriteComment("Dummy search-engine parameters");
-                WriteNameValueElement("parameter", "peptide_mass_tol", "3.000");
-                WriteNameValueElement("parameter", "fragment_ion_tol", "0.000");
+                if (Math.Abs(SearchEngineParams.PrecursorMassToleranceDa) < float.Epsilon && Math.Abs(SearchEngineParams.PrecursorMassTolerancePpm) < float.Epsilon)
+                {
+                    // Write out two dummy-parameters
+                    mXMLWriter.WriteComment("Dummy search-engine parameters");
+                    WriteNameValueElement("parameter", "peptide_mass_tol", "3.000");
+                    WriteNameValueElement("parameter", "fragment_ion_tol", "0.000");
+                }
+                else
+                {
+                    mXMLWriter.WriteComment("Search-engine parameters");
+                    if (SearchEngineParams.PrecursorMassTolerancePpm > 0)
+                    {
+                        WriteNameValueElement("parameter", "peptide_mass_tol", StringUtilities.DblToString(SearchEngineParams.PrecursorMassTolerancePpm, 2));
+                        WriteNameValueElement("parameter", "peptide_mass_tol_units", "ppm");
+                    }
+                    else if (SearchEngineParams.PrecursorMassToleranceDa > 0)
+                    {
+                        WriteNameValueElement("parameter", "peptide_mass_tol", StringUtilities.DblToString(SearchEngineParams.PrecursorMassToleranceDa, 6));
+                        WriteNameValueElement("parameter", "peptide_mass_tol_units", "Da");
+                    }
+                }
             }
             else
             {
