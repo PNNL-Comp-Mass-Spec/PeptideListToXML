@@ -319,44 +319,46 @@ namespace PeptideListToXML
             // Amino acid mod details
             foreach (var modDef in SearchEngineParams.ModList)
             {
-                if (modDef.CanAffectPeptideResidues())
+                if (!modDef.CanAffectPeptideResidues())
                 {
-                    if (string.IsNullOrEmpty(modDef.TargetResidues))
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(modDef.TargetResidues))
+                {
+                    // This modification can affect any amino acid (skip BJOUXZ)
+                    targetResidues = "ACDEFGHIKLMNPQRSTVWY";
+                }
+                else
+                {
+                    targetResidues = modDef.TargetResidues;
+                }
+
+                foreach (var residue in targetResidues)
+                {
+                    if (terminalSymbols.Contains(residue))
                     {
-                        // This modification can affect any amino acid (skip BJOUXZ)
-                        targetResidues = "ACDEFGHIKLMNPQRSTVWY";
+                        continue;
+                    }
+
+                    mXMLWriter.WriteStartElement("aminoacid_modification");
+                    WriteAttribute("aminoacid", residue.ToString());                 // Amino acid symbol, e.g. A
+                    WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
+                    aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
+                    WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
+
+                    if (modDef.ModificationType == ModificationDefinition.ResidueModificationType.DynamicMod)
+                    {
+                        WriteAttribute("variable", "Y");
                     }
                     else
                     {
-                        targetResidues = modDef.TargetResidues;
+                        WriteAttribute("variable", "N");
                     }
 
-                    foreach (var residue in targetResidues)
-                    {
-                        if (terminalSymbols.Contains(residue))
-                        {
-                            continue;
-                        }
-
-                        mXMLWriter.WriteStartElement("aminoacid_modification");
-                        WriteAttribute("aminoacid", residue.ToString());                 // Amino acid symbol, e.g. A
-                        WriteAttributePlusMinus("massdiff", modDef.ModificationMass, 5); // Mass difference, must begin with + or -
-                        aminoAcidMass = mPeptideMassCalculator.GetAminoAcidMass(residue);
-                        WriteAttribute("mass", aminoAcidMass + modDef.ModificationMass);
-
-                        if (modDef.ModificationType == ModificationDefinition.ResidueModificationType.DynamicMod)
-                        {
-                            WriteAttribute("variable", "Y");
-                        }
-                        else
-                        {
-                            WriteAttribute("variable", "N");
-                        }
-
-                        WriteAttribute("symbol", modDef.ModificationSymbol.ToString()); // Symbol used by search-engine to denote this mod
-                        WriteAttribute("description", modDef.MassCorrectionTag);
-                        mXMLWriter.WriteEndElement(); // aminoacid_modification
-                    }
+                    WriteAttribute("symbol", modDef.ModificationSymbol.ToString()); // Symbol used by search-engine to denote this mod
+                    WriteAttribute("description", modDef.MassCorrectionTag);
+                    mXMLWriter.WriteEndElement(); // aminoacid_modification
                 }
             }
 
