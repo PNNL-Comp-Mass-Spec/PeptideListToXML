@@ -223,20 +223,20 @@ namespace PeptideListToXML
                         }
                         else
                         {
-                            ShowMessage("  ... use the /NoMods switch to avoid this error (though modified peptides in that case modified peptides would not be stored properly)");
+                            ShowMessage("  ... use the /NoMods switch to silence this warning (though modified peptides in that case modified peptides would not be stored properly)");
                         }
                     }
                     else if (message.Contains("MSGF file not found"))
                     {
-                        ShowMessage("  ... use the /NoMSGF switch to avoid this error");
+                        ShowMessage("  ... use the /NoMSGF switch to silence this warning");
                     }
                     else if (message.Contains("Extended ScanStats file not found"))
                     {
-                        ShowMessage("  ... parent ion m/z values may not be completely accurate; use the /NoScanStats switch to avoid this error");
+                        ShowMessage("  ... parent ion m/z values may not be completely accurate; use the /NoScanStats switch to silence this warning");
                     }
                     else if (message.Contains("ScanStats file not found"))
                     {
-                        ShowMessage("  ... unable to determine elution times; use the /NoScanStats switch to avoid this error");
+                        ShowMessage("  ... unable to determine elution times; use the /NoScanStats switch to silence this warning");
                     }
                     else if (message.Contains("ModSummary file not found"))
                     {
@@ -453,7 +453,7 @@ namespace PeptideListToXML
                     PeptideListToXMLErrorCodes.MSGFFileNotFound =>
                         "MSGF file not found; use the /NoMSGF switch to silence this error",
                     PeptideListToXMLErrorCodes.ScanStatsFileNotFound =>
-                        "MASIC ScanStats file not found; use the /NoScanStats switch to avoid this error",
+                        "MASIC ScanStats file not found; use the /NoScanStats switch to ignore this error",
                     PeptideListToXMLErrorCodes.UnspecifiedError =>
                         "Unspecified localized error",
                     _ => "Unknown error state"

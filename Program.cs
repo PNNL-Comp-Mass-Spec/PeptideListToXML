@@ -31,7 +31,7 @@ namespace PeptideListToXML
     {
         // Ignore Spelling: mzIdentML
 
-        private const string PROGRAM_DATE = "June 18, 2021";
+        private const string PROGRAM_DATE = "June 21, 2021";
 
         private static string mOutputDirectoryAlternatePath;             // Optional
         private static bool mRecreateDirectoryHierarchyInAlternatePath; // Optional
