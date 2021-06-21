@@ -193,25 +193,20 @@ namespace PeptideListToXML
         /// <param name="attributeName"></param>
         /// <param name="value"></param>
         /// <param name="digitsOfPrecision"></param>
+        private void WriteAttributePlusMinus(string attributeName, double value, byte digitsOfPrecision)
         {
             mXMLWriter.WriteAttributeString(attributeName, SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
         }
 
-        private void WriteAttribute(string attributeName, double value, int digitsOfPrecision = 4)
         /// <summary>
         /// Append the value to the XML file, rounding the number to the specified number of digits
         /// </summary>
         /// <param name="attributeName"></param>
         /// <param name="value"></param>
         /// <param name="digitsAfterDecimal"></param>
+        private void WriteAttribute(string attributeName, double value, byte digitsAfterDecimal = 4)
         {
-            var formatString = "0";
-            if (digitsOfPrecision > 0)
-            {
-                formatString += "." + new string('0', digitsOfPrecision);
-            }
-
-            mXMLWriter.WriteAttributeString(attributeName, value.ToString(formatString));
+            mXMLWriter.WriteAttributeString(attributeName, StringUtilities.DblToString(value, digitsAfterDecimal));
         }
 
         private void WriteNameValueElement(string elementName, string name, string value)
@@ -222,7 +217,7 @@ namespace PeptideListToXML
             mXMLWriter.WriteEndElement();
         }
 
-        private void WriteNameValueElement(string elementName, string name, double value, int digitsOfPrecision)
+        private void WriteNameValueElement(string elementName, string name, double value, byte digitsOfPrecision)
         {
             mXMLWriter.WriteStartElement(elementName);
             WriteAttribute("name", name);
