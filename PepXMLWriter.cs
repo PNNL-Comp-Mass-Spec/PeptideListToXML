@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using PHRPReader;
@@ -498,6 +499,8 @@ namespace PeptideListToXML
             WriteAttribute("spectrumNativeID", spectrum.NativeID); // Example: controllerType=0 controllerNumber=1 scan=20554
             mXMLWriter.WriteStartElement("search_result");
 
+            var hasMsgfSpecEValue = psms.Any(psmEntry => !string.IsNullOrWhiteSpace(psmEntry.MSGFSpecEValue));
+
             foreach (var psmEntry in psms)
             {
                 mXMLWriter.WriteStartElement("search_hit");
@@ -617,7 +620,10 @@ namespace PeptideListToXML
                     }
                 }
 
-                WriteNameValueElement("search_score", "msgfspecprob", psmEntry.MSGFSpecEValue);
+                if (hasMsgfSpecEValue)
+                {
+                    WriteNameValueElement("search_score", "msgfspecprob", psmEntry.MSGFSpecEValue);
+                }
 
                 // Write out the mass error ppm value as a custom search score
                 WriteNameValueElement("search_score", "MassErrorPPM", psmEntry.MassErrorPPM);
