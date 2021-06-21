@@ -601,81 +601,7 @@ namespace PeptideListToXML
 
                 if (psmEntry.ModifiedResidues.Count > 0)
                 {
-                    mXMLWriter.WriteStartElement("modification_info");
-                    var nTermAddon = 0.0;
-                    var cTermAddon = 0.0;
-
-                    // Look for N and C terminal mods in psmEntry.ModifiedResidues
-                    foreach (var residue in psmEntry.ModifiedResidues)
-                    {
-                        if (residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
-                        {
-                            switch (residue.TerminusState)
-                            {
-                                case AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
-                                case AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
-                                case AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
-                                    nTermAddon += residue.ModDefinition.ModificationMass;
-                                    break;
-
-                                case AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
-                                case AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
-                                    cTermAddon += residue.ModDefinition.ModificationMass;
-                                    break;
-
-                                default:
-                                    // This is unexpected
-                                    OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + residue.Residue + " at position " + residue.ResidueLocInPeptide + " in peptide " + psmEntry.Peptide + ", scan " + psmEntry.ScanNumber);
-                                    break;
-                            }
-                        }
-                    }
-
-                    // If a peptide-terminal mod, add either of these attributes:
-                    if (Math.Abs(nTermAddon) > float.Epsilon)
-                    {
-                        WriteAttributePlusMinus("mod_nterm_mass", PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + nTermAddon, 5);
-                    }
-
-                    if (Math.Abs(cTermAddon) > float.Epsilon)
-                    {
-                        WriteAttributePlusMinus("mod_cterm_mass", PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + cTermAddon, 5);
-                    }
-
-                    // Write out an entry for each modified amino acid
-                    // We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
-                    modifiedResidues.Clear();
-                    foreach (var residue in psmEntry.ModifiedResidues)
-                    {
-                        if (residue.ModDefinition.ModificationType is
-                            ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod or
-                            ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
-                        {
-                            continue;
-                        }
-
-                        if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
-                        {
-                            // This residue has more than one modification applied to it
-                            totalMass += residue.ModDefinition.ModificationMass;
-                            modifiedResidues[residue.ResidueLocInPeptide] = totalMass;
-                        }
-                        else
-                        {
-                            var totalMass2 = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
-                            modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass2);
-                        }
-                    }
-
-                    foreach (var item in modifiedResidues)
-                    {
-                        mXMLWriter.WriteStartElement("mod_aminoacid_mass");
-                        WriteAttribute("position", item.Key);     // Position of residue in peptide
-                        WriteAttribute("mass", item.Value, 5);    // Total amino acid mass, including all mods (but excluding N or C terminal mods)
-                        mXMLWriter.WriteEndElement();      // mod_aminoacid_mass
-                    }
-
-                    mXMLWriter.WriteEndElement();      // modification_info
+                    WriteModificationInfo(modifiedResidues, psmEntry);
                 }
 
                 // Write out the search scores
@@ -710,6 +636,85 @@ namespace PeptideListToXML
 
             mXMLWriter.WriteEndElement();            // search_result
             mXMLWriter.WriteEndElement();            // spectrum_query
+        }
+
+        private void WriteModificationInfo(IDictionary<int, double> modifiedResidues, PSM psmEntry)
+        {
+            mXMLWriter.WriteStartElement("modification_info");
+            var nTermAddon = 0.0;
+            var cTermAddon = 0.0;
+
+            // Look for N and C terminal mods in psmEntry.ModifiedResidues
+            foreach (var residue in psmEntry.ModifiedResidues)
+            {
+                if (residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod || residue.ModDefinition.ModificationType == ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
+                {
+                    switch (residue.TerminusState)
+                    {
+                        case AminoAcidModInfo.ResidueTerminusState.PeptideNTerminus:
+                        case AminoAcidModInfo.ResidueTerminusState.ProteinNTerminus:
+                        case AminoAcidModInfo.ResidueTerminusState.ProteinNandCCTerminus:
+                            nTermAddon += residue.ModDefinition.ModificationMass;
+                            break;
+
+                        case AminoAcidModInfo.ResidueTerminusState.PeptideCTerminus:
+                        case AminoAcidModInfo.ResidueTerminusState.ProteinCTerminus:
+                            cTermAddon += residue.ModDefinition.ModificationMass;
+                            break;
+
+                        default:
+                            // This is unexpected
+                            OnErrorEvent("Peptide or Protein terminal mod found, but residue is not at a peptide or protein terminus: " + residue.Residue + " at position " + residue.ResidueLocInPeptide + " in peptide " + psmEntry.Peptide + ", scan " + psmEntry.ScanNumber);
+                            break;
+                    }
+                }
+            }
+
+            // If a peptide-terminal mod, add either of these attributes:
+            if (Math.Abs(nTermAddon) > float.Epsilon)
+            {
+                WriteAttributePlusMinus("mod_nterm_mass", PeptideMassCalculator.DEFAULT_N_TERMINUS_MASS_CHANGE + nTermAddon, 5);
+            }
+
+            if (Math.Abs(cTermAddon) > float.Epsilon)
+            {
+                WriteAttributePlusMinus("mod_cterm_mass", PeptideMassCalculator.DEFAULT_C_TERMINUS_MASS_CHANGE + cTermAddon, 5);
+            }
+
+            // Write out an entry for each modified amino acid
+            // We need to keep track of the total mass of each modified residue (excluding terminal mods) since a residue could have multiple modifications
+            modifiedResidues.Clear();
+            foreach (var residue in psmEntry.ModifiedResidues)
+            {
+                if (residue.ModDefinition.ModificationType is
+                    ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod or
+                    ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod)
+                {
+                    continue;
+                }
+
+                if (modifiedResidues.TryGetValue(residue.ResidueLocInPeptide, out var totalMass))
+                {
+                    // This residue has more than one modification applied to it
+                    totalMass += residue.ModDefinition.ModificationMass;
+                    modifiedResidues[residue.ResidueLocInPeptide] = totalMass;
+                }
+                else
+                {
+                    var totalMass2 = mPeptideMassCalculator.GetAminoAcidMass(residue.Residue) + residue.ModDefinition.ModificationMass;
+                    modifiedResidues.Add(residue.ResidueLocInPeptide, totalMass2);
+                }
+            }
+
+            foreach (var item in modifiedResidues)
+            {
+                mXMLWriter.WriteStartElement("mod_aminoacid_mass");
+                WriteAttribute("position", item.Key);     // Position of residue in peptide
+                WriteAttribute("mass", item.Value, 5);    // Total amino acid mass, including all mods (but excluding N or C terminal mods)
+                mXMLWriter.WriteEndElement();      // mod_aminoacid_mass
+            }
+
+            mXMLWriter.WriteEndElement();      // modification_info
         }
     }
 }
