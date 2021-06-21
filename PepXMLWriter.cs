@@ -184,13 +184,26 @@ namespace PeptideListToXML
 
             mXMLWriter.WriteAttributeString(attributeName, value.ToString(formatString));
         }
-
         private void WriteAttributePlusMinus(string attributeName, double value, int digitsOfPrecision)
+        /// <summary>
+        /// Append the value to the XML file, formatting the number so that it begins with a + sign if positive or a - sign if negative
+        /// Rounds the number to the specified number of digits, trimming off trailing zeros
+        /// Example output: +79.9663 or -17.016
+        /// </summary>
+        /// <param name="attributeName"></param>
+        /// <param name="value"></param>
+        /// <param name="digitsOfPrecision"></param>
         {
             mXMLWriter.WriteAttributeString(attributeName, SynFileReaderBaseClass.NumToStringPlusMinus(value, digitsOfPrecision));
         }
 
         private void WriteAttribute(string attributeName, double value, int digitsOfPrecision = 4)
+        /// <summary>
+        /// Append the value to the XML file, rounding the number to the specified number of digits
+        /// </summary>
+        /// <param name="attributeName"></param>
+        /// <param name="value"></param>
+        /// <param name="digitsAfterDecimal"></param>
         {
             var formatString = "0";
             if (digitsOfPrecision > 0)
