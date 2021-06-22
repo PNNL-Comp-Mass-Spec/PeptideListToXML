@@ -33,7 +33,7 @@ namespace PeptideListToXML
 
         private const string PROGRAM_DATE = "June 21, 2021";
 
-        private static string mOutputDirectoryAlternatePath;             // Optional
+        private static string mOutputDirectoryAlternatePath;            // Optional
         private static bool mRecreateDirectoryHierarchyInAlternatePath; // Optional
         private static bool mRecurseDirectories;
         private static int mRecurseDirectoriesMaxLevels;
@@ -323,7 +323,7 @@ namespace PeptideListToXML
                     "and creates a PepXML with the appropriate information. The various _SeqInfo files created by PHRP " +
                     "must be present in the same directory as the text file. " +
                     "If the MASIC Scan Stats file is also present, elution time information will be extracted and included in the PepXML file. " +
-                    "You should ideally also include the name of the parameter file used for the MS/MS search engine."));
+                    "You should ideally also include the name of the parameter file used by the MS/MS search engine."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:");
                 Console.WriteLine(Path.GetFileName(Assembly.GetExecutingAssembly().Location) + " /I:PHRPResultsFile [/O:OutputDirectoryPath]");
@@ -335,28 +335,37 @@ namespace PeptideListToXML
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "The input file path can contain the wildcard character * and should point to a tab-delimited text file created by PHRP " +
-                    "(for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_inspect_syn.txt) " +
-                    "The output directory switch is optional. If omitted, the output file will be created in the same directory as the input file"));
+                    "(for example, Dataset_syn.txt, Dataset_xt.txt, Dataset_msgfplus_syn.txt or Dataset_maxq_syn.txt) "));
+                Console.WriteLine();
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "The output directory switch is optional. If omitted, the output file will be created in the same directory as the input file."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /E to specify the name of the parameter file used by the MS/MS search engine " +
                     "(must be in the same directory as the PHRP results file). For X!Tandem results, " +
                     "the default_input.xml and taxonomy.xml files must also be present in the input directory."));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /F to specify the path to the fasta file to store in the PepXML file; " +
                     "ignored if /E is provided and the search engine parameter file defines the fasta file to search " +
                     "(this is the case for SEQUEST and X!Tandem but not Inspect or MS-GF+)"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                    "Use /H to specify the number of matches per spectrum to store " +
-                    "(default is " + PeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use 0 to keep all hits)"));
+                    "Use /H to specify the number of matches (aka hits) per spectrum to store " +
+                    "(default is " + PeptideListToXML.DEFAULT_HITS_PER_SPECTRUM + "; use /H:0 to keep all PSMs)"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /X to specify that peptides with X residues should be skipped"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /TopHitOnly to specify that each scan should only include a single peptide match (regardless of charge)"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /MaxProteins to define the maximum number of proteins to track for each PSM (default is " + PeptideListToXML.DEFAULT_MAX_PROTEINS_PER_PSM + ")"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /PepFilter:File to use a text file to filter the peptides included in the output file (one peptide sequence per line)"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /ChargeFilter:ChargeList to specify one or more charges to filter on for inclusion in the output file. Examples:"));
                 Console.WriteLine("  Only 2+ peptides:    /ChargeFilter:2");
@@ -365,12 +374,15 @@ namespace PeptideListToXML
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph
                     ("By default, the _ModSummary file and SeqInfo files are loaded and used to determine the modified residues; " +
                      "use /NoMods to skip these files"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                    "By default, the _MSGF.txt file is loaded to associated MSGF SpecProb values with the results; " +
+                    "By default, the _msgf.txt file is loaded to associated MSGF SpecProb values with the results; " +
                     "use /NoMSGF to skip this file"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "By default, the MASIC _ScanStats.txt and _ScanStatsEx.txt files are loaded " +
                     "to determine elution times for scan numbers; use /NoScanStats to skip these files"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /Preview to preview the files that would be required for the specified dataset " +
                     "(taking into account the other command line switches used)"));
@@ -378,11 +390,13 @@ namespace PeptideListToXML
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /P to specify a parameter file to use. " +
                     "Options in this file will override options specified for /E, /F, /H, and /X"));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /S to process all valid files in the input directory and subdirectories. " +
                     "Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " +
                     "When using /S, you can redirect the output of the results using /A. " +
                     "When using /S, you can use /R to re-create the input directory hierarchy in the alternate output directory (if defined)."));
+                Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "Use /L to log messages to a file. If /Q is used, no messages will be displayed at the console."));
                 Console.WriteLine();
