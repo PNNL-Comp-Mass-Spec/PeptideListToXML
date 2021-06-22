@@ -1,5 +1,9 @@
 PeptideListToXML Revision History
 
+Version 1.2.7842; June 21, 2021
+	- Convert to C#
+	- Add support for MaxQuant synopsis files
+
 Version 1.1.6731; June 6, 2018
 	- Use clsEventNotifier, clsParseCommandLine, and ProcessFilesBase in PRISM.dll
 
