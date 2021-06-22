@@ -1,4 +1,19 @@
-﻿using System;
+﻿// This program reads a tab-delimited text file of peptide sequence and
+// creates a PepXML or mzIdentML file with the appropriate information
+//
+// -------------------------------------------------------------------------------
+// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
+// Program started April 13, 2012
+//
+// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
+// Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
+// -------------------------------------------------------------------------------
+//
+// Licensed under the Apache License, Version 2.0; you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,21 +24,6 @@ using PRISM.Logging;
 
 namespace PeptideListToXML
 {
-    // This program reads a tab-delimited text file of peptide sequence and
-    // creates a PepXML or mzIdentML file with the appropriate information
-    //
-    // -------------------------------------------------------------------------------
-    // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-    // Program started April 13, 2012
-    //
-    // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
-    // Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
-    // -------------------------------------------------------------------------------
-    //
-    // Licensed under the Apache License, Version 2.0; you may not use this file except
-    // in compliance with the License. You may obtain a copy of the License at
-    // http://www.apache.org/licenses/LICENSE-2.0
-
     /// <summary>
     /// Entry class for the .exe
     /// </summary>
