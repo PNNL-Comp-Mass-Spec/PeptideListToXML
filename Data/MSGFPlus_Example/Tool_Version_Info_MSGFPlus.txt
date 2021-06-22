@@ -1,0 +1,8 @@
+Date: 2014-03-24 09:37:30 PM
+Dataset: QC_Shew_13_05b_HCD_500ng_24Mar14_Tiger_14-03-04
+Job: 1037469
+Step: 3
+Tool: MSGFPlus
+ToolVersionInfo:
+MS-GF+ Beta (v9949) (2/10/2014)
+MSGFPlus.jar: 2014-02-10 01:33:53 PM

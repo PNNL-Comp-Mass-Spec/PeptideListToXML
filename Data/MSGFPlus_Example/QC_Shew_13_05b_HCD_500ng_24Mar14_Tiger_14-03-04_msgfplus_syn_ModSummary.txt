@@ -1,0 +1,2 @@
+Modification_Symbol	Modification_Mass	Target_Residues	Modification_Type	Mass_Correction_Tag	Occurrence_Count
+*	15.994915	M	D	Plus1Oxy	640

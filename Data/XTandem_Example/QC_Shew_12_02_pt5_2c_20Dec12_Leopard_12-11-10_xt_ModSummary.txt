@@ -1,0 +1,5 @@
+Modification_Symbol	Modification_Mass	Target_Residues	Modification_Type	Mass_Correction_Tag	Occurrence_Count
+*	15.994915	M	D	Plus1Oxy	98
+$	-18.010565	E	D	MinusH2O	9
+&	-17.026548	Q	D	NH3_Loss	24
+#	42.01057	<	D	Acetyl	4

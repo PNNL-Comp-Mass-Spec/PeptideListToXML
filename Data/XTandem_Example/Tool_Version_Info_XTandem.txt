@@ -1,0 +1,8 @@
+Date: 2016-01-19 05:28:01 PM
+Dataset: QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10
+Job: 1274141
+Step: 3
+Tool: XTandem
+ToolVersionInfo:
+X! TANDEM Vengeance (2015.12.15.2)
+Tandem.exe: 2015-12-16 02:47:16 PM

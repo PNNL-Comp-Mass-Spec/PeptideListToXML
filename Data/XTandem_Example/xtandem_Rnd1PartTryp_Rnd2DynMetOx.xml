@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<bioml>
+	<note>This parameter file contains parameter definitions that override the defaults</note>
+
+	<note>Use partially-tryptic search in round 1 searching</note>
+	<note type="input" label="protein, cleavage site">[RK]|{P}</note>
+	<note type="input" label="protein, cleavage semi">yes</note>
+
+	<note>Potential (dynamic) modifications during round 2 searching</note>
+	<note type="input" label="refine, potential modification mass">15.9949@M</note>
+		<note>Oxidized Methionine</note>
+
+</bioml>

@@ -1,0 +1,16 @@
+
+Parsing QC_Mam_19_01_Run3_02Jun21_Cicero_WBEH-20-09-08_maxq_syn.txt
+Caching PHRP data
+Reading the PHRP ModSummary file
+Reading the PHRP SeqInfo file
+Reading the PHRP ModSummary file
+.....
+ ... cached 29,177 PSMs
+
+Loading Search Engine parameters
+Creating the .pepXML file
+
+Creating PepXML file at QC_Mam_19_01_Run3_02Jun21_Cicero_WBEH-20-09-08.pepXML
+.....
+
+PepXML file created with 28,976 spectra and 29,177 peptides

@@ -1,0 +1,16 @@
+
+Parsing QC_Shew_13_05b_HCD_500ng_24Mar14_Tiger_14-03-04_msgfplus_syn.txt
+Caching PHRP data
+Reading the PHRP ModSummary file
+Reading the PHRP SeqInfo file
+Reading the PHRP ModSummary file
+..
+ ... cached 14,262 PSMs
+
+Loading Search Engine parameters
+Creating the .pepXML file
+
+Creating PepXML file at QC_Shew_13_05b_HCD_500ng_24Mar14_Tiger_14-03-04.pepXML
+..
+
+PepXML file created with 14,166 spectra and 14,262 peptides

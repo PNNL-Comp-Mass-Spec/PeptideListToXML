@@ -1,0 +1,35 @@
+
+Parsing QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10_xt.txt
+Caching PHRP data
+Reading the PHRP ModSummary file
+Reading the PHRP SeqInfo file
+Reading the PHRP ModSummary file
+.
+ ... cached 6,588 PSMs
+
+Loading Search Engine parameters
+Creating the .pepXML file
+
+Creating PepXML file at QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10.pepXML
+.
+
+PepXML file created with 6,581 spectra and 6,588 peptides
+  
+  
+  
+
+Parsing QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10_xt.txt
+Caching PHRP data
+Reading the PHRP ModSummary file
+Reading the PHRP SeqInfo file
+Reading the PHRP ModSummary file
+.
+ ... cached 6,588 PSMs
+
+Loading Search Engine parameters
+Creating the .pepXML file
+
+Creating PepXML file at QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10.pepXML
+.
+
+PepXML file created with 6,581 spectra and 6,588 peptides
