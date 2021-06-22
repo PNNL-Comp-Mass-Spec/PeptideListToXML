@@ -1,3 +1,0 @@
-*	15.994915	M	D	Plus1Oxy
-$	-18.010565	E	D	MinusH2O
-&	-17.026548	Q	D	NH3_Loss
