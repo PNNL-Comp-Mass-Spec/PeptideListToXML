@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 %ExePath% -i:QC_Shew_12_02_pt5_2c_20Dec12_Leopard_12-11-10_xt.txt -e:xtandem_Rnd1PartTryp_Rnd2DynMetOx.xml                               > PeptideListToXML_ConsoleOutput.txt

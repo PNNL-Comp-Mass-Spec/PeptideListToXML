@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 %ExePath% /i:QC_Shew_13_05b_HCD_500ng_24Mar14_Tiger_14-03-04_msgfplus_syn.txt /e:MSGFPlus_PartTryp_MetOx_20ppmParTol.txt > PeptideListToXML_ConsoleOutput.txt

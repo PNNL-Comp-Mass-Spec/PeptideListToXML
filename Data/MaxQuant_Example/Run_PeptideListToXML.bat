@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 %ExePath% QC_Mam_19_01_Run3_02Jun21_Cicero_WBEH-20-09-08_maxq_syn.txt /E:MaxQuant_Tryp_Stat_CysAlk_Dyn_MetOx_NTermAcet_20ppmParTol.xml /NoMSGF > PeptideListToXML_ConsoleOutput.txt
